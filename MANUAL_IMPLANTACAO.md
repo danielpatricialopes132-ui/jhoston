@@ -100,3 +100,23 @@ Isso ocorre se o cliente do banco de dados não foi gerado após a instalação 
 Caso precise apagar todos os dados de testes e reiniciar o banco do zero:
 *   **Aviso**: Este comando deleta todos os registros cadastrados!
 *   **Solução**: Execute `npx prisma migrate reset` e confirme a operação. No primeiro login, os usuários `@master`, `@admin` e `@campo` serão recriados.
+
+---
+
+## 6. Implantação em Nuvem (Produção: Vercel & Supabase)
+
+Para rodar em ambiente compartilhado para múltiplos acessos (Escritório + Campo), a aplicação deve ser hospedada na internet usando uma nuvem estável.
+
+### 🛢️ Banco de Dados (Supabase - PostgreSQL)
+1. Crie um projeto PostgreSQL no [Supabase](https://supabase.com).
+2. Obtenha a String de Conexão (Connection String) em **Project Settings -> Database -> Connection string -> Prisma**.
+3. No código, o Prisma está configurado no arquivo `prisma/schema.prisma` com o provedor `postgresql` e o adaptador de conexões nativo `@prisma/adapter-pg`.
+
+### 🚀 Hospedagem (Vercel - Serverless)
+1. Crie uma conta na [Vercel](https://vercel.com).
+2. Conecte o repositório GitHub do projeto à Vercel.
+3. Nas configurações do projeto na Vercel (**Settings -> Environment Variables**), adicione a seguinte variável:
+   * **Key**: `DATABASE_URL`
+   * **Value**: *[Sua Connection String do Supabase]*
+4. A Vercel executará automaticamente a compilação do projeto (`npm run build`), incluindo a geração do Prisma Client com o comando `prisma generate && next build`.
+5. Toda alteração enviada para o ramo `main` do GitHub disparará uma nova atualização automática de produção na nuvem.
