@@ -1,0 +1,140 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Funcionario {
+  id                 Int              @id @default(autoincrement())
+  nome               String
+  cargo              String
+  diariaPadrao       Float            @default(0)
+  adicionalMotorista Float            @default(0)
+  pix                String?
+  ativo              Boolean          @default(true)
+  pontos             RegistroPonto[]
+  vales              Vale[]
+  diariasViagem      DiariaViagem[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model Obra {
+  id                    Int                   @id @default(autoincrement())
+  nome                  String
+  clienteNome           String
+  endereco              String?
+  status                String                @default("ATIVA") // "ATIVA", "FINALIZADA", "SUSPENSA"
+  progressoEscavacao    Int                   @default(0)
+  progressoEstrutura    Int                   @default(0)
+  progressoHidraulica   Int                   @default(0)
+  progressoRevestimento Int                   @default(0)
+  progressoAcabamento   Int                   @default(0)
+  pontos                RegistroPonto[]
+  viagens               Viagem[]
+  transacoesFinanceiras TransacaoFinanceira[]
+  diarios               DiarioObra[]
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+}
+
+model RegistroPonto {
+  id               Int         @id @default(autoincrement())
+  funcionarioId    Int
+  funcionario      Funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  obraId           Int
+  obra             Obra        @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  data             DateTime
+  tipoDia          String      @default("TRABALHO") // "TRABALHO", "FALTA", "FOLGA", "ATESTADO", "VIAGEM", "CHUVA"
+  horasTrabalhadas Float       @default(8)
+  percentualPago   Float       @default(100)
+  observacoes      String?
+  statusAprovacao  String      @default("APROVADO") // "PENDENTE", "APROVADO", "REJEITADO"
+  criadoPorId      Int?
+  criadoPor        Usuario?    @relation(fields: [criadoPorId], references: [id], onDelete: SetNull)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model Viagem {
+  id            Int            @id @default(autoincrement())
+  obraId        Int
+  obra          Obra           @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  dataInicio    DateTime
+  dataFim       DateTime
+  motoristaId   Int
+  descricao     String?
+  diariasViagem DiariaViagem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model DiariaViagem {
+  id              Int         @id @default(autoincrement())
+  viagemId        Int
+  viagem          Viagem      @relation(fields: [viagemId], references: [id], onDelete: Cascade)
+  funcionarioId   Int
+  funcionario     Funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  valorCalculado  Float
+  foiDirigindo    Boolean     @default(false)
+  tipoDiaria      String      @default("INTEIRA") // "INTEIRA", "MEIA"
+  statusPagamento String      @default("PENDENTE") // "PENDENTE", "PAGO"
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Vale {
+  id             Int         @id @default(autoincrement())
+  funcionarioId  Int
+  funcionario    Funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  data           DateTime
+  valor          Float
+  descricao      String?
+  statusDesconto String      @default("PENDENTE") // "PENDENTE", "DESCONTADO"
+  tipo           String      @default("VALE") // "VALE" (desconto) ou "BONUS" (acréscimo)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model TransacaoFinanceira {
+  id                Int       @id @default(autoincrement())
+  tipo              String    // "RECEITA", "DESPESA"
+  categoria         String    // "Fornecedores", "Cliente", "Folha", "Viagem", "Outros"
+  obraId            Int?
+  obra              Obra?     @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  descricao         String
+  valor             Float
+  dataVencimento    DateTime
+  dataPagamento     DateTime?
+  status            String    @default("PENDENTE") // "PENDENTE", "PAGO", "ATRASADO"
+  clienteFornecedor String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Usuario {
+  id            Int             @id @default(autoincrement())
+  usuario       String          @unique
+  senha         String
+  nome          String
+  role          String          @default("CAMPO") // "MASTER", "ESCRITORIO", "CAMPO"
+  statusReset   String          @default("NENHUM") // "NENHUM", "SOLICITADO", "AUTORIZADO"
+  pontosCriados RegistroPonto[]
+  diariosCriados DiarioObra[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model DiarioObra {
+  id        Int      @id @default(autoincrement())
+  obraId    Int
+  obra      Obra     @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  data      DateTime
+  conteudo  String
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
