@@ -1,36 +1,32 @@
-# Manual de Implantação — JHOSTON TEC Piscinas
+# Manual de Implantação — JHOSTON TEC Piscinas (Versão 1.0)
 
-Este manual descreve as etapas técnicas necessárias para instalar, configurar e colocar em execução a aplicação financeira da **JHOSTON TEC Piscinas** localmente ou em servidor de homologação/produção.
+Este manual descreve as etapas técnicas necessárias para instalar, configurar e colocar em execução a aplicação da **JHOSTON TEC Piscinas** localmente ou em servidor de produção.
 
 ---
 
 ## 1. Requisitos do Sistema
-Para executar a aplicação, certifique-se de que a máquina possui instalado:
-1.  **Node.js**: Versão 18.x ou superior (Recomendado v20+ ou v24+).
-2.  **NPM**: Versão 9.x ou superior (Incluso com o Node.js).
-3.  **Git** (Opcional, para versionamento do código).
+Para executar a aplicação, certifique-se de que o ambiente possui instalado:
+1.  **Node.js**: Versão 18.x ou superior (Recomendado v20+).
+2.  **NPM**: Versão 9.x ou superior.
+3.  **Git** (Para controle de versão).
 
 ---
 
-## 2. Estrutura de Arquivos Principais do Projeto
-*   `package.json`: Definição de scripts de execução e dependências do projeto (Next.js, Prisma, SQLite, React).
-*   `prisma.config.ts`: Configurações de inicialização do Prisma 7 ORM.
-*   `prisma/schema.prisma`: Definição estrutural das tabelas do banco de dados (SQLite), incluindo novos modelos `Usuario` e `DiarioObra` com campos de progresso físico de piscinas (`progressoEscavacao`, `progressoEstrutura`, etc.).
-*   `src/lib/db.ts`: Gerenciador da conexão singleton do banco utilizando o driver do SQLite.
-*   `src/middleware.ts`: Validador de rotas para restringir caminhos específicos às permissões `MASTER`, `ESCRITORIO` e `CAMPO`.
-*   `src/app/(dashboard)`: Grupo de rotas protegidas que compartilham do menu lateral de navegação (Sidebar).
-*   `src/app/login`: Tela pública de login.
-*   `src/app/signup`: Tela pública de registro (auto-cadastro) de novos usuários.
-*   `.env`: Arquivo de variáveis de ambiente.
+## 2. Estrutura de Arquivos e Componentes
+*   `package.json`: Definição de scripts e dependências do projeto (Next.js, Prisma, React, pizzip, docxtemplater).
+*   `prisma/schema.prisma`: Definição estrutural do banco de dados contendo o novo modelo `Oportunidade` do CRM e os demais modelos de gestão.
+*   `src/templates/`: Pasta contendo os arquivos de modelo Word (`Proposta_Premium_Template.docx` e `Proposta_Super_Premium_Template.docx`).
+*   `src/app/api/propostas/[id]/route.ts`: API Route Handler para download das propostas em Word preenchidas sob demanda.
+*   `src/app/(dashboard)/crm/`: Módulo de CRM contendo visualizadores, formulários e server actions de vendas.
+*   `src/app/(dashboard)/ajuda/`: Interface interna do manual do usuário otimizada para impressão.
 
 ---
 
-## 3. Instruções de Instalação e Execução (Passo a Passo)
+## 3. Instruções de Instalação e Execução
 
 ### Passo 1: Clonar ou Extrair o Projeto
-Caso o projeto esteja em um repositório git:
+Navegue até a pasta do projeto:
 ```bash
-git clone <url-do-repositorio>
 cd "JHOSTON TEC"
 ```
 
@@ -39,84 +35,52 @@ Instale as dependências declaradas no projeto:
 ```bash
 npm install
 ```
+*Nota: As bibliotecas `docxtemplater` e `pizzip` foram adicionadas para dar suporte à geração dinâmica de propostas comerciais em formato Word (.docx).*
 
-### Passo 3: Configurar Banco de Dados SQLite e Migrações
-1.  Verifique se o arquivo `.env` na raiz do projeto contém a variável:
-    ```env
-    DATABASE_URL="file:./dev.db"
-    ```
-2.  Execute as migrações para criar e sincronizar o banco de dados (`dev.db`):
+### Passo 3: Configurar Banco de Dados e Migrações
+1.  Verifique a string de conexão no arquivo `.env` na raiz do projeto:
+    *   Para desenvolvimento local, pode ser utilizado o SQLite (`file:./dev.db`).
+    *   Para produção, utilize a string de conexão PostgreSQL fornecida.
+2.  Para sincronizar a estrutura das novas tabelas do banco de dados (como a tabela `Oportunidade`), execute:
     ```bash
-    npx prisma migrate dev --name add_vale_tipo_for_bonus
+    npx prisma db push
     ```
-3.  Gere as tipagens atualizadas do cliente do banco de dados:
+    *Atenção: Se estiver operando em ambiente de produção com um Transaction Pooler do Supabase (porta 6543), certifique-se de configurar temporariamente a variável DATABASE_URL apontando para a porta direta 5432 ao rodar comandos de alteração estrutural (db push), evitando que a migração trave por falta de trava de sessão.*
+3.  Gere as tipagens do cliente Prisma atualizadas:
     ```bash
     npx prisma generate
     ```
-    *Nota: No primeiro acesso à tela de login, o sistema executará automaticamente o auto-seeding das credenciais mestras:*
-    *   **Usuário MASTER**: `@master` | **Senha**: `@MASTER123`
-    *   **Usuário Escritório**: `@admin` | **Senha**: `admin123`
-    *   **Usuário Campo**: `@campo` | **Senha**: `campo123`
-    *   *Todos os novos usuários que usarem a tela de cadastro `/signup` entrarão por padrão com o papel `CAMPO`, necessitando de promoção pelo usuário `@master` para obter acesso administrativo.*
 
 ### Passo 4: Executar a Aplicação em Modo de Desenvolvimento (Local)
-Inicie o servidor local do Next.js:
+Inicie o servidor local:
 ```bash
 npm run dev
 ```
-A aplicação estará disponível para acesso no navegador pelo endereço:
-**`http://localhost:3000`**
-
-### Passo 5: Personalizar o Logotipo
-Para exibir o logotipo da sua empresa no menu lateral do sistema:
-1.  Salve a imagem do seu logotipo em formato PNG com o nome **`logo.png`**.
-2.  Cole o arquivo dentro do diretório **`public`** na raiz do projeto (caminho: `JHOSTON TEC/public/logo.png`).
-3.  O sistema substituirá automaticamente a logo de texto padrão pela imagem enviada.
+A aplicação estará disponível no endereço: **`http://localhost:3000`**
 
 ---
 
 ## 4. Geração do Pacote de Produção
-Para rodar a aplicação em um ambiente de produção (mais veloz e otimizado):
+Para rodar a aplicação em um ambiente de produção (hospedagem ou servidor dedicado):
 
-1.  Compile o projeto Next.js:
+1.  Compilar o projeto Next.js:
     ```bash
     npm run build
     ```
-2.  Inicie o servidor de produção compilado:
+2.  Iniciar o servidor otimizado de produção:
     ```bash
     npm run start
     ```
-    *(Opcional: Você pode rodar a aplicação em segundo plano em servidores usando gerenciadores de processos como o `pm2`: `pm2 start "npm run start" --name "jhoston-tec"`)*.
 
 ---
 
 ## 5. Troubleshooting (Resolução de Problemas Comuns)
 
 ### Erro: `Could not load Prisma Client`
-Isso ocorre se o cliente do banco de dados não foi gerado após a instalação de pacotes ou alterações no banco.
-*   **Solução**: Execute `npx prisma generate` e reinicie o servidor.
+Ocorre quando o cliente local do banco de dados está dessincronizado.
+*   **Solução**: Execute `npx prisma generate` e reinicie a aplicação.
 
-### Resetar o Banco de Dados e Usuários
-Caso precise apagar todos os dados de testes e reiniciar o banco do zero:
-*   **Aviso**: Este comando deleta todos os registros cadastrados!
-*   **Solução**: Execute `npx prisma migrate reset` e confirme a operação. No primeiro login, os usuários `@master`, `@admin` e `@campo` serão recriados.
-
----
-
-## 6. Implantação em Nuvem (Produção: Vercel & Supabase)
-
-Para rodar em ambiente compartilhado para múltiplos acessos (Escritório + Campo), a aplicação deve ser hospedada na internet usando uma nuvem estável.
-
-### 🛢️ Banco de Dados (Supabase - PostgreSQL)
-1. Crie um projeto PostgreSQL no [Supabase](https://supabase.com).
-2. Obtenha a String de Conexão (Connection String) em **Project Settings -> Database -> Connection string -> Prisma**.
-3. No código, o Prisma está configurado no arquivo `prisma/schema.prisma` com o provedor `postgresql` e o adaptador de conexões nativo `@prisma/adapter-pg`.
-
-### 🚀 Hospedagem (Vercel - Serverless)
-1. Crie uma conta na [Vercel](https://vercel.com).
-2. Conecte o repositório GitHub do projeto à Vercel.
-3. Nas configurações do projeto na Vercel (**Settings -> Environment Variables**), adicione a seguinte variável:
-   * **Key**: `DATABASE_URL`
-   * **Value**: *[Sua Connection String do Supabase]*
-4. A Vercel executará automaticamente a compilação do projeto (`npm run build`), incluindo a geração do Prisma Client com o comando `prisma generate && next build`.
-5. Toda alteração enviada para o ramo `main` do GitHub disparará uma nova atualização automática de produção na nuvem.
+### Resetar Banco de Dados
+Caso precise limpar dados de teste do banco de dados e recriar as tabelas do zero:
+*   **Aviso**: Este comando apagará todos os dados cadastrados no banco!
+*   **Solução**: Execute `npx prisma migrate reset` ou reinstale a estrutura executando `npx prisma db push --force-reset`.

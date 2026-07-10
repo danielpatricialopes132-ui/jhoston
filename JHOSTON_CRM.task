@@ -1,0 +1,28 @@
+# JHOSTON TEC - IMPLANTAÇÃO CRM E DOCUMENTAÇÃO V1.0
+
+[x] 1. Alterar Schema do Banco de Dados (`schema.prisma`)
+    [x] Adicionar o modelo Oportunidade
+    [x] Aplicar alterações com 'npx prisma db push'
+    [x] Atualizar typings com 'npx prisma generate'
+[x] 2. Configurar Templates Word (.docx) em src/templates
+    [x] Executar script de normalização
+[x] 3. Criar Server Actions do CRM (crm/actions.ts)
+    [x] Implementar CRUD de oportunidades e cálculo automático
+    [x] Implementar conversão de Oportunidade para Obra
+[x] 4. Criar Rota da API de Download da Proposta (api/propostas/[id]/route.ts)
+    [x] Integrar Pizzip + Docxtemplater para preenchimento de placeholders
+[x] 5. Criar Interface do CRM (crm/page.tsx)
+    [x] Painel de KPIs e Tabela de Oportunidades com Filtros
+    [x] Formulário Modal de Oportunidades
+[x] 6. Criar Tela de Ajuda (ajuda/page.tsx)
+    [x] Manual de usuário em HTML para Escritório/Campo (sem menções ao MASTER)
+    [x] Otimização para Impressão PDF (@media print)
+[x] 7. Atualizar Menu Lateral (Sidebar.tsx)
+    [x] Adicionar links e ícones para CRM e Ajuda
+[x] 8. Atualizar Manuais Físicos do Repositório (v1.0 sem MASTER)
+    [x] Atualizar MANUAL_USUARIO.md
+    [x] Atualizar MANUAL_IMPLANTACAO.md
+    [x] Atualizar PLANO_TREINAMENTO.md
+[x] 9. Validação e Fechamento
+    [x] Executar build de produção 'npm run build'
+    [x] Realizar commit final do git

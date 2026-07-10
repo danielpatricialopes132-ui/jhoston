@@ -1,161 +1,110 @@
-# Manual do Usuário — Sistema de Gestão Financeira JHOSTON TEC
+# Manual do Usuário — Sistema de Gestão JHOSTON TEC (Versão 1.0)
 
-Este manual orienta a equipe do escritório e de campo na operação do sistema financeiro, controle de ponto, diárias, diários de obra e vales da **JHOSTON TEC Piscinas**.
+Este manual orienta a equipe do escritório e de campo na operação do CRM, controle de ponto, diárias, diários de obra, vales e financeiro da **JHOSTON TEC Piscinas**.
 
 ---
 
 ## 1. Níveis de Acesso e Autenticação (Login & Cadastro)
-O sistema possui três níveis de acesso diferenciados para garantir a segurança dos dados e o controle centralizado de permissões:
+O sistema possui dois níveis de acesso práticos diferenciados para garantir a segurança dos dados e o fluxo correto de permissões:
 
-### A. Usuário MASTER (Administrador Geral)
-*   **Usuário Padrão**: `@master` | **Senha**: `@MASTER123`
-*   **Acesso**: Total. Visualiza todas as telas do sistema e possui acesso exclusivo ao menu **Gerenciar Usuários** (`/usuarios`) para liberar contas e definir papéis.
-*   **Padrão de Login**: Segue obrigatoriamente o padrão `@master`.
+### A. Escritório (Administrativo)
+*   **Acesso:** Completo. Opera o CRM (Oportunidades e Propostas), painel financeiro, fluxo de caixa, cadastros de funcionários, obras, diárias de viagens, adiantamentos (vales) e todos os relatórios operacionais.
+*   **Padrão de Login:** Segue o padrão `@nomeusuario` (ex: `@admin`, `@danielsmlopes`).
 
-### B. Escritório (Administrativo)
-*   **Acesso**: Administrativo. Opera o painel financeiro, fluxo de caixa, cadastros de funcionários, obras, diárias de viagens, adiantamentos (vales) e todos os relatórios operacionais. Não possui acesso à tela de gerenciamento de usuários.
-*   **Padrão de Login**: Segue o padrão `@nomeusuario` (ex: `@admin`, `@danielsmlopes`).
+### B. Campo (Operacional)
+*   **Acesso:** Restrito. Visualiza e opera **apenas** as telas de *Controle de Ponto* (envio de escalas) e *Diário de Obra* (lançamento de notas e fotos).
+*   **Padrão de Login:** Segue o padrão `@nomeusuario` (ex: `@campo`, `@roberto`).
 
-### C. Campo (Operacional)
-*   **Acesso**: Restrito. Visualiza e opera **apenas** as telas de *Controle de Ponto* e *Diário de Obra*.
-*   **Padrão de Login**: Segue o padrão `@nomeusuario` (ex: `@campo`, `@roberto`).
-
-### D. Fluxo de Auto-Cadastro (Sign Up)
+### C. Fluxo de Auto-Cadastro (Sign Up)
 1.  Na tela de login, clique no link **Cadastre-se**.
 2.  Insira seu nome completo, usuário desejado e senha.
-3.  **Validação de Usuário**: O sistema exige o prefixo `@` (ex: `@danielsmlopes`). Se você esquecer de digitar o `@`, o sistema o adicionará automaticamente.
-4.  **Acesso Inicial**: Por segurança, todo novo usuário cadastrado inicia automaticamente no nível **CAMPO** (acesso restrito). Para obter acesso de **ESCRITÓRIO**, solicite ao usuário `@master` que altere seu papel no painel de controle.
+3.  **Validação de Usuário:** O sistema exige o prefixo `@` (ex: `@danielsmlopes`). Se você esquecer de digitar o `@`, o sistema o adicionará automaticamente.
+4.  **Acesso Inicial:** Por segurança, todo novo usuário cadastrado inicia automaticamente no nível **CAMPO** (acesso restrito). A liberação para acesso administrativo de **ESCRITÓRIO** deve ser efetuada no painel de controle por um administrador autorizado.
 
-### E. Redefinição de Senha (Reset)
+### D. Redefinição de Senha (Reset)
 Caso um usuário esqueça a senha:
 1.  Na tela de login, clique em **Esqueceu a senha? Solicitar reset**.
 2.  Digite seu usuário (ex: `@danielsmlopes`) e clique em **Verificar Status**.
-3.  Se for o primeiro acesso ao reset, clique em **Solicitar Reset ao Master**. A solicitação será encaminhada ao painel do usuário MASTER.
-4.  Após a autorização do MASTER, ao acessar a mesma tela de reset, o sistema liberará os campos de nova senha.
-5.  Digite a nova senha e confirme. **Atenção**: Ao redefinir a senha, o seu perfil volta temporariamente ao papel **CAMPO** por segurança. O usuário MASTER precisará liberá-lo/promovê-lo novamente para que você volte a ter acesso administrativo de **ESCRITÓRIO**.
+3.  Se for o primeiro acesso ao reset, clique em **Solicitar Reset ao Administrador**. A solicitação será encaminhada para moderação.
+4.  Após a autorização, ao acessar a mesma tela de reset, o sistema liberará os campos de nova senha.
+5.  Digite a nova senha e confirme. **Atenção:** Ao redefinir a senha, o seu perfil volta temporariamente ao papel **CAMPO** por segurança, necessitando que o administrador o promova novamente para retornar ao acesso administrativo.
 
 ---
 
-## 2. Gerenciamento de Permissões & Tarefas (Exclusivo do MASTER)
-O usuário MASTER possui ferramentas de controle total e moderação de acesso aos recursos administrativos:
+## 2. CRM & Propostas Comerciais (Apenas Escritório)
+Esta tela permite gerenciar o funil de prospecção e vendas de revestimentos para piscinas.
 
-### A. Painel de Tarefas do MASTER (Dashboard)
-Ao fazer login como `@master`, o sistema exibe um bloco laranja de **Tarefas Pendentes** no topo do Painel Principal sempre que houver ações administrativas necessárias:
-*   **🔑 Resets de Senha**: Indica que há usuários aguardando autorização para trocar de senha.
-*   **👥 Novos Usuários**: Indica novos cadastros pendentes de promoção/liberação de acesso administrativo.
-*   **📝 Pontos Pendentes**: Indica folhas de ponto enviadas pelo Campo que precisam ser validadas e aprovadas.
-O painel contém links diretos para facilitar o acesso rápido às ações.
+### A. Cadastro de Oportunidades
+1. Acesse o menu **CRM / Oportunidades** e clique em **Nova Oportunidade**.
+2. Preencha o nome do cliente/prospect, telefone, e-mail, endereço da piscina, breve descrição física, **Área da Piscina (m²)** e o produto selecionado.
+3. **Opções de Produtos:**
+   *   **Linha Premium (Resina PU):** Solução de alto padrão em poliuretano para projetos coloridos.
+   *   **Linha Super Premium (Poliaspártica):** Solução definitiva com resina poliaspártica para projetos brancos (estabilidade UV absoluta que não amarela).
 
-### B. Controle de Permissões e Resets
-1.  Logado com o usuário `@master`, acesse o menu **Controle de Acessos** no menu lateral.
-2.  A tabela exibirá todos os usuários cadastrados.
-3.  **Nível de Acesso (Papel)**: Altere no dropdown entre *CAMPO (Restrito)* e *ESCRITÓRIO (Administrador)*.
-4.  **Reset de Senha (Coluna)**:
-    *   Se um usuário solicitou a troca de senha, aparecerá o status amarelo **"Reset Solicitado"** com o botão **Autorizar**. Clique em **Autorizar** para permitir que ele digite uma nova senha.
-    *   Se desejar cancelar ou reverter a autorização, clique em **Revogar**.
-5.  Para remover o acesso de qualquer usuário do sistema permanentemente, clique no botão **Excluir**.
+### B. Cálculo Comercial Automático
+O sistema calcula o valor total da proposta em tempo real baseando-se na área em metros quadrados (m²):
+*   **Premium:** R$ 270,00/m² + R$ 25,00/m² (aditivo de salinidade) = **R$ 295,00/m²**.
+*   **Super Premium:** R$ 350,00/m² + R$ 25,00/m² (aditivo de salinidade) = **R$ 375,00/m²**.
 
----
+### C. Geração de Proposta Comercial (.docx)
+Na tabela de oportunidades, clique em **Proposta**. O sistema gerará o download de um arquivo do Microsoft Word (.docx) contendo o contrato totalmente preenchido com os dados do cliente, data por extenso e detalhamento comercial, mantendo o leiaute original.
 
-## 3. Visão Geral e Fases da Obra (Dashboard)
-O **Painel Principal** apresenta um resumo visual das finanças e do progresso físico dos projetos:
-*   **Saldo em Caixa**: Total de receitas líquidas recebidas menos as despesas pagas.
-*   **Acompanhamento de Fases de Obra (Piscinas)**: Painel gráfico que exibe o percentual de progresso de cada uma das 5 etapas da piscina:
-    1.  *Escavação*
-    2.  *Alvenaria/Estrutura*
-    3.  *Hidráulica/Tubulação*
-    4.  *Revestimento/Azulejo*
-    5.  *Acabamento/Entrega*
-    *   O gráfico exibe um progresso geral médio com base nessas 5 etapas.
+### D. Conversão de Prospect em Cliente Ativo
+Quando a proposta for aceita, clique no botão **Aceitar Obra**. O sistema atualizará o status da oportunidade comercial e inserirá de forma automática o projeto no menu de **Obras** como uma obra **ATIVA** pronta para execução.
 
 ---
 
-## 4. Cadastro de Obras (Apenas Escritório e MASTER)
-1.  Acesse o menu **Obras (Projetos)** e clique em **Nova Obra**.
-2.  Preencha o **Nome da Obra**, **Cliente** e **Endereço**.
-3.  Defina o **Status** (*Ativa*, *Finalizada* ou *Suspensa*). Apenas obras com status *Ativa* aparecem para o lançamento de ponto, diário de obra e viagens.
+## 3. Cadastro de Obras e Funcionários (Apenas Escritório)
+*   **Obras:** Acesse **Obras (Projetos)** para registrar novos projetos. Defina o status (*Ativa*, *Finalizada* ou *Suspensa*). Apenas obras *Ativas* aparecem nos lançamentos operacionais de ponto, diários e viagens.
+*   **Funcionários:** Acesse **Funcionários** para gerenciar os colaboradores diaristas, cadastrando sua diária padrão, adicional motorista e chave PIX.
 
 ---
 
-## 5. Cadastro de Funcionários (Apenas Escritório e MASTER)
-1.  Acesse o menu **Funcionários** e clique em **Novo Funcionário**.
-2.  Defina a **Diária Padrão (R$)** e o **Adicional Motorista (R$)** (extra pago nos dias de viagem dirigindo).
-3.  Insira a **Chave PIX** para agilizar transferências de fechamento.
+## 4. Lançamento e Aprovação de Ponto
+*   **Lançamento Manual pelo Campo (ou Escritório):** No menu **Controle de Ponto**, escolha a obra e a data. Marque a equipe:
+    *   *Dia Trabalhado:* Presença normal de 8 horas e diária integral.
+    *   *V - Viagem:* Registra o dia em deslocamento/trabalho em viagem.
+    *   *Dia Chuvoso (CH):* Abre campo para digitar o percentual proporcional de pagamento da diária (ex: `50` para meia diária).
+    *   *N/A - Não Aplicável:* O funcionário não estava escalado para este projeto e dia.
+    *   *Nota:* Apontamentos feitos por usuários de nível `CAMPO` salvam como **PENDENTES** e necessitam de validação.
+*   **Importar Escala do WhatsApp (Apenas Escritório):** Cole a mensagem de escalas do grupo do WhatsApp e clique em **Analisar Texto**. O sistema gerará automaticamente os apontamentos presenciais, solicitando correção apenas se houver grafias incorretas de funcionários.
+*   **Aprovação (Apenas Escritório):** Na aba **Aprovações Pendentes**, o administrador visualiza e valida os lançamentos individualmente ou em lote.
 
 ---
 
-## 6. Lançamento e Aprovação de Ponto
-Como todos os funcionários são **Diaristas**, o controle de ponto foi simplificado, removendo opções como Falta e Atestado Médico.
-*   **Lançamento Manual pelo Campo (ou Escritório)**: No menu **Controle de Ponto**, escolha a obra e a data. O sistema listará a equipe. Você pode selecionar:
-    *   **Dia Trabalhado**: Registra presença normal (padrão de 8 horas e diária cheia).
-    *   **V - Viagem**: Marca o dia do funcionário como viagem na folha de ponto (registro visual).
-    *   **Dia Chuvoso**: Abre um campo perguntando **"Pagar (%)"** para inserir qual percentual da diária padrão será creditado (ex: `50` para meia diária).
-    *   **N/A - Não Aplicável**: Indica que o colaborador não foi alocado naquela obra e dia. Não gera horas e nem pagamento.
-    *   *Nota*: Pontos lançados por usuários de nível `CAMPO` são salvos como **PENDENTES** e necessitam de aprovação.
-*   **Importar Escala do WhatsApp (Escritório/MASTER)**:
-    1. No canto superior direito da tela de **Controle de Ponto**, clique em **Importar Escala WhatsApp**.
-    2. Cole a mensagem do WhatsApp.
-    3. Clique em **Analisar Texto da Mensagem**. Se houver grafias incorretas ou novos funcionários no texto, o importador abrirá a tela de resolução para você corrigir ou criar o cadastro instantaneamente.
-    4. O sistema gerará as escalas com os citados marcados como "Presente" e os não citados como **N/A - Não Aplicável**.
-    5. Clique em **Confirmar e Lançar [N] dias**.
-*   **Aprovação pelo Escritório/MASTER**: Na aba **Aprovações Pendentes**, o administrador visualiza os lançamentos e aprova em lote ou individualmente.
+## 5. Controle de Vales & Bônus (Apenas Escritório)
+*   **Vales (Débito):** Adiantamentos fornecidos que serão deduzidos no cálculo de fechamento mensal.
+*   **Bônus (Crédito):** Premiações por produtividade. **Para lançar bônus, é obrigatório preencher a descrição/motivo** (ex: *Bônus produtividade piscina Alphaville*).
 
 ---
 
-## 7. Controle de Vales & Bônus (Escritório e MASTER)
-Esta tela permite gerenciar adiantamentos e premiações concedidas aos colaboradores diaristas.
-1. Acesse o menu **Controle de Vales & Bônus** e clique em **Lançar Vale / Bônus**.
-2. Preencha o funcionário, data e valor.
-3. Escolha o **Tipo de Ajuste**:
-   *   **Vale / Adiantamento (Débito/Desconto)**: Valor que será descontado no fechamento. A descrição é opcional.
-   *   **Bônus / Extra (Crédito/Acréscimo)**: Valor que será creditado. **Para o tipo Bônus, a Descrição/Anotação é obrigatória** (ex: *Bônus produtividade piscina A*).
-4. Clique em **Salvar**. Ajustes salvos como "Pendentes" são calculados no fechamento. Ao consolidar, o status pode ser alterado para "Conciliado".
+## 6. Diário de Obra e Galeria de Fotos
+Permite registrar relatos operacionais diários, atualizar as etapas físicas e arquivar fotos da obra.
+1. Acesse o menu **Diário de Obra** e escolha o projeto ativo.
+2. Atualize o progresso das 5 etapas através dos seletores de barra (0% a 100%):
+   *   *1. Escavação* | *2. Estrutura* | *3. Hidráulica* | *4. Revestimento* | *5. Entrega*
+3. Escreva o relato diário e selecione fotos para anexar. O sistema comprime as imagens localmente no navegador antes de enviar para economizar o plano de dados móveis do celular no canteiro de obras.
+4. Clique em qualquer foto no histórico para visualizá-la expandida (Lightbox).
 
 ---
 
-## 8. Diário de Obra e Galeria de Fotos
-A tela de **Diário de Obra** permite registrar relatos técnicos, anexar fotos e atualizar o progresso físico da piscina. Tanto o **Escritório** quanto o **Campo** têm acesso.
-1.  Acesse o menu **Diário de Obra** e escolha a **Obra Ativa**.
-2.  No painel da esquerda (Lançar Ocorrência):
-    *   Defina a data.
-    *   **Sliders de Fases**: Arraste os sliders (de 0% a 100%) para atualizar o progresso real de cada fase da piscina (*Escavação*, *Estrutura*, *Hidráulica*, *Revestimento* e *Entrega*).
-    *   Escreva o relato do dia (ex: *Escavação concluída, iniciando a montagem da armadura de ferro*).
-    *   **Anexar Fotos**: Clique no botão de seleção de arquivos. No celular, você pode escolher **tirar fotos direto da câmera** ou selecionar fotos da galeria.
-    *   *Nota: O sistema realiza a compressão automática das fotos direto no navegador do celular antes do envio, garantindo uploads rápidos e baixo consumo de dados móveis.*
-    *   Clique em **Salvar Nota e Atualizar Fases**.
-3.  O histórico de relatos é exibido em ordem cronológica à direita. Abaixo de cada relato, as fotos anexadas aparecem em miniatura. Clique em qualquer foto para visualizá-la ampliada em tela cheia (Lightbox). MASTER e Escritório possuem o botão **Excluir** para moderação das notas e suas fotos.
+## 7. Módulo Financeiro e Fornecedores (Apenas Escritório)
+*   **Financeiro:** Controle de Contas a Pagar/Receber. Despesas da categoria "Fornecedores" exigem a seleção de um fornecedor cadastrado.
+*   **Cadastro de Fornecedores:** Salve os contatos, CNPJ e a chave PIX dos parceiros. Ao lançar uma despesa financeira, clique no botão `+` para cadastrar um novo fornecedor de forma rápida sem fechar o formulário atual.
+*   **Histórico de Compras:** Clique sobre qualquer linha de fornecedor na tabela para abrir o modal de detalhes com o extrato financeiro acumulado e todas as transações correspondentes.
 
 ---
 
-## 9. Cadastro e Gestão de Fornecedores (Apenas Escritório e MASTER)
-Esta tela centraliza o banco de dados dos fornecedores parceiros, automatizando o controle financeiro de custos diretos de materiais e serviços.
-1. Acesse o menu **Cad. Fornecedores**.
-2. O painel exibe cards de resumo financeiro (total gasto pago, contas pendentes e atrasadas com todos os fornecedores).
-3. **Cadastrar/Editar**: Preencha *Nome/Razão Social*, *CNPJ*, *Contato*, *Telefone*, *Email*, *Chave PIX* e *Observações*.
-4. **Histórico e Extrato de Compras**: Clique em qualquer linha da tabela de fornecedores para abrir o **modal de detalhes**. Nele você visualiza os dados cadastrais rápidos (como a chave PIX para pagamentos rápidos) e todo o **histórico de transações/despesas financeiras vinculadas a ele**, organizadas com status (Pago, Pendente, Vencido) e obra relacionada.
-5. **Integração no Lançamento Financeiro**: 
-   * Na tela de **Contas a Pagar/Rec** (`/financeiro`), ao lançar uma Despesa com categoria "Fornecedores", em vez de digitar o nome aberto do parceiro, você deve selecioná-lo a partir do dropdown de fornecedores cadastrados.
-   * Se o fornecedor ainda não estiver cadastrado, clique no botão **`+`** ao lado do dropdown para abrir o formulário de cadastro rápido de fornecedor sem precisar fechar ou perder o lançamento financeiro atual.
+## 8. Relatórios e Holerites (Apenas Escritório)
+O sistema conta com fechamentos consolidados de:
+*   **Ponto por Obra:** Grade de presenças mensais.
+*   **Pagamento de Funcionários:** Cálculo líquido automático (Diárias + Viagens + Bônus - Vales). Permite a abertura do **Holerite** individual para impressão limpa (escondendo os menus do sistema) para salvar em PDF e enviar via WhatsApp.
+*   **Lucratividade por Obra:** Balanço de faturamento contra custos.
+*   **Andamento de Obra:** Relatório visual completo contendo os relatos cronológicos e fotos organizadas para enviar ao cliente.
 
 ---
 
-## 10. Módulo de Relatórios (Apenas Escritório e MASTER)
-O módulo possui quatro abas de fechamento:
-*   **Ponto por Obra**: Grade de presença mensal consolidando pontos aprovados. Dias de viagem aparecem como **V**, chuvosos como **CH** e não aplicáveis como **-**.
-*   **Pagamento de Funcionários**: Extrato de fechamento líquido:
-    *   Soma de diárias normais + diárias proporcionais de chuva + viagens + **Bônus lançados**.
-    *   Desconto de **Vales lançados**.
-    *   Ao lado de cada colaborador, há o botão **Holerite**. Ao clicar, abre o demonstrativo de pagamento detalhado.
-*   **Lucratividade por Obra**: Faturamento (receitas) contra custos diretos e mão de obra, apontando a margem de lucro (%).
-*   **Andamento de Obra**: Exporta a data de início (data de cadastro da obra), todas as anotações do **Diário de Obra** (incluindo a **Galeria de Fotos** cronológica de evolução física do projeto) e as barras de progresso de instalação da piscina.
-
-### 📄 Como Gerar PDF de Relatórios ou Holerites (WhatsApp):
-*   **Relatório Geral**: Clique no botão **Gerar PDF (WhatsApp)** no cabeçalho do relatório, escolha "Salvar como PDF" e compartilhe.
-*   **Holerite Individual**: Na aba de Pagamentos, clique no botão **Holerite** do funcionário. No modal que abrir, clique em **Gerar PDF Holerite (WhatsApp)**. O sistema esconde todos os menus administrativos automaticamente, deixando apenas a guia de pagamento limpa com campos de assinatura, pronta para salvar como PDF e enviar no WhatsApp do colaborador.
-
----
-
-## 11. Como Alterar o Logotipo do Sistema
-1.  Salve a imagem do seu logotipo em formato PNG com o nome **`logo.png`**.
-2.  Copie o arquivo para dentro da pasta **`public`** na raiz do projeto (`JHOSTON TEC/public/logo.png`).
-3.  O menu lateral detectará o arquivo e exibirá a sua imagem automaticamente.
+## 9. Como Imprimir ou Exportar Manuais em PDF
+1. Para exportar este manual ou relatórios em formato PDF a partir do sistema, clique no botão **Salvar como PDF / Imprimir** disponível no cabeçalho das páginas.
+2. O sistema é otimizado para ocultar automaticamente os cabeçalhos administrativos e menus laterais durante a impressão, gerando uma folha limpa e bem diagramada.
+3. Nas opções de impressão do seu navegador, escolha o destino como **Salvar como PDF**.
