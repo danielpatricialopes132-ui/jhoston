@@ -15,6 +15,13 @@ interface Obra {
   progressoAcabamento: number;
 }
 
+interface Foto {
+  id: number;
+  diarioObraId: number;
+  base64Data: string;
+  createdAt: string;
+}
+
 interface Relato {
   id: number;
   obraId: number;
@@ -25,6 +32,7 @@ interface Relato {
     nome: string;
     role: string;
   };
+  fotos: Foto[];
   createdAt: string;
 }
 
@@ -44,8 +52,10 @@ export default function DiarioObraPage() {
   // Form states
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
   const [conteudo, setConteudo] = useState("");
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
 
   // Progress states
   const [progressoEscavacao, setProgressoEscavacao] = useState(0);
@@ -101,6 +111,50 @@ export default function DiarioObraPage() {
     setSuccessMsg("");
   }, [selectedObraId]);
 
+  // Função para comprimir imagens usando Canvas no cliente antes de salvar
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    setErrorMsg("");
+
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith("image/")) {
+        setErrorMsg("Apenas arquivos de imagem são aceitos.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 1024; // Resolução suficiente e leve
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            // Comprimir para JPEG leve (qualidade 70%)
+            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+            setSelectedPhotos((prev) => [...prev, compressedBase64]);
+          }
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedObraId) {
@@ -125,11 +179,13 @@ export default function DiarioObraPage() {
         progressoHidraulica,
         progressoRevestimento,
         progressoAcabamento,
+        fotosBase64: selectedPhotos,
       });
 
       if (res.success) {
         setConteudo("");
-        setSuccessMsg("Relato e progresso de obra salvos com sucesso!");
+        setSelectedPhotos([]);
+        setSuccessMsg("Relato de obra e fotos salvos com sucesso!");
         loadRelatos();
         setTimeout(() => setSuccessMsg(""), 3000);
       } else {
@@ -139,7 +195,7 @@ export default function DiarioObraPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("Tem certeza que deseja excluir esta nota de diário?")) {
+    if (confirm("Tem certeza que deseja excluir esta nota de diário e todas as suas fotos?")) {
       const res = await deleteRelatoDiario(id);
       if (res.success) {
         loadRelatos();
@@ -174,7 +230,7 @@ export default function DiarioObraPage() {
             Diário de Obra e Fases da Piscina
           </h3>
           <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
-            Registre notas técnicas e atualize o andamento das fases de escavação, estrutura e hidráulica.
+            Registre notas técnicas, anexe fotos do andamento e acompanhe as fases de escavação, estrutura e hidráulica.
           </p>
         </div>
       </div>
@@ -200,7 +256,7 @@ export default function DiarioObraPage() {
 
       {selectedObraId ? (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: "32px", alignItems: "flex-start" }}>
-          {/* Formulário de Lançamento e Progresso (Esquerda) */}
+          {/* Formulário de Lançamento (Esquerda) */}
           <div className="card" style={{ padding: "28px" }}>
             <h4 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px", color: "var(--text-heading)" }}>
               Lançar Relato e Atualizar Etapas
@@ -333,7 +389,8 @@ export default function DiarioObraPage() {
                 </div>
               </div>
 
-              <div className="form-group" style={{ marginBottom: "20px" }}>
+              {/* Relato Técnico */}
+              <div className="form-group" style={{ marginBottom: "16px" }}>
                 <label className="form-label">Relato do Dia / Nota Técnica</label>
                 <textarea
                   className="form-control"
@@ -343,6 +400,61 @@ export default function DiarioObraPage() {
                   onChange={(e) => setConteudo(e.target.value)}
                   required
                 />
+              </div>
+
+              {/* Upload de Fotos */}
+              <div className="form-group" style={{ marginBottom: "24px" }}>
+                <label className="form-label">Anexar Fotos da Obra (Celular ou Arquivos)</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  multiple 
+                  capture="environment" // Aciona a câmera traseira do celular no celular
+                  className="form-control"
+                  onChange={handlePhotoSelect}
+                  style={{ padding: "8px" }}
+                />
+                
+                {/* Visualização de fotos selecionadas para envio */}
+                {selectedPhotos.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "12px", padding: "10px", background: "rgba(255,255,255,0.02)", borderRadius: "6px", border: "1px solid var(--border-color)" }}>
+                    <div style={{ width: "100%", fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>
+                      Imagens selecionadas ({selectedPhotos.length}):
+                    </div>
+                    {selectedPhotos.map((photo, idx) => (
+                      <div key={idx} style={{ position: "relative", width: "70px", height: "70px" }}>
+                        <img 
+                          src={photo} 
+                          alt={`Selecionada ${idx + 1}`} 
+                          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)" }} 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                          style={{
+                            position: "absolute",
+                            top: "-6px",
+                            right: "-6px",
+                            background: "var(--error)",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "50%",
+                            width: "20px",
+                            height: "20px",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.3)"
+                          }}
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>
@@ -391,9 +503,37 @@ export default function DiarioObraPage() {
                         </button>
                       )}
                     </div>
-                    <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-main)", whiteSpace: "pre-line" }}>
+                    
+                    <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-main)", whiteSpace: "pre-line", margin: 0 }}>
                       {r.conteudo}
                     </p>
+
+                    {/* Galeria de Fotos Associadas */}
+                    {r.fotos && r.fotos.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "8px" }}>
+                        {r.fotos.map((f) => (
+                          <div 
+                            key={f.id} 
+                            style={{ 
+                              width: "90px", 
+                              height: "90px", 
+                              borderRadius: "6px", 
+                              overflow: "hidden", 
+                              border: "1px solid rgba(255,255,255,0.08)",
+                              cursor: "zoom-in"
+                            }}
+                            onClick={() => setLightboxPhoto(f.base64Data)}
+                          >
+                            <img 
+                              src={f.base64Data} 
+                              alt="Foto da obra registrada" 
+                              style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.2s" }}
+                              className="hover-zoom"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -404,6 +544,45 @@ export default function DiarioObraPage() {
         <div className="card" style={{ textAlign: "center", padding: "48px 24px", color: "var(--text-muted)", borderStyle: "dashed", borderWidth: "2px" }}>
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--text-muted)", marginBottom: "16px" }}><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           <p style={{ fontSize: "16px", fontWeight: 500 }}>Selecione uma obra acima para visualizar, registrar ocorrências e atualizar o progresso físico da piscina.</p>
+        </div>
+      )}
+
+      {/* Lightbox Modal de Foto Expandida */}
+      {lightboxPhoto && (
+        <div 
+          className="modal-overlay" 
+          style={{ zIndex: 1200, display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.85)" }} 
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <div style={{ position: "relative", maxWidth: "90%", maxHeight: "90%" }} onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={lightboxPhoto} 
+              alt="Visualização da Obra" 
+              style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: "8px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }} 
+            />
+            <button 
+              onClick={() => setLightboxPhoto(null)} 
+              style={{ 
+                position: "absolute", 
+                top: "-40px", 
+                right: "0", 
+                background: "rgba(0,0,0,0.6)", 
+                color: "#fff", 
+                border: "none", 
+                borderRadius: "50%", 
+                width: "36px", 
+                height: "36px", 
+                fontSize: "24px", 
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                lineHeight: 1
+              }}
+            >
+              &times;
+            </button>
+          </div>
         </div>
       )}
     </div>

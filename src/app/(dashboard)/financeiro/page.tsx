@@ -2,10 +2,18 @@
 
 import { useEffect, useState, startTransition } from "react";
 import { getFinanceiroData, salvarTransacao, deleteTransacao, alterarStatusTransacao } from "./actions";
+import { salvarFornecedor } from "../fornecedores/actions";
 
 interface Obra {
   id: number;
   nome: string;
+}
+
+interface Fornecedor {
+  id: number;
+  nome: string;
+  cnpj: string | null;
+  pix: string | null;
 }
 
 interface Transacao {
@@ -20,11 +28,14 @@ interface Transacao {
   dataPagamento: string | null;
   status: string;
   clienteFornecedor: string | null;
+  fornecedorId: number | null;
+  fornecedor: Fornecedor | null;
 }
 
 export default function FinanceiroPage() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [obras, setObras] = useState<Obra[]>([]);
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [tipoFilter, setTipoFilter] = useState("TODOS");
   const [statusFilter, setStatusFilter] = useState("TODOS");
@@ -42,11 +53,18 @@ export default function FinanceiroPage() {
   const [status, setStatus] = useState("PENDENTE");
   const [dataPagamento, setDataPagamento] = useState("");
   const [clienteFornecedor, setClienteFornecedor] = useState("");
+  const [fornecedorId, setFornecedorId] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Quick Fornecedor Modal states
+  const [isQuickFornecedorOpen, setIsQuickFornecedorOpen] = useState(false);
+  const [quickNome, setQuickNome] = useState("");
+  const [quickPix, setQuickPix] = useState("");
 
   const loadData = () => {
     getFinanceiroData().then((res) => {
       setObras(res.obras);
+      setFornecedores(res.fornecedores || []);
       const mapped = res.transacoes.map((t) => ({
         ...t,
         dataVencimento: new Date(t.dataVencimento).toISOString().split("T")[0],
@@ -71,6 +89,7 @@ export default function FinanceiroPage() {
     setStatus("PENDENTE");
     setDataPagamento("");
     setClienteFornecedor("");
+    setFornecedorId("");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -86,6 +105,7 @@ export default function FinanceiroPage() {
     setStatus(t.status);
     setDataPagamento(t.dataPagamento || "");
     setClienteFornecedor(t.clienteFornecedor || "");
+    setFornecedorId(t.fornecedorId ? t.fornecedorId.toString() : "");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -106,6 +126,12 @@ export default function FinanceiroPage() {
       return;
     }
 
+    // Se for despesa com fornecedores, valida se um fornecedor cadastrado foi selecionado
+    if (tipo === "DESPESA" && categoria === "Fornecedores" && !fornecedorId) {
+      setErrorMsg("Selecione um fornecedor para o lançamento.");
+      return;
+    }
+
     const payload = {
       id: editingTransacao?.id,
       tipo,
@@ -116,7 +142,8 @@ export default function FinanceiroPage() {
       dataVencimento,
       dataPagamento: status === "PAGO" ? (dataPagamento || new Date().toISOString().split("T")[0]) : null,
       status,
-      clienteFornecedor,
+      clienteFornecedor: tipo === "DESPESA" && categoria === "Fornecedores" ? "" : clienteFornecedor,
+      fornecedorId: tipo === "DESPESA" && categoria === "Fornecedores" && fornecedorId ? parseInt(fornecedorId) : null,
     };
 
     startTransition(async () => {
@@ -128,6 +155,26 @@ export default function FinanceiroPage() {
         setErrorMsg("Erro ao salvar a transação.");
       }
     });
+  };
+
+  const handleQuickFornecedorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickNome.trim()) return;
+
+    const res = await salvarFornecedor({ nome: quickNome, pix: quickPix });
+    if (res.success && res.data) {
+      // Recarregar fornecedores e selecionar o novo
+      getFinanceiroData().then((resData) => {
+        setFornecedores(resData.fornecedores || []);
+        const found = resData.fornecedores.find((f: any) => f.nome === quickNome.trim());
+        setFornecedorId(found ? found.id.toString() : res.data!.id.toString());
+      });
+      setIsQuickFornecedorOpen(false);
+      setQuickNome("");
+      setQuickPix("");
+    } else {
+      alert(res.error || "Erro ao salvar fornecedor rápido.");
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -158,7 +205,7 @@ export default function FinanceiroPage() {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
   };
 
-  // Cálculos Financeiros Globais (Sem filtros de busca aplicados, para manter o caixa real)
+  // Cálculos Financeiros Globais
   const receitasRecebidas = transacoes.filter((t) => t.tipo === "RECEITA" && t.status === "PAGO").reduce((acc, t) => acc + t.valor, 0);
   const despesasPagas = transacoes.filter((t) => t.tipo === "DESPESA" && t.status === "PAGO").reduce((acc, t) => acc + t.valor, 0);
   const caixaAtual = receitasRecebidas - despesasPagas;
@@ -273,7 +320,7 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
-      {/* Lista de Transações */}
+      {/* Tabela de Transações */}
       <div className="table-container">
         <table className="table">
           <thead>
@@ -303,7 +350,9 @@ export default function FinanceiroPage() {
                       {t.tipo === "RECEITA" ? "Receita" : "Despesa"}
                     </span>
                   </td>
-                  <td style={{ fontWeight: 600 }}>{t.clienteFornecedor || <em style={{ color: "var(--text-muted)" }}>Não informado</em>}</td>
+                  <td style={{ fontWeight: 600 }}>
+                    {t.clienteFornecedor || <em style={{ color: "var(--text-muted)" }}>Não informado</em>}
+                  </td>
                   <td>{t.descricao}</td>
                   <td>
                     {t.obra ? (
@@ -396,16 +445,48 @@ export default function FinanceiroPage() {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">{tipo === "RECEITA" ? "Cliente" : "Fornecedor / Favorecido"}</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder={`Nome do ${tipo === "RECEITA" ? "cliente" : "fornecedor"}...`}
-                    value={clienteFornecedor}
-                    onChange={(e) => setClienteFornecedor(e.target.value)}
-                  />
-                </div>
+                {/* Condicional para Fornecedores Cadastrados */}
+                {tipo === "DESPESA" && categoria === "Fornecedores" ? (
+                  <div className="form-group">
+                    <label className="form-label">Fornecedor Cadastrado *</label>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <select 
+                        className="form-control" 
+                        value={fornecedorId} 
+                        onChange={(e) => setFornecedorId(e.target.value)}
+                        required
+                        style={{ flex: 1 }}
+                      >
+                        <option value="">-- Selecione um Fornecedor --</option>
+                        {fornecedores.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            {f.nome} {f.cnpj ? `(CNPJ: ${f.cnpj})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary" 
+                        style={{ padding: "0 12px", height: "40px", fontSize: "18px", fontWeight: "bold" }}
+                        onClick={() => setIsQuickFornecedorOpen(true)}
+                        title="Cadastrar fornecedor rápido"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="form-group">
+                    <label className="form-label">{tipo === "RECEITA" ? "Cliente" : "Fornecedor / Favorecido"}</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder={`Nome do ${tipo === "RECEITA" ? "cliente" : "fornecedor"}...`}
+                      value={clienteFornecedor}
+                      onChange={(e) => setClienteFornecedor(e.target.value)}
+                    />
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label className="form-label">Obra Vinculada (Centro de Custo)</label>
@@ -481,6 +562,61 @@ export default function FinanceiroPage() {
                 </button>
                 <button type="submit" className="btn btn-primary">
                   Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Cadastro Rápido de Fornecedor */}
+      {isQuickFornecedorOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: "400px", marginTop: "10%" }}>
+            <div className="modal-header">
+              <h4 style={{ fontSize: "16px", fontWeight: 600 }}>Cadastrar Fornecedor Rápido</h4>
+              <button 
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px" }} 
+                onClick={() => setIsQuickFornecedorOpen(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleQuickFornecedorSubmit}>
+              <div className="modal-body">
+                <div className="form-group" style={{ marginBottom: "12px" }}>
+                  <label className="form-label">Razão Social / Nome Fantasia *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Nome do fornecedor..."
+                    value={quickNome}
+                    onChange={(e) => setQuickNome(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Chave PIX (Opcional)</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Chave PIX para pagamento..."
+                    value={quickPix}
+                    onChange={(e) => setQuickPix(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setIsQuickFornecedorOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Cadastrar
                 </button>
               </div>
             </form>

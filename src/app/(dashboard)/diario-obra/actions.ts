@@ -20,6 +20,7 @@ export async function getDiarioData(obraId?: number) {
       include: {
         usuario: true,
         obra: true,
+        fotos: true,
       },
       orderBy: { data: "desc" },
     }),
@@ -40,6 +41,7 @@ export async function salvarRelatoDiario(data: {
   progressoHidraulica?: number;
   progressoRevestimento?: number;
   progressoAcabamento?: number;
+  fotosBase64?: string[];
 }) {
   const session = await getSession();
   if (!session) {
@@ -60,7 +62,7 @@ export async function salvarRelatoDiario(data: {
     });
 
     // 2. Criar a nota do diário de obra
-    return await tx.diarioObra.create({
+    const relatoObj = await tx.diarioObra.create({
       data: {
         obraId: data.obraId,
         data: new Date(data.data),
@@ -68,6 +70,18 @@ export async function salvarRelatoDiario(data: {
         usuarioId: session.userId,
       },
     });
+
+    // 3. Criar os registros de fotos se fornecido
+    if (data.fotosBase64 && data.fotosBase64.length > 0) {
+      await tx.diarioObraFoto.createMany({
+        data: data.fotosBase64.map((base64) => ({
+          diarioObraId: relatoObj.id,
+          base64Data: base64,
+        })),
+      });
+    }
+
+    return relatoObj;
   });
 
   revalidatePath("/diario-obra");
@@ -83,6 +97,7 @@ export async function deleteRelatoDiario(id: number) {
   }
 
   try {
+    // Ao deletar o diário de obra, as fotos vinculadas serão excluídas automaticamente (onDelete: Cascade no Prisma)
     await prisma.diarioObra.delete({
       where: { id },
     });

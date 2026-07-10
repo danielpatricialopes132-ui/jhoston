@@ -4,17 +4,19 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 export async function getFinanceiroData() {
-  const [obras, transacoes] = await Promise.all([
+  const [obras, transacoes, fornecedores] = await Promise.all([
     prisma.obra.findMany({ orderBy: { nome: "asc" } }),
     prisma.transacaoFinanceira.findMany({
       include: {
         obra: true,
+        fornecedor: true,
       },
       orderBy: { dataVencimento: "desc" },
     }),
+    prisma.fornecedor.findMany({ orderBy: { nome: "asc" } }),
   ]);
 
-  return { obras, transacoes };
+  return { obras, transacoes, fornecedores };
 }
 
 export async function salvarTransacao(data: {
@@ -28,7 +30,20 @@ export async function salvarTransacao(data: {
   dataPagamento?: string | null;
   status: string;
   clienteFornecedor?: string;
+  fornecedorId?: number | null;
 }) {
+  let clienteFornecedor = data.clienteFornecedor || "";
+
+  // Se for uma despesa vinculada a um fornecedor cadastrado, preenchemos o clienteFornecedor automaticamente com o nome do fornecedor
+  if (data.tipo === "DESPESA" && data.fornecedorId) {
+    const fornecedor = await prisma.fornecedor.findUnique({
+      where: { id: data.fornecedorId },
+    });
+    if (fornecedor) {
+      clienteFornecedor = fornecedor.nome;
+    }
+  }
+
   const payload = {
     tipo: data.tipo,
     categoria: data.categoria,
@@ -38,7 +53,8 @@ export async function salvarTransacao(data: {
     dataVencimento: new Date(data.dataVencimento),
     dataPagamento: data.dataPagamento ? new Date(data.dataPagamento) : null,
     status: data.status,
-    clienteFornecedor: data.clienteFornecedor || "",
+    clienteFornecedor: clienteFornecedor,
+    fornecedorId: data.fornecedorId || null,
   };
 
   let transacao;
@@ -55,6 +71,7 @@ export async function salvarTransacao(data: {
 
   revalidatePath("/financeiro");
   revalidatePath("/relatorios");
+  revalidatePath("/fornecedores");
   revalidatePath("/");
   return { success: true, data: transacao };
 }
@@ -66,6 +83,7 @@ export async function deleteTransacao(id: number) {
     });
     revalidatePath("/financeiro");
     revalidatePath("/relatorios");
+    revalidatePath("/fornecedores");
     revalidatePath("/");
     return { success: true };
   } catch (error) {
@@ -87,6 +105,7 @@ export async function alterarStatusTransacao(
   });
   revalidatePath("/financeiro");
   revalidatePath("/relatorios");
+  revalidatePath("/fornecedores");
   revalidatePath("/");
   return { success: true, data: transacao };
 }

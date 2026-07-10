@@ -277,6 +277,7 @@ export async function getAndamentoObraReport(
       },
       include: {
         usuario: true,
+        fotos: true,
       },
       orderBy: {
         data: "asc",

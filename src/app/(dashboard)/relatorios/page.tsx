@@ -725,7 +725,20 @@ export default function RelatoriosPage() {
                         <strong style={{ color: "var(--primary)" }}>{formatDateBR(new Date(d.data).toISOString().split("T")[0])}</strong>
                         <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Registrado por: {d.usuario?.nome || "Sistema"}</span>
                       </div>
-                      <p style={{ fontSize: "14px", color: "var(--text-main)", lineHeight: "1.5" }}>{d.conteudo}</p>
+                      <p style={{ fontSize: "14px", color: "var(--text-main)", lineHeight: "1.5", margin: 0 }}>{d.conteudo}</p>
+                      
+                      {d.fotos && d.fotos.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "12px" }}>
+                          {d.fotos.map((f: any) => (
+                            <img 
+                              key={f.id} 
+                              src={f.base64Data} 
+                              alt="Progresso da Obra" 
+                              style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "6px", border: "1px solid #e2e8f0" }} 
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))
                 )}

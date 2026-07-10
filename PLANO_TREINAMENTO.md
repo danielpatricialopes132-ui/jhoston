@@ -11,8 +11,8 @@ O treinamento será dividido em 3 sessões de 1 hora, focando na prática guiada
 | Sessão | Tópico Principal | Conteúdo Programático |
 | :--- | :--- | :--- |
 | **Sessão 1** | Acesso MASTER e Permissões | - Logar como `@master` | senha `@MASTER123`<br>- Fluxo de Auto-cadastro (`/signup`) com padrão de login `@usuario`<br>- Painel de Gerenciamento de Usuários (`/usuarios`) para liberação de acesso |
-| **Sessão 2** | Operações de Campo e Fases da Obra | - Lançamento de Ponto pelo Campo (Status *Pendente*)<br>- Lançamento de relatos no Diário de Obra<br>- Acompanhamento e atualização das 5 fases físicas da piscina (Sliders: 0% a 100%) |
-| **Sessão 3** | Administrativo e Relatórios | - Validação/Aprovação de pontos em lote pelo escritório<br>- Fechamento da Folha de Pagamentos e Análise de Lucratividade<br>- Relatório de Andamento com progresso gráfico impresso para o cliente |
+| **Sessão 2** | Operações de Campo e Fases da Obra | - Lançamento de Ponto pelo Campo (Status *Pendente*)<br>- Lançamento de relatos no Diário de Obra **e anexo de fotos com compressão local**<br>- Acompanhamento e atualização das 5 fases físicas da piscina (Sliders: 0% a 100%) |
+| **Sessão 3** | Administrativo e Relatórios | - Validação/Aprovação de pontos em lote pelo escritório<br>- Fechamento da Folha de Pagamentos e Análise de Lucratividade<br>- **Cadastro de Fornecedores e integração com lançamentos do Financeiro**<br>- Relatório de Andamento com galeria de fotos e progresso gráfico impresso para o cliente |
 
 ---
 
@@ -39,17 +39,19 @@ Realize os seguintes passos simulados para testar o fluxo de ponta a ponta:
 5.  Clique em **Sair (Logout)** no rodapé.
 6.  Logue novamente com a conta de `@danielsmlopes`. Observe que agora você tem acesso administrativo completo a todas as funções e relatórios do escritório!
 
-### Exercício 3: Lançamento de Diário com Fases da Obra
+### Exercício 3: Lançamento de Diário com Fases e Fotos da Obra
 1.  Acesse o menu **Diário de Obra**.
 2.  Selecione a obra de teste ativa (ex: "*Piscina Condomínio Alphaville*").
 3.  No painel esquerdo:
     *   Mova o slider **1. Escavação** para `100%`.
     *   Mova o slider **2. Alvenaria/Estrutura** para `30%`.
-    *   Deixe as demais em `0%`.
     *   No relato do dia, escreva: "*Escavação de terra totalmente finalizada hoje à tarde. Iniciada a montagem dos blocos da estrutura da piscina.*"
+    *   **Anexo de Fotos**: Clique no campo de upload de imagem e escolha 1 ou 2 imagens de teste (ou tire fotos com o celular se estiver testando pelo dispositivo). Observe a miniatura da foto aparecer com o botão de excluir.
     *   Clique em **Salvar Nota e Atualizar Fases**.
-4.  Acesse o menu **Painel Principal** (Dashboard) e observe que o progresso geral e as fases da obra na piscina foram atualizados graficamente.
-5.  Acesse o menu **Relatórios**, vá para a aba **Andamento de Obra**, selecione o projeto e clique em **Filtrar**. Verifique as barras de progresso desenhadas no relatório.
+4.  No histórico do Diário de Obra (lado direito), verifique que a nota foi adicionada exibindo o texto do relato e as fotos em miniatura:
+    *   Clique em uma das miniaturas e confirme a abertura do modal ampliado (Lightbox). Clique no `X` ou fora da imagem para fechar.
+5.  Acesse o menu **Painel Principal** (Dashboard) e observe o progresso atualizado.
+6.  Acesse o menu **Relatórios**, vá na aba **Andamento de Obra**, selecione o projeto e clique em **Filtrar**. Verifique que os relatos são impressos contendo a galeria das fotos registradas cronologicamente, pronto para ser enviado ao cliente.
 
 ### Exercício 4: Ponto de Diarista Simplificado (Dia Chuvoso, Viagem e N/A)
 1.  Logado com o perfil `@admin` (ou `@master`), acesse o menu **Controle de Ponto**.
@@ -104,6 +106,29 @@ Realize os seguintes passos simulados para testar o fluxo de ponta a ponta:
     *   Digite o usuário de teste e clique em **Verificar Status**.
     *   O sistema exibirá a mensagem de sucesso informando que o reset foi autorizado.
     *   Digite a nova senha e confirme. Salve o registro.
-4.  **Nova Liberação do Acesso**:
+4.  Nova Liberação do Acesso:
     *   Observe que agora o usuário de teste teve seu papel redefinido temporariamente como **CAMPO** por segurança.
     *   Para restaurar o acesso administrativo de Escritório, faça login novamente como `@master` e, na tela de Controle de Acesso, altere o seletor do usuário de teste de volta para **ESCRITÓRIO**.
+
+### Exercício 8: Cadastro de Fornecedores e Integração Financeira
+1.  Logado com o perfil `@admin` (ou `@master`), acesse o menu **Cad. Fornecedores**.
+2.  Clique em **Novo Fornecedor** e cadastre um parceiro:
+    *   **Nome**: `Distribuidora de Canos TuboMax`
+    *   **Chave PIX**: `contato@tubomax.com`
+    *   **Pessoa de Contato**: `Marcos Vendedor`
+    *   Clique em **Cadastrar Fornecedor**.
+3.  Acesse o menu **Contas a Pagar/Rec** (`/financeiro`) para simular uma compra:
+    *   Clique em **Nova Despesa (Fornecedor)**.
+    *   Selecione a categoria **Fornecedores**.
+    *   No seletor **Fornecedor Cadastrado**, escolha `Distribuidora de Canos TuboMax`.
+    *   Preencha os dados da compra (Ex: Valor `450.00`, Vencimento `Hoje`, Descrição `Tubos PVC de 50mm`).
+    *   Clique em **Salvar**.
+4.  Retorne ao menu **Cad. Fornecedores** e localize a linha da `TuboMax` na tabela:
+    *   Veja que o valor de R$ 450.00 já aparece na coluna de **Pendente** deste fornecedor.
+    *   Clique na linha da `TuboMax` para abrir o modal de detalhes do fornecedor.
+    *   Verifique os dados cadastrais rápidos (como a chave PIX para envio do pagamento) e confirme que a despesa de R$ 450.00 de tubos PVC consta no **Histórico de Transações** deste fornecedor.
+5.  **Simular Cadastro Rápido (Sem Sair do Lançamento)**:
+    *   Volte a **Contas a Pagar/Rec** e clique em **Nova Despesa (Fornecedor)**.
+    *   No campo de fornecedor cadastrado, clique no botão **`+`** ao lado do dropdown.
+    *   No formulário rápido que abrir, digite o nome `Cimento Forte S/A` e clique em **Cadastrar**.
+    *   Verifique que o modal rápido se fecha e a opção `Cimento Forte S/A` já aparece selecionada automaticamente no seletor, pronta para o lançamento!

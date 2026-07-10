@@ -99,19 +99,35 @@ model Vale {
 }
 
 model TransacaoFinanceira {
-  id                Int       @id @default(autoincrement())
-  tipo              String    // "RECEITA", "DESPESA"
-  categoria         String    // "Fornecedores", "Cliente", "Folha", "Viagem", "Outros"
+  id                Int         @id @default(autoincrement())
+  tipo              String      // "RECEITA", "DESPESA"
+  categoria         String      // "Fornecedores", "Cliente", "Folha", "Viagem", "Outros"
   obraId            Int?
-  obra              Obra?     @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  obra              Obra?       @relation(fields: [obraId], references: [id], onDelete: Cascade)
   descricao         String
   valor             Float
   dataVencimento    DateTime
   dataPagamento     DateTime?
-  status            String    @default("PENDENTE") // "PENDENTE", "PAGO", "ATRASADO"
+  status            String      @default("PENDENTE") // "PENDENTE", "PAGO", "ATRASADO"
   clienteFornecedor String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  fornecedorId      Int?
+  fornecedor        Fornecedor? @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model Fornecedor {
+  id          Int                   @id @default(autoincrement())
+  nome        String                @unique
+  cnpj        String?
+  telefone    String?
+  email       String?
+  pix         String?
+  contato     String?
+  observacoes String?
+  transacoes  TransacaoFinanceira[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
 }
 
 model Usuario {
@@ -128,13 +144,22 @@ model Usuario {
 }
 
 model DiarioObra {
-  id        Int      @id @default(autoincrement())
+  id        Int              @id @default(autoincrement())
   obraId    Int
-  obra      Obra     @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  obra      Obra             @relation(fields: [obraId], references: [id], onDelete: Cascade)
   data      DateTime
   conteudo  String
   usuarioId Int
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  usuario   Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  fotos     DiarioObraFoto[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model DiarioObraFoto {
+  id           Int        @id @default(autoincrement())
+  diarioObraId Int
+  diarioObra   DiarioObra @relation(fields: [diarioObraId], references: [id], onDelete: Cascade)
+  base64Data   String
+  createdAt    DateTime   @default(now())
 }

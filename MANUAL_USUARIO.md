@@ -113,19 +113,33 @@ Esta tela permite gerenciar adiantamentos e premiações concedidas aos colabora
 
 ---
 
-## 7. Diário de Obra e Atualização de Progresso
-A tela de **Diário de Obra** permite registrar relatos técnicos e atualizar o progresso físico da piscina. Tanto o **Escritório** quanto o **Campo** têm acesso.
+## 8. Diário de Obra e Galeria de Fotos
+A tela de **Diário de Obra** permite registrar relatos técnicos, anexar fotos e atualizar o progresso físico da piscina. Tanto o **Escritório** quanto o **Campo** têm acesso.
 1.  Acesse o menu **Diário de Obra** e escolha a **Obra Ativa**.
 2.  No painel da esquerda (Lançar Ocorrência):
     *   Defina a data.
     *   **Sliders de Fases**: Arraste os sliders (de 0% a 100%) para atualizar o progresso real de cada fase da piscina (*Escavação*, *Estrutura*, *Hidráulica*, *Revestimento* e *Entrega*).
     *   Escreva o relato do dia (ex: *Escavação concluída, iniciando a montagem da armadura de ferro*).
+    *   **Anexar Fotos**: Clique no botão de seleção de arquivos. No celular, você pode escolher **tirar fotos direto da câmera** ou selecionar fotos da galeria.
+    *   *Nota: O sistema realiza a compressão automática das fotos direto no navegador do celular antes do envio, garantindo uploads rápidos e baixo consumo de dados móveis.*
     *   Clique em **Salvar Nota e Atualizar Fases**.
-3.  O histórico de relatos é exibido em ordem cronológica à direita. MASTER e Escritório possuem o botão **Excluir** para moderação das notas.
+3.  O histórico de relatos é exibido em ordem cronológica à direita. Abaixo de cada relato, as fotos anexadas aparecem em miniatura. Clique em qualquer foto para visualizá-la ampliada em tela cheia (Lightbox). MASTER e Escritório possuem o botão **Excluir** para moderação das notas e suas fotos.
 
 ---
 
-## 9. Módulo de Relatórios (Apenas Escritório e MASTER)
+## 9. Cadastro e Gestão de Fornecedores (Apenas Escritório e MASTER)
+Esta tela centraliza o banco de dados dos fornecedores parceiros, automatizando o controle financeiro de custos diretos de materiais e serviços.
+1. Acesse o menu **Cad. Fornecedores**.
+2. O painel exibe cards de resumo financeiro (total gasto pago, contas pendentes e atrasadas com todos os fornecedores).
+3. **Cadastrar/Editar**: Preencha *Nome/Razão Social*, *CNPJ*, *Contato*, *Telefone*, *Email*, *Chave PIX* e *Observações*.
+4. **Histórico e Extrato de Compras**: Clique em qualquer linha da tabela de fornecedores para abrir o **modal de detalhes**. Nele você visualiza os dados cadastrais rápidos (como a chave PIX para pagamentos rápidos) e todo o **histórico de transações/despesas financeiras vinculadas a ele**, organizadas com status (Pago, Pendente, Vencido) e obra relacionada.
+5. **Integração no Lançamento Financeiro**: 
+   * Na tela de **Contas a Pagar/Rec** (`/financeiro`), ao lançar uma Despesa com categoria "Fornecedores", em vez de digitar o nome aberto do parceiro, você deve selecioná-lo a partir do dropdown de fornecedores cadastrados.
+   * Se o fornecedor ainda não estiver cadastrado, clique no botão **`+`** ao lado do dropdown para abrir o formulário de cadastro rápido de fornecedor sem precisar fechar ou perder o lançamento financeiro atual.
+
+---
+
+## 10. Módulo de Relatórios (Apenas Escritório e MASTER)
 O módulo possui quatro abas de fechamento:
 *   **Ponto por Obra**: Grade de presença mensal consolidando pontos aprovados. Dias de viagem aparecem como **V**, chuvosos como **CH** e não aplicáveis como **-**.
 *   **Pagamento de Funcionários**: Extrato de fechamento líquido:
@@ -133,7 +147,7 @@ O módulo possui quatro abas de fechamento:
     *   Desconto de **Vales lançados**.
     *   Ao lado de cada colaborador, há o botão **Holerite**. Ao clicar, abre o demonstrativo de pagamento detalhado.
 *   **Lucratividade por Obra**: Faturamento (receitas) contra custos diretos e mão de obra, apontando a margem de lucro (%).
-*   **Andamento de Obra**: Exporta a data de início (data de cadastro da obra), todas as anotações do **Diário de Obra** e as barras de progresso físico de instalação da piscina.
+*   **Andamento de Obra**: Exporta a data de início (data de cadastro da obra), todas as anotações do **Diário de Obra** (incluindo a **Galeria de Fotos** cronológica de evolução física do projeto) e as barras de progresso de instalação da piscina.
 
 ### 📄 Como Gerar PDF de Relatórios ou Holerites (WhatsApp):
 *   **Relatório Geral**: Clique no botão **Gerar PDF (WhatsApp)** no cabeçalho do relatório, escolha "Salvar como PDF" e compartilhe.
@@ -141,7 +155,7 @@ O módulo possui quatro abas de fechamento:
 
 ---
 
-## 9. Como Alterar o Logotipo do Sistema
+## 11. Como Alterar o Logotipo do Sistema
 1.  Salve a imagem do seu logotipo em formato PNG com o nome **`logo.png`**.
 2.  Copie o arquivo para dentro da pasta **`public`** na raiz do projeto (`JHOSTON TEC/public/logo.png`).
 3.  O menu lateral detectará o arquivo e exibirá a sua imagem automaticamente.
