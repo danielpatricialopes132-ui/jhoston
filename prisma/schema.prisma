@@ -180,3 +180,15 @@ model Oportunidade {
   updatedAt        DateTime @updatedAt
 }
 
+model Boleto {
+  id           Int      @id @default(autoincrement())
+  vencimento   DateTime
+  sacado       String
+  cedente      String
+  valor        Float
+  codigoBarras String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+

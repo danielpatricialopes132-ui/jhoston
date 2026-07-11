@@ -1,6 +1,6 @@
-# Plano de Treinamento — Sistema de Gestão JHOSTON TEC (Versão 1.0)
+# Plano de Treinamento — Sistema de Gestão JHOSTON TEC (Versão 1.1)
 
-Este documento apresenta o cronograma de treinamento e roteiros de simulação prática para capacitar a equipe do escritório (Administrativo) e a equipe externa de campo nas funcionalidades de gestão comercial, controle de ponto diarista, diários de obra e fechamentos.
+Este documento apresenta o cronograma de treinamento e roteiros de simulação prática para capacitar a equipe do escritório (Administrativo) e a equipe externa de campo nas funcionalidades de gestão comercial, controle de ponto diarista, diários de obra, fechamentos, boletos inteligentes e relógios.
 
 ---
 
@@ -13,6 +13,7 @@ O treinamento será dividido em 3 sessões práticas focadas na rotina de uso:
 | **Sessão 1** | Comercial & CRM | - Fluxo de Auto-cadastro (`/signup`) e controle de acesso Escritório vs Campo<br>- Cadastro de Oportunidades comerciais e cálculo automático de propostas<br>- Geração de Propostas em Word (.docx) automatizadas sob demanda<br>- Conversão de oportunidades em Obras Ativas |
 | **Sessão 2** | Operações de Campo | - Apontamento de Ponto Diarista pelo Campo (Presente, Chuvoso, Viagem, N/A)<br>- Lançamento de notas no Diário de Obra e atualização gráfica de fases (Sliders)<br>- Upload e compressão automática de fotos no navegador |
 | **Sessão 3** | Administrativo & Relatórios | - Validação e aprovação de pontos em lote<br>- Lançamento de Vales (Débito) e Bônus com descrição obrigatória (Crédito)<br>- Cadastro de Fornecedores integrado aos lançamentos do financeiro<br>- Emissão de Holerites e Relatórios de evolução física em PDF para o cliente |
+| **Sessão 4** | Boletos & Relógios Inteligentes (v1.1) | - Leitura e cadastro de boletos por prompt, voz e foto (OCR)<br>- Consulta ao widget de vencimentos críticos (Hoje, 1, 3 e 5 dias) no painel<br>- Configuração de atalhos e widgets no Apple/Galaxy Watch via API |
 
 ---
 
@@ -64,3 +65,17 @@ Realize os seguintes passos simulados para testar o fluxo de ponta a ponta:
     *   Lance um **Bônus** de R$ 100,00 (é obrigatório justificar no campo de anotação).
 4.  Acesse **Relatórios -> Pagamento de Funcionários** e confira o fechamento consolidado.
 5.  Clique em **Holerite**, verifique a folha detalhada e clique em **Gerar PDF Holerite (WhatsApp)** para salvar a imagem limpa e assinada para compartilhamento em formato PDF.
+
+### Exercício 6: Cadastro de Boletos por Comando de Voz, Prompt ou OCR de Imagem
+1.  Acesse o menu **Financeiro** e clique em **Gerenciar Boletos**.
+2.  **Teste de Voz**: Clique no botão **Falar Comando de Voz**. Diga: *"Cadastrar boleto do cedente Coelba sacado Jhoston valor duzentos e cinquenta reais vencimento trinta de julho de dois mil e vinte e seis"*. Observe se o texto é transcrito e os campos correspondentes são devidamente extraídos.
+3.  **Teste de Imagem**: Clique em **Ler de uma Foto (OCR)**, faça o upload de uma imagem simulada de um boleto de teste. Verifique se o código de barras, o valor e a data de vencimento são lidos localmente na tela.
+4.  Com os campos preenchidos, preencha o código de barras caso não tenha sido lido, revise os dados e clique em **Salvar Boleto**.
+5.  Valide que o boleto cadastrado aparece na listagem do lado direito. Clique no ícone de copiar e certifique-se de que a linha digitável foi salva na sua área de transferência.
+
+### Exercício 7: Integração com Apple Watch (Atalhos/Shortcuts)
+1.  Acesse a aba **Boletos & Smartwatches** na tela de **Ajuda** do sistema.
+2.  Copie a URL do endpoint de relógio informada (ex: `http://localhost:3000/api/watch/adm?token=JhostonTecWatchKey2026`).
+3.  No seu iPhone, abra o app **Atalhos (Shortcuts)**, crie um atalho com a ação "Obter conteúdo da URL" colando o endereço.
+4.  Extraia e exiba campos como `saldoCaixa` e `tarefasPendentes.total`.
+5.  Execute o atalho e verifique a exibição correta no relógio.

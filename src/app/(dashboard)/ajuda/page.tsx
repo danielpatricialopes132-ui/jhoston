@@ -149,6 +149,7 @@ export default function AjudaPage() {
         <button className={`help-tab-btn ${activeTab === "PONTO" ? "active" : ""}`} onClick={() => setActiveTab("PONTO")}>Controle de Ponto</button>
         <button className={`help-tab-btn ${activeTab === "DIARIO" ? "active" : ""}`} onClick={() => setActiveTab("DIARIO")}>Diário de Obra</button>
         <button className={`help-tab-btn ${activeTab === "FINANCEIRO" ? "active" : ""}`} onClick={() => setActiveTab("FINANCEIRO")}>Financeiro & Fornecedores</button>
+        <button className={`help-tab-btn ${activeTab === "BOLETOS_WATCH" ? "active" : ""}`} onClick={() => setActiveTab("BOLETOS_WATCH")}>Boletos & Smartwatches (v1.1)</button>
       </div>
 
       {/* Conteúdo do Manual */}
@@ -309,6 +310,66 @@ export default function AjudaPage() {
               <li><strong>Vales (Débito):</strong> Adiantamentos financeiros concedidos aos diaristas. Serão deduzidos automaticamente na folha de fechamento.</li>
               <li><strong>Bônus (Crédito):</strong> Premiações ou diárias extras. Exige obrigatoriamente o preenchimento do campo de descrição com a justificativa técnica.</li>
             </ul>
+          </div>
+        )}
+
+        {/* SEÇÃO 6: GESTÃO DE BOLETOS & SMARTWATCHES (VERSÃO 1.1) */}
+        {(activeTab === "BOLETOS_WATCH" || typeof window === "undefined" || window.matchMedia("print").matches) && (
+          <div className="help-section">
+            <h4>6. Gestão de Boletos e Integração com Smartwatches (v1.1)</h4>
+            
+            <h5>A. Leitura por Prompt, Voz ou Foto</h5>
+            <p>
+              O sistema agora possui um módulo dedicado de <strong>Boletos de Contas a Pagar</strong>. Você pode acessá-lo através do botão "Gerenciar Boletos" na tela do Financeiro. Este módulo possui três canais inteligentes de entrada:
+            </p>
+            <ul>
+              <li><strong>Prompt de Texto:</strong> Digite frases descrevendo o boleto (ex: <code>"Cadastrar boleto do cedente Coelba sacado Jhoston valor 350 reais vencimento 15/07/2026 código..."</code>) e clique em Analisar. O sistema preencherá os campos automaticamente.</li>
+              <li><strong>Comando de Voz:</strong> Clique em "Falar Comando de Voz", autorize o microfone no navegador e descreva o boleto falando naturalmente. O sistema transcreverá a fala e fará o parse.</li>
+              <li><strong>Leitura por Foto (OCR):</strong> Clique em "Ler de uma Foto (OCR)" e envie a imagem ou tire uma foto do boleto. O navegador processará a imagem localmente (via Tesseract.js), extrairá a linha digitável e autocompletará as informações de sacado, cedente, valor e vencimento.</li>
+            </ul>
+
+            <h5>B. Integração com Smartwatches (Apple Watch & Galaxy Watch)</h5>
+            <p>
+              A aplicação expõe um canal de comunicação de dados em tempo real para visualização rápida em relógios inteligentes.
+            </p>
+            <ul>
+              <li><strong>Endpoint da API:</strong> <code>/api/watch/adm?token=SUA_CHAVE</code></li>
+              <li><strong>Chave Padrão:</strong> <code>JhostonTecWatchKey2026</code> (ou a chave configurada no parâmetro <code>WATCH_API_TOKEN</code> do servidor).</li>
+              <li><strong>Como configurar no Apple Watch (Atalhos/Shortcuts):</strong>
+                <ol>
+                  <li>No seu iPhone, abra o app <strong>Atalhos (Shortcuts)</strong> e clique em criar novo atalho.</li>
+                  <li>Adicione a ação <strong>"Obter conteúdo da URL"</strong>, inserindo o link completo do sistema (ex: <code>https://[sua-url-do-sistema]/api/watch/adm?token=JhostonTecWatchKey2026</code>).</li>
+                  <li>Adicione a ação <strong>"Obter valor do dicionário"</strong> para ler as chaves do JSON retornado (ex: <code>saldoCaixa</code>, <code>obrasAtivas</code>, <code>tarefasPendentes.total</code>).</li>
+                  <li>Adicione a ação <strong>"Mostrar resultado"</strong> para formatar a mensagem.</li>
+                  <li>Marque para exibir o atalho no Apple Watch. Pronto! Agora você pode ver o resumo do financeiro direto no pulso.</li>
+                </ol>
+              </li>
+              <li><strong>Como configurar no Galaxy Watch:</strong>
+                <ol>
+                  <li>Utilize aplicativos de visualização HTTP ou Tiles de Web Browser para Wear OS.</li>
+                  <li>Configure o link do seu endpoint com o token correspondente para obter a resposta JSON.</li>
+                </ol>
+              </li>
+            </ul>
+
+            <h5>C. Formato de Resposta do Relógio (JSON)</h5>
+            <p>
+              A API retorna os seguintes campos estruturados:
+            </p>
+            <pre style={{ backgroundColor: "#1e293b", color: "#f8fafc", padding: "12px", borderRadius: "6px", fontSize: "12px", overflowX: "auto" }}>
+{`{
+  "saldoCaixa": 25450.00,
+  "obrasAtivas": 5,
+  "funcionariosAtivos": 12,
+  "tarefasPendentes": { "pontos": 3, "resets": 1, "usuarios": 2, "total": 6 },
+  "contasAPagar": {
+    "hoje": { "count": 1, "valor": 550.00 },
+    "amanha": { "count": 2, "valor": 1200.00 },
+    "em3Dias": { "count": 0, "valor": 0.00 },
+    "em5Dias": { "count": 1, "valor": 450.00 }
+  }
+}`}
+            </pre>
           </div>
         )}
 

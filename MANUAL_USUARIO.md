@@ -1,6 +1,6 @@
-# Manual do Usuário — Sistema de Gestão JHOSTON TEC (Versão 1.0)
+# Manual do Usuário — Sistema de Gestão JHOSTON TEC (Versão 1.1)
 
-Este manual orienta a equipe do escritório e de campo na operação do CRM, controle de ponto, diárias, diários de obra, vales e financeiro da **JHOSTON TEC Piscinas**.
+Este manual orienta a equipe do escritório e de campo na operação do CRM, controle de ponto, diárias, diários de obra, vales, financeiro, gestão de boletos e integração com relógios inteligentes da **JHOSTON TEC Piscinas**.
 
 ---
 
@@ -108,3 +108,24 @@ O sistema conta com fechamentos consolidados de:
 1. Para exportar este manual ou relatórios em formato PDF a partir do sistema, clique no botão **Salvar como PDF / Imprimir** disponível no cabeçalho das páginas.
 2. O sistema é otimizado para ocultar automaticamente os cabeçalhos administrativos e menus laterais durante a impressão, gerando uma folha limpa e bem diagramada.
 3. Nas opções de impressão do seu navegador, escolha o destino como **Salvar como PDF**.
+
+---
+
+## 10. Gestão de Boletos Inteligente (Voz, Prompt e Foto - Apenas Escritório)
+Esta tela permite que você armazene e gerencie boletos bancários ou de concessionárias vinculados a contas a pagar:
+1. Acesse o menu **Financeiro** e clique em **Gerenciar Boletos**.
+2. **Métodos de Cadastro Inteligentes**:
+   *   **Por Prompt de Texto**: Cole o texto do boleto ou digite uma instrução como *"Boleto de Coelba sacado Jhoston valor 350 vencimento 15/07/2026 código 34191..."* e clique em **Analisar**.
+   *   **Por Voz**: Clique em **Falar Comando de Voz** e narre o boleto. O sistema transcreverá e interpretará as informações automaticamente.
+   *   **Por Foto (OCR)**: Clique em **Ler de uma Foto (OCR)** e carregue uma foto do boleto. O sistema fará a leitura local da imagem no próprio navegador, buscando o código de barras, o valor e a data de vencimento.
+3. **Confirmação**: Revise os dados preenchidos no formulário (Data de Vencimento, Valor, Cedente, Sacado, Código de Barras) e clique em **Salvar Boleto**.
+4. **Cópia Rápida**: Na listagem de boletos cadastrados, você pode clicar no ícone de cópia para copiar a linha digitável do código de barras instantaneamente.
+
+---
+
+## 11. Integração com Relógios Inteligentes (Apple Watch & Galaxy Watch)
+A equipe de administração pode acompanhar os indicadores mais críticos do painel do escritório diretamente em seu relógio inteligente:
+*   **Dados Disponíveis**: Saldo de caixa consolidado, obras e funcionários ativos, total de tarefas do MASTER pendentes e resumo de contas a pagar (expirando hoje, 1, 3 e 5 dias).
+*   **API de Sincronização**: O relógio conecta-se à rota de API do sistema: `/api/watch/adm?token=JhostonTecWatchKey2026`.
+*   **Apple Watch (Atalhos/Shortcuts)**: Crie um atalho no iPhone utilizando a ação "Obter conteúdo da URL" apontando para a API do seu sistema, e configure um widget para mostrar as informações lidas na tela do Apple Watch.
+*   **Galaxy Watch**: Utilize aplicativos integrados de Wear OS compatíveis com a leitura de payloads JSON de APIs externas.

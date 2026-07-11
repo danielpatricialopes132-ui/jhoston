@@ -38,9 +38,14 @@ async function getDashboardData() {
   ]);
 
   // Cálculos Financeiros
-  const transacoesPagas = await prisma.transacaoFinanceira.findMany({
-    where: { status: "PAGO" },
-  });
+  const [transacoesPagas, despesasPendentes] = await Promise.all([
+    prisma.transacaoFinanceira.findMany({
+      where: { status: "PAGO" },
+    }),
+    prisma.transacaoFinanceira.findMany({
+      where: { tipo: "DESPESA", status: "PENDENTE" },
+    }),
+  ]);
 
   const receitasPagas = transacoesPagas
     .filter((t) => t.tipo === "RECEITA")
@@ -52,6 +57,43 @@ async function getDashboardData() {
 
   const saldoCaixa = receitasPagas - despesasPagas;
 
+  // Classificação de Contas a Pagar por data crítica (GMT-3)
+  const now = new Date();
+  const brOffset = -3;
+  const brTime = new Date(now.getTime() + brOffset * 60 * 60 * 1000);
+  const hojeStr = brTime.toISOString().split("T")[0];
+  const hojeDate = new Date(hojeStr);
+
+  let contasHojeCount = 0;
+  let contasHojeValor = 0;
+  let contas1DiaCount = 0;
+  let contas1DiaValor = 0;
+  let contas3DiasCount = 0;
+  let contas3DiasValor = 0;
+  let contas5DiasCount = 0;
+  let contas5DiasValor = 0;
+
+  despesasPendentes.forEach((t) => {
+    const vencStr = t.dataVencimento.toISOString().split("T")[0];
+    const vencDate = new Date(vencStr);
+    const diffTime = vencDate.getTime() - hojeDate.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      contasHojeCount++;
+      contasHojeValor += t.valor;
+    } else if (diffDays === 1) {
+      contas1DiaCount++;
+      contas1DiaValor += t.valor;
+    } else if (diffDays === 3) {
+      contas3DiasCount++;
+      contas3DiasValor += t.valor;
+    } else if (diffDays === 5) {
+      contas5DiasCount++;
+      contas5DiasValor += t.valor;
+    }
+  });
+
   return {
     obrasAtivasCount,
     funcionariosCount,
@@ -62,6 +104,12 @@ async function getDashboardData() {
     despesasPagas,
     saldoCaixa,
     obrasAtivasLista,
+    vencimentoAlerts: {
+      hoje: { count: contasHojeCount, valor: contasHojeValor },
+      amanha: { count: contas1DiaCount, valor: contas1DiaValor },
+      em3Dias: { count: contas3DiasCount, valor: contas3DiasValor },
+      em5Dias: { count: contas5DiasCount, valor: contas5DiasValor },
+    },
   };
 }
 
@@ -223,6 +271,96 @@ export default async function DashboardPage() {
             Receitas Pagas: <strong style={{ color: "var(--success)" }}>{formatCurrency(data.receitasPagas)}</strong><br />
             Despesas Pagas: <strong style={{ color: "var(--error)" }}>{formatCurrency(data.despesasPagas)}</strong>
           </div>
+        </div>
+      </div>
+
+      {/* NOVO PAINEL: CONTAS A PAGAR CRÍTICAS */}
+      <div className="card" style={{ marginBottom: "24px", padding: "20px 24px" }}>
+        <h4 style={{ fontSize: "15px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "16px" }}>
+          Controle de Vencimentos — Contas a Pagar Pendentes
+        </h4>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+          
+          {/* Hoje */}
+          <div style={{
+            padding: "16px",
+            border: "1px solid #fca5a5",
+            borderRadius: "var(--radius-md)",
+            backgroundColor: "#fef2f2",
+            borderLeft: "5px solid var(--error)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px"
+          }}>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "#991b1b" }}>Vencem Hoje</span>
+            <strong style={{ fontSize: "20px", color: "var(--error)" }}>
+              {formatCurrency(data.vencimentoAlerts.hoje.valor)}
+            </strong>
+            <span style={{ fontSize: "12px", color: "#7f1d1d" }}>
+              {data.vencimentoAlerts.hoje.count} despesa(s) pendente(s)
+            </span>
+          </div>
+
+          {/* Amanhã (1 dia) */}
+          <div style={{
+            padding: "16px",
+            border: "1px solid #fed7aa",
+            borderRadius: "var(--radius-md)",
+            backgroundColor: "#fff7ed",
+            borderLeft: "5px solid #ea580c",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px"
+          }}>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "#c2410c" }}>Vencem Amanhã (1 Dia)</span>
+            <strong style={{ fontSize: "20px", color: "#c2410c" }}>
+              {formatCurrency(data.vencimentoAlerts.amanha.valor)}
+            </strong>
+            <span style={{ fontSize: "12px", color: "#7c2d12" }}>
+              {data.vencimentoAlerts.amanha.count} despesa(s) pendente(s)
+            </span>
+          </div>
+
+          {/* 3 dias */}
+          <div style={{
+            padding: "16px",
+            border: "1px solid #fef08a",
+            borderRadius: "var(--radius-md)",
+            backgroundColor: "#fefce8",
+            borderLeft: "5px solid var(--warning)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px"
+          }}>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "#a16207" }}>Vencem em 3 Dias</span>
+            <strong style={{ fontSize: "20px", color: "#a16207" }}>
+              {formatCurrency(data.vencimentoAlerts.em3Dias.valor)}
+            </strong>
+            <span style={{ fontSize: "12px", color: "#713f12" }}>
+              {data.vencimentoAlerts.em3Dias.count} despesa(s) pendente(s)
+            </span>
+          </div>
+
+          {/* 5 dias */}
+          <div style={{
+            padding: "16px",
+            border: "1px solid #bfdbfe",
+            borderRadius: "var(--radius-md)",
+            backgroundColor: "#eff6ff",
+            borderLeft: "5px solid var(--info)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px"
+          }}>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "#1d4ed8" }}>Vencem em 5 Dias</span>
+            <strong style={{ fontSize: "20px", color: "#1d4ed8" }}>
+              {formatCurrency(data.vencimentoAlerts.em5Dias.valor)}
+            </strong>
+            <span style={{ fontSize: "12px", color: "#1e3a8a" }}>
+              {data.vencimentoAlerts.em5Dias.count} despesa(s) pendente(s)
+            </span>
+          </div>
+
         </div>
       </div>
 

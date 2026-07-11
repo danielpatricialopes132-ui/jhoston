@@ -1,4 +1,4 @@
-# Manual de Implantação — JHOSTON TEC Piscinas (Versão 1.0)
+# Manual de Implantação — JHOSTON TEC Piscinas (Versão 1.1)
 
 Este manual descreve as etapas técnicas necessárias para instalar, configurar e colocar em execução a aplicação da **JHOSTON TEC Piscinas** localmente ou em servidor de produção.
 
@@ -14,11 +14,12 @@ Para executar a aplicação, certifique-se de que o ambiente possui instalado:
 
 ## 2. Estrutura de Arquivos e Componentes
 *   `package.json`: Definição de scripts e dependências do projeto (Next.js, Prisma, React, pizzip, docxtemplater).
-*   `prisma/schema.prisma`: Definição estrutural do banco de dados contendo o novo modelo `Oportunidade` do CRM e os demais modelos de gestão.
-*   `src/templates/`: Pasta contendo os arquivos de modelo Word (`Proposta_Premium_Template.docx` e `Proposta_Super_Premium_Template.docx`).
-*   `src/app/api/propostas/[id]/route.ts`: API Route Handler para download das propostas em Word preenchidas sob demanda.
-*   `src/app/(dashboard)/crm/`: Módulo de CRM contendo visualizadores, formulários e server actions de vendas.
-*   `src/app/(dashboard)/ajuda/`: Interface interna do manual do usuário otimizada para impressão.
+*   `prisma/schema.prisma`: Definição estrutural do banco de dados contendo os novos modelos `Oportunidade` (CRM) e `Boleto` (Financeiro).
+*   `src/templates/`: Pasta contendo os arquivos de modelo Word.
+*   `src/app/api/propostas/[id]/route.ts`: API Route Handler para download de propostas.
+*   `src/app/api/watch/adm/route.ts`: API do relógio que retorna dados administrativos em JSON.
+*   `src/app/(dashboard)/financeiro/boletos/`: Nova tela para gerenciamento e digitalização de boletos (voz, foto OCR, texto).
+*   `src/app/(dashboard)/ajuda/`: Interface interna do manual do usuário atualizada com guias de Smartwatches e Boletos.
 
 ---
 
@@ -37,16 +38,21 @@ npm install
 ```
 *Nota: As bibliotecas `docxtemplater` e `pizzip` foram adicionadas para dar suporte à geração dinâmica de propostas comerciais em formato Word (.docx).*
 
-### Passo 3: Configurar Banco de Dados e Migrações
+### Passo 3: Configurar Banco de Dados, Variáveis de Ambiente e Migrações
 1.  Verifique a string de conexão no arquivo `.env` na raiz do projeto:
     *   Para desenvolvimento local, pode ser utilizado o SQLite (`file:./dev.db`).
     *   Para produção, utilize a string de conexão PostgreSQL fornecida.
-2.  Para sincronizar a estrutura das novas tabelas do banco de dados (como a tabela `Oportunidade`), execute:
+2.  **Variáveis do Smartwatch (Opcional)**:
+    Adicione a seguinte variável no seu `.env` para segurança do Smartwatch:
+    ```env
+    WATCH_API_TOKEN="JhostonTecWatchKey2026"
+    ```
+3.  Para sincronizar a estrutura das novas tabelas do banco de dados (como as tabelas `Oportunidade` e `Boleto` da v1.1), execute:
     ```bash
     npx prisma db push
     ```
     *Atenção: Se estiver operando em ambiente de produção com um Transaction Pooler do Supabase (porta 6543), certifique-se de configurar temporariamente a variável DATABASE_URL apontando para a porta direta 5432 ao rodar comandos de alteração estrutural (db push), evitando que a migração trave por falta de trava de sessão.*
-3.  Gere as tipagens do cliente Prisma atualizadas:
+4.  Gere as tipagens do cliente Prisma atualizadas:
     ```bash
     npx prisma generate
     ```
