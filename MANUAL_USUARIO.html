@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Manual do Usuário - JHOSTON TEC</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #0284c7;
+      --text-main: #334155;
+      --text-heading: #0f172a;
+      --border-color: #e2e8f0;
+      --bg-pre: #f1f5f9;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      color: var(--text-main);
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 24px;
+      background-color: #ffffff;
+    }
+
+    h1, h2, h3, h4 {
+      color: var(--text-heading);
+      font-weight: 700;
+      margin-top: 1.8em;
+      margin-bottom: 0.6em;
+    }
+
+    h1 {
+      font-size: 32px;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 12px;
+      margin-top: 0;
+    }
+
+    h2 {
+      font-size: 22px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+
+    p {
+      margin-bottom: 16px;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    ul, ol {
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    pre {
+      background-color: var(--bg-pre);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 13px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f8fafc;
+      color: var(--text-heading);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--border-color);
+      margin: 40px 0;
+    }
+
+    .no-print-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .no-print-btn:hover {
+      background-color: #0369a1;
+    }
+
+    @media print {
+      body {
+        margin: 20px auto;
+        padding: 0;
+      }
+      .no-print-btn {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="no-print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  <h1>Manual do Usuário — Sistema de Gestão JHOSTON TEC (Versão 1.2)</h1>
+
+<p>Este manual orienta a equipe do escritório e de campo na operação do CRM, controle de ponto, diárias, diários de obra, vales, financeiro, gestão de boletos, calculadora de obra, comunicação interna (chat) e integração com relógios inteligentes da <strong>JHOSTON TEC Piscinas</strong>.</p>
+<hr />
+<h2>1. Níveis de Acesso e Autenticação (Login &amp; Cadastro)</h2>
+<p>O sistema possui dois níveis de acesso práticos diferenciados para garantir a segurança dos dados e o fluxo correto de permissões:</p>
+
+<h3>A. Escritório (Administrativo)</h3>
+<p><em>   <strong>Acesso:</strong> Completo. Opera o CRM (Oportunidades e Propostas), painel financeiro, fluxo de caixa, cadastros de funcionários, obras, diárias de viagens, adiantamentos (vales) e todos os relatórios operacionais.</p>
+<p></em>   <strong>Padrão de Login:</strong> Segue o padrão `@nomeusuario` (ex: `@admin`, `@danielsmlopes`).</p>
+
+<h3>B. Campo (Operacional)</h3>
+<p><em>   <strong>Acesso:</strong> Restrito. Visualiza e opera <strong>apenas</strong> as telas de </em>Controle de Ponto<em> (envio de escalas) e </em>Diário de Obra<em> (lançamento de notas e fotos).</p>
+<p></em>   <strong>Padrão de Login:</strong> Segue o padrão `@nomeusuario` (ex: `@campo`, `@roberto`).</p>
+
+<h3>C. Fluxo de Auto-Cadastro (Sign Up)</h3>
+<ol><li>Na tela de login, clique no link <strong>Cadastre-se</strong>.</li><li>Insira seu nome completo, usuário desejado e senha.</li><li><strong>Validação de Usuário:</strong> O sistema exige o prefixo `@` (ex: `@danielsmlopes`). Se você esquecer de digitar o `@`, o sistema o adicionará automaticamente.</li><li><strong>Acesso Inicial:</strong> Por segurança, todo novo usuário cadastrado inicia automaticamente no nível <strong>CAMPO</strong> (acesso restrito). A liberação para acesso administrativo de <strong>ESCRITÓRIO</strong> deve ser efetuada no painel de controle por um administrador autorizado.</li></ol>
+
+<h3>D. Redefinição de Senha (Reset)</h3>
+<p>Caso um usuário esqueça a senha:</p>
+<ol><li>Na tela de login, clique em <strong>Esqueceu a senha? Solicitar reset</strong>.</li><li>Digite seu usuário (ex: `@danielsmlopes`) e clique em <strong>Verificar Status</strong>.</li><li>Se for o primeiro acesso ao reset, clique em <strong>Solicitar Reset ao Administrador</strong>. A solicitação será encaminhada para moderação.</li><li>Após a autorização, ao acessar a mesma tela de reset, o sistema liberará os campos de nova senha.</li><li>Digite a nova senha e confirme. <strong>Atenção:</strong> Ao redefinir a senha, o seu perfil volta temporariamente ao papel <strong>CAMPO</strong> por segurança, necessitando que o administrador o promova novamente para retornar ao acesso administrativo.</li></ol>
+<hr />
+<h2>2. CRM &amp; Propostas Comerciais (Apenas Escritório)</h2>
+<p>Esta tela permite gerenciar o funil de prospecção e vendas de revestimentos para piscinas.</p>
+
+<h3>A. Cadastro de Oportunidades</h3>
+<ol><li>Acesse o menu <strong>CRM / Oportunidades</strong> e clique em <strong>Nova Oportunidade</strong>.</li><li>Preencha o nome do cliente/prospect, telefone, e-mail, endereço da piscina, breve descrição física, <strong>Área da Piscina (m²)</strong> e o produto selecionado.</li><li><strong>Opções de Produtos:</strong></li></ol>
+<p>   <em>   <strong>Linha Premium (Resina PU):</strong> Solução de alto padrão em poliuretano para projetos coloridos.</p>
+<p>   </em>   <strong>Linha Super Premium (Poliaspártica):</strong> Solução definitiva com resina poliaspártica para projetos brancos (estabilidade UV absoluta que não amarela).</p>
+
+<h3>B. Cálculo Comercial Automático</h3>
+<p>O sistema calcula o valor total da proposta em tempo real baseando-se na área em metros quadrados (m²):</p>
+<p><em>   <strong>Premium:</strong> R$ 270,00/m² + R$ 25,00/m² (aditivo de salinidade) = <strong>R$ 295,00/m²</strong>.</p>
+<p></em>   <strong>Super Premium:</strong> R$ 350,00/m² + R$ 25,00/m² (aditivo de salinidade) = <strong>R$ 375,00/m²</strong>.</p>
+
+<h3>C. Geração de Proposta Comercial (.docx)</h3>
+<p>Na tabela de oportunidades, clique em <strong>Proposta</strong>. O sistema gerará o download de um arquivo do Microsoft Word (.docx) contendo o contrato totalmente preenchido com os dados do cliente, data por extenso e detalhamento comercial, mantendo o leiaute original.</p>
+
+<h3>D. Conversão de Prospect em Cliente Ativo</h3>
+<p>Quando a proposta for aceita, clique no botão <strong>Aceitar Obra</strong>. O sistema atualizará o status da oportunidade comercial e inserirá de forma automática o projeto no menu de <strong>Obras</strong> como uma obra <strong>ATIVA</strong> pronta para execução.</p>
+<hr />
+<h2>3. Cadastro de Obras e Funcionários (Apenas Escritório)</h2>
+<p><em>   <strong>Obras:</strong> Acesse <strong>Obras (Projetos)</strong> para registrar novos projetos. Defina o status (</em>Ativa<em>, </em>Finalizada<em> ou </em>Suspensa<em>). Apenas obras </em>Ativas<em> aparecem nos lançamentos operacionais de ponto, diários e viagens.</p>
+<p></em>   <strong>Funcionários:</strong> Acesse <strong>Funcionários</strong> para gerenciar os colaboradores diaristas, cadastrando sua diária padrão, adicional motorista e chave PIX.</p>
+<hr />
+<h2>4. Lançamento e Aprovação de Ponto</h2>
+<p><em>   <strong>Lançamento Manual pelo Campo (ou Escritório):</strong> No menu <strong>Controle de Ponto</strong>, escolha a obra e a data. Marque a equipe:</p>
+<p>    </em>   <em>Dia Trabalhado:</em> Presença normal de 8 horas e diária integral.</p>
+<p>    <em>   </em>V - Viagem:<em> Registra o dia em deslocamento/trabalho em viagem.</p>
+<p>    </em>   <em>Dia Chuvoso (CH):</em> Abre campo para digitar o percentual proporcional de pagamento da diária (ex: `50` para meia diária).</p>
+<p>    <em>   </em>N/A - Não Aplicável:<em> O funcionário não estava escalado para este projeto e dia.</p>
+<p>    </em>   <em>Nota:</em> Apontamentos feitos por usuários de nível `CAMPO` salvam como <strong>PENDENTES</strong> e necessitam de validação.</p>
+<p><em>   <strong>Importar Escala do WhatsApp (Apenas Escritório):</strong> Cole a mensagem de escalas do grupo do WhatsApp e clique em <strong>Analisar Texto</strong>. O sistema gerará automaticamente os apontamentos presenciais, solicitando correção apenas se houver grafias incorretas de funcionários.</p>
+<p></em>   <strong>Aprovação (Apenas Escritório):</strong> Na aba <strong>Aprovações Pendentes</strong>, o administrador visualiza e valida os lançamentos individualmente ou em lote.</p>
+<hr />
+<h2>5. Controle de Vales &amp; Bônus (Apenas Escritório)</h2>
+<p><em>   <strong>Vales (Débito):</strong> Adiantamentos fornecidos que serão deduzidos no cálculo de fechamento mensal.</p>
+<p></em>   <strong>Bônus (Crédito):</strong> Premiações por produtividade. <strong>Para lançar bônus, é obrigatório preencher a descrição/motivo</strong> (ex: <em>Bônus produtividade piscina Alphaville</em>).</p>
+<hr />
+<h2>6. Diário de Obra e Galeria de Fotos</h2>
+<p>Permite registrar relatos operacionais diários, atualizar as etapas físicas e arquivar fotos da obra.</p>
+<ol><li>Acesse o menu <strong>Diário de Obra</strong> e escolha o projeto ativo.</li><li>Atualize o progresso das 5 etapas através dos seletores de barra (0% a 100%):</li></ol>
+<p>   <em>   </em>1. Escavação<em> | </em>2. Estrutura<em> | </em>3. Hidráulica<em> | </em>4. Revestimento<em> | </em>5. Entrega<em></p>
+<ol><li>Escreva o relato diário e selecione fotos para anexar. O sistema comprime as imagens localmente no navegador antes de enviar para economizar o plano de dados móveis do celular no canteiro de obras.</li><li>Clique em qualquer foto no histórico para visualizá-la expandida (Lightbox).</li></ol>
+<hr />
+<h2>7. Módulo Financeiro e Fornecedores (Apenas Escritório)</h2>
+<p></em>   <strong>Financeiro:</strong> Controle de Contas a Pagar/Receber. Despesas da categoria "Fornecedores" exigem a seleção de um fornecedor cadastrado.</p>
+<p><em>   <strong>Cadastro de Fornecedores:</strong> Salve os contatos, CNPJ e a chave PIX dos parceiros. Ao lançar uma despesa financeira, clique no botão `+` para cadastrar um novo fornecedor de forma rápida sem fechar o formulário atual.</p>
+<p></em>   <strong>Histórico de Compras:</strong> Clique sobre qualquer linha de fornecedor na tabela para abrir o modal de detalhes com o extrato financeiro acumulado e todas as transações correspondentes.</p>
+<hr />
+<h2>8. Relatórios e Holerites (Apenas Escritório)</h2>
+<p>O sistema conta com fechamentos consolidados de:</p>
+<p><em>   <strong>Ponto por Obra:</strong> Grade de presenças mensais.</p>
+<p></em>   <strong>Pagamento de Funcionários:</strong> Cálculo líquido automático (Diárias + Viagens + Bônus - Vales). Permite a abertura do <strong>Holerite</strong> individual para impressão limpa (escondendo os menus do sistema) para salvar em PDF e enviar via WhatsApp.</p>
+<p><em>   <strong>Lucratividade por Obra:</strong> Balanço de faturamento contra custos.</p>
+<p></em>   <strong>Andamento de Obra:</strong> Relatório visual completo contendo os relatos cronológicos e fotos organizadas para enviar ao cliente.</p>
+<hr />
+<h2>9. Como Imprimir ou Exportar Manuais em PDF</h2>
+<ol><li>Para exportar este manual ou relatórios em formato PDF a partir do sistema, clique no botão <strong>Salvar como PDF / Imprimir</strong> disponível no cabeçalho das páginas.</li><li>O sistema é otimizado para ocultar automaticamente os cabeçalhos administrativos e menus laterais durante a impressão, gerando uma folha limpa e bem diagramada.</li><li>Nas opções de impressão do seu navegador, escolha o destino como <strong>Salvar como PDF</strong>.</li></ol>
+<hr />
+<h2>10. Gestão de Boletos Inteligente (Voz, Prompt e Foto - Apenas Escritório)</h2>
+<p>Esta tela permite que você armazene e gerencie boletos bancários ou de concessionárias vinculados a contas a pagar:</p>
+<ol><li>Acesse o menu <strong>Financeiro</strong> e clique em <strong>Gerenciar Boletos</strong>.</li><li><strong>Métodos de Cadastro Inteligentes</strong>:</li></ol>
+<p>   <em>   <strong>Por Prompt de Texto</strong>: Cole o texto do boleto ou digite uma instrução como </em>"Boleto de Coelba sacado Jhoston valor 350 vencimento 15/07/2026 código 34191..."<em> e clique em <strong>Analisar</strong>.</p>
+<p>   </em>   <strong>Por Voz</strong>: Clique em <strong>Falar Comando de Voz</strong> e narre o boleto. O sistema transcreverá e interpretará as informações automaticamente.</p>
+<p>   <em>   <strong>Por Foto (OCR)</strong>: Clique em <strong>Ler de uma Foto (OCR)</strong> e carregue uma foto do boleto. O sistema fará a leitura local da imagem no próprio navegador, buscando o código de barras, o valor e a data de vencimento.</p>
+<ol><li><strong>Confirmação</strong>: Revise os dados preenchidos no formulário (Data de Vencimento, Valor, Cedente, Sacado, Código de Barras) e clique em <strong>Salvar Boleto</strong>.</li><li><strong>Cópia Rápida</strong>: Na listagem de boletos cadastrados, você pode clicar no ícone de cópia para copiar a linha digitável do código de barras instantaneamente.</li></ol>
+<hr />
+<h2>11. Integração com Relógios Inteligentes (Apple Watch &amp; Galaxy Watch)</h2>
+<p>A equipe de administração pode acompanhar os indicadores mais críticos do painel do escritório diretamente em seu relógio inteligente:</p>
+<p></em>   <strong>Dados Disponíveis</strong>: Saldo de caixa consolidado, obras e funcionários ativos, total de tarefas do MASTER pendentes e resumo de contas a pagar (expirando hoje, 1, 3 e 5 dias).</p>
+<p><em>   <strong>API de Sincronização</strong>: O relógio conecta-se à rota de API do sistema: `/api/watch/adm?token=JhostonTecWatchKey2026`.</p>
+<p></em>   <strong>Apple Watch (Atalhos/Shortcuts)</strong>: Crie um atalho no iPhone utilizando a ação "Obter conteúdo da URL" apontando para a API do seu sistema, e configure um widget para mostrar as informações lidas na tela do Apple Watch.</p>
+<p><em>   <strong>Galaxy Watch</strong>: Utilize aplicativos integrados de Wear OS compatíveis com a leitura de payloads JSON de APIs externas.</p>
+<hr />
+<h2>12. Calculadora de Obra &amp; Conversor de Medidas (Disponível para Todos)</h2>
+<p>A calculadora de obra ajuda a estimar e converter medidas na execução do projeto:</p>
+<ol><li>Acesse o menu lateral <strong>Calculadora de Obra</strong> ou clique no atalho da Home.</li><li>Escolha o módulo desejado nas abas superiores:</li></ol>
+<p>   </em>   <strong>Volume de Piscina</strong>: Calcule o volume em metros cúbicos ($m^3$) e litros ($L$) para formatos retangulares, ovais ou redondos.</p>
+<p>   <em>   <strong>Área de Revestimento</strong>: Descubra a metragem quadrada necessária de revestimento (pastilhas, cerâmicas ou tintas) para recobrir fundo e paredes, com cálculo de recortes de perda automática (+10% padrão).</p>
+<p>   </em>   <strong>Dosagem de Concreto</strong>: Insira o volume desejado e obtenha a quantidade de sacos de cimento (50kg), metros cúbicos de areia e metros cúbicos de brita necessários no traço estrutural 1:2:3.</p>
+<ol><li><strong>Conversor de Medidas</strong>: Realize conversões instantâneas bidirecionais (ex: metros cúbicos para litros, metros para polegadas, $m^2$ para pés quadrados, etc).</li></ol>
+<hr />
+<h2>13. Comunicação Interna (Chat - Disponível para Todos)</h2>
+<p>Permite a troca de informações rápidas e diretas entre a equipe técnica externa e administrativa:</p>
+<ol><li>Acesse o menu lateral <strong>Chat Interno</strong> ou utilize o atalho rápido no topo da Home.</li><li><strong>Canais de Obras (📢)</strong>: Canais compartilhados de grupo de cada uma das Obras Ativas. Toda a equipe que opera no projeto e o escritório podem ler e enviar mensagens.</li><li><strong>Conversas Diretas (👤)</strong>: Mensagens um-a-um privadas. Escolha qualquer usuário listado para enviar uma mensagem exclusiva.</li><li><strong>Alerta Sonoro</strong>: Ao receber novas mensagens na janela de chat ativa que não tenham sido enviadas por você, o sistema emitirá um som discreto (beep).</li><li><strong>Atualização</strong>: O chat é atualizado automaticamente a cada 3 segundos, dispensando a necessidade de atualizar a página manualmente.</li></ol>
+
+</body>
+</html>

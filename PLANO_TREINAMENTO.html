@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Plano de Treinamento - JHOSTON TEC</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #0284c7;
+      --text-main: #334155;
+      --text-heading: #0f172a;
+      --border-color: #e2e8f0;
+      --bg-pre: #f1f5f9;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      color: var(--text-main);
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 24px;
+      background-color: #ffffff;
+    }
+
+    h1, h2, h3, h4 {
+      color: var(--text-heading);
+      font-weight: 700;
+      margin-top: 1.8em;
+      margin-bottom: 0.6em;
+    }
+
+    h1 {
+      font-size: 32px;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 12px;
+      margin-top: 0;
+    }
+
+    h2 {
+      font-size: 22px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+
+    p {
+      margin-bottom: 16px;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    ul, ol {
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    pre {
+      background-color: var(--bg-pre);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 13px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f8fafc;
+      color: var(--text-heading);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--border-color);
+      margin: 40px 0;
+    }
+
+    .no-print-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .no-print-btn:hover {
+      background-color: #0369a1;
+    }
+
+    @media print {
+      body {
+        margin: 20px auto;
+        padding: 0;
+      }
+      .no-print-btn {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="no-print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  <h1>Plano de Treinamento — Sistema de Gestão JHOSTON TEC (Versão 1.2)</h1>
+
+<p>Este documento apresenta o cronograma de treinamento e roteiros de simulação prática para capacitar a equipe do escritório (Administrativo) e a equipe externa de campo nas funcionalidades de gestão comercial, controle de ponto diarista, diários de obra, fechamentos, boletos inteligentes, calculadora de obra, chat e relógios.</p>
+<hr />
+<h2>1. Cronograma de Capacitação Proposto</h2>
+
+<p>O treinamento será dividido em 3 sessões práticas focadas na rotina de uso:</p>
+
+<table class="table"><thead><tr><th>Sessão</th><th>Tópico Principal</th><th>Conteúdo Programático</th></tr></thead><tbody>
+
+<tr><td><strong>Sessão 1</strong></td><td>Comercial &amp; CRM</td><td>- Fluxo de Auto-cadastro (`/signup`) e controle de acesso Escritório vs Campo&lt;br&gt;- Cadastro de Oportunidades comerciais e cálculo automático de propostas&lt;br&gt;- Geração de Propostas em Word (.docx) automatizadas sob demanda&lt;br&gt;- Conversão de oportunidades em Obras Ativas</td></tr>
+<tr><td><strong>Sessão 2</strong></td><td>Operações de Campo</td><td>- Apontamento de Ponto Diarista pelo Campo (Presente, Chuvoso, Viagem, N/A)&lt;br&gt;- Lançamento de notas no Diário de Obra e atualização gráfica de fases (Sliders)&lt;br&gt;- Upload e compressão automática de fotos no navegador</td></tr>
+<tr><td><strong>Sessão 3</strong></td><td>Administrativo &amp; Relatórios</td><td>- Validação e aprovação de pontos em lote&lt;br&gt;- Lançamento de Vales (Débito) e Bônus com descrição obrigatória (Crédito)&lt;br&gt;- Cadastro de Fornecedores integrado aos lançamentos do financeiro&lt;br&gt;- Emissão de Holerites e Relatórios de evolução física em PDF para o cliente</td></tr>
+<tr><td><strong>Sessão 4</strong></td><td>Boletos &amp; Relógios Inteligentes (v1.1)</td><td>- Leitura e cadastro de boletos por prompt, voz e foto (OCR)&lt;br&gt;- Consulta ao widget de vencimentos críticos (Hoje, 1, 3 e 5 dias) no painel&lt;br&gt;- Configuração de atalhos e widgets no Apple/Galaxy Watch via API</td></tr>
+<tr><td><strong>Sessão 5</strong></td><td>Calculadora &amp; Chat de Equipe (v1.2)</td><td>- Execução de cálculos de volumes, revestimentos e concretagem&lt;br&gt;- Uso do conversor de unidades de obras&lt;br&gt;- Comunicação direta por DMs e canais de Obras Ativas com alertas sonoros</td></tr>
+<p></tbody></table></table></p>
+<hr />
+<h2>2. Roteiro Prático de Simulação (Exercício Guiado)</h2>
+
+<p>Realize os seguintes passos simulados para testar o fluxo de ponta a ponta:</p>
+
+<h3>Exercício 1: Auto-cadastro e Permissão de Usuário</h3>
+<ol><li>Abra o navegador em `http://localhost:3000/signup`.</li><li>Preencha o formulário para criar um novo usuário (ex: Nome: `Daniel Lopes`, Usuário: `danielsmlopes`, Senha: `senha123`). Note que o sistema gerará o login padrão `@danielsmlopes`.</li><li>Após ser redirecionado para a tela de login, entre com a conta criada.</li><li>Observe que, por padrão, o nível inicial de acesso é restrito como <strong>CAMPO</strong> (apenas Controle de Ponto e Diário de Obra aparecem no menu).</li><li>Efetue logout. Entre com um usuário administrativo de <strong>ESCRITÓRIO</strong> e realize a alteração de perfil de `@danielsmlopes` de <em>Campo</em> para <em>Escritório</em> no menu de gerenciamento.</li><li>Acesse novamente o login com a conta `@danielsmlopes` e confirme que agora você possui acesso total de Escritório!</li></ol>
+
+<h3>Exercício 2: Gestão Comercial no CRM e Propostas</h3>
+<ol><li>Com acesso administrativo, clique no menu <strong>CRM / Oportunidades</strong>.</li><li>Clique em <strong>Nova Oportunidade</strong> e preencha:</li></ol>
+<p>    <em>   <strong>Cliente:</strong> `Vivant Eco Beach`</p>
+<p>    </em>   <strong>Endereço:</strong> `Fazenda Mona Lisa – Praia de Taipú`</p>
+<p>    <em>   <strong>Área da Piscina (m²):</strong> `150`</p>
+<p>    </em>   <strong>Produto:</strong> `Premium (Resina PU)`</p>
+<p>    <em>   <strong>Status:</strong> `Pendente`</p>
+<ol><li>Observe o valor da proposta comercial calculado na caixa de pré-visualização ao vivo: <strong>R$ 44.250,00</strong> (150 m² &amp;times; R$ 295,00/m²). Salve a oportunidade.</li><li>Na linha do cliente na tabela, clique em <strong>Proposta</strong>.</li><li>O sistema gerará um arquivo Word (.docx). Abra o arquivo e verifique que os dados de cliente, endereço, área, preços, data local por extenso e valor total comercial foram preenchidos corretamente, preservando a formatação original do contrato.</li></ol>
+
+<h3>Exercício 3: Conversão de Oportunidade em Obra Ativa</h3>
+<ol><li>Na tela de <strong>CRM / Oportunidades</strong>, localize a oportunidade de `Vivant Eco Beach` criada no exercício anterior.</li><li>Clique em <strong>Aceitar Obra</strong>.</li><li>Na janela de confirmação, defina o nome oficial do projeto (ex: `Obra Vivant Eco Beach - Piscina PU`) e clique em <strong>Confirmar e Iniciar Obra</strong>.</li><li>Verifique que o status comercial mudou para <strong>Aceito (Ativo)</strong>.</li><li>Clique no menu <strong>Obras (Projetos)</strong> e certifique-se de que a obra `Obra Vivant Eco Beach - Piscina PU` consta como <strong>ATIVA</strong> e com o endereço correto na listagem de execução de campo.</li></ol>
+
+<h3>Exercício 4: Lançamento de Diário de Obra e Fotos</h3>
+<ol><li>Acesse o menu <strong>Diário de Obra</strong>.</li><li>Selecione o projeto recém-criado.</li><li>Mova o controle de <strong>1. Escavação</strong> para `50%`.</li><li>No relato, escreva: "</em>Iniciada escavação do terreno. Terraplanagem concluída.<em>"</li><li>Selecione uma imagem de teste e clique em <strong>Salvar Nota</strong>.</li><li>Na galeria cronológica ao lado direito, clique na foto adicionada e verifique se a ampliação (Lightbox) funciona.</li><li>Acesse <strong>Relatórios -&gt; Andamento de Obra</strong>, filtre o projeto e veja a nota técnica e a foto organizadas para envio ao cliente.</li></ol>
+
+<h3>Exercício 5: Ponto Diarista, Vales e Holerite</h3>
+<ol><li>Acesse o menu <strong>Controle de Ponto</strong>.</li><li>Selecione a obra de teste e a data atual. Registre a escala da equipe marcando presenças, dias de viagem e dias chuvosos (com preenchimento de percentual proporcional, ex: 50%).</li><li>Acesse <strong>Controle de Vales</strong> e simule lançamentos:</li></ol>
+<p>    </em>   Lance um <strong>Vale</strong> de R$ 50,00 (adiantamento).</p>
+<p>    <em>   Lance um <strong>Bônus</strong> de R$ 100,00 (é obrigatório justificar no campo de anotação).</p>
+<ol><li>Acesse <strong>Relatórios -&gt; Pagamento de Funcionários</strong> e confira o fechamento consolidado.</li><li>Clique em <strong>Holerite</strong>, verifique a folha detalhada e clique em <strong>Gerar PDF Holerite (WhatsApp)</strong> para salvar a imagem limpa e assinada para compartilhamento em formato PDF.</li></ol>
+
+<h3>Exercício 6: Cadastro de Boletos por Comando de Voz, Prompt ou OCR de Imagem</h3>
+<ol><li>Acesse o menu <strong>Financeiro</strong> e clique em <strong>Gerenciar Boletos</strong>.</li><li><strong>Teste de Voz</strong>: Clique no botão <strong>Falar Comando de Voz</strong>. Diga: </em>"Cadastrar boleto do cedente Coelba sacado Jhoston valor duzentos e cinquenta reais vencimento trinta de julho de dois mil e vinte e seis"<em>. Observe se o texto é transcrito e os campos correspondentes são devidamente extraídos.</li><li><strong>Teste de Imagem</strong>: Clique em <strong>Ler de uma Foto (OCR)</strong>, faça o upload de uma imagem simulada de um boleto de teste. Verifique se o código de barras, o valor e a data de vencimento são lidos localmente na tela.</li><li>Com os campos preenchidos, preencha o código de barras caso não tenha sido lido, revise os dados e clique em <strong>Salvar Boleto</strong>.</li><li>Valide que o boleto cadastrado aparece na listagem do lado direito. Clique no ícone de copiar e certifique-se de que a linha digitável foi salva na sua área de transferência.</li></ol>
+
+<h3>Exercício 7: Integração com Apple Watch (Atalhos/Shortcuts)</h3>
+<ol><li>Acesse a aba <strong>Boletos &amp; Smartwatches</strong> na tela de <strong>Ajuda</strong> do sistema.</li><li>Copie a URL do endpoint de relógio informada (ex: `http://localhost:3000/api/watch/adm?token=JhostonTecWatchKey2026`).</li><li>No seu iPhone, abra o app <strong>Atalhos (Shortcuts)</strong>, crie um atalho com a ação "Obter conteúdo da URL" colando o endereço.</li><li>Extraia e exiba campos como `saldoCaixa` e `tarefasPendentes.total`.</li><li>Execute o atalho e verifique a exibição correta no relógio.</li></ol>
+
+<h3>Exercício 8: Uso da Calculadora de Obra e Conversões</h3>
+<ol><li>Na barra lateral ou no cabeçalho do Painel Principal, clique em <strong>Calculadora de Obra</strong>.</li><li>Na aba <strong>Volume de Piscina</strong>, digite: Comprimento `10`, Largura `5`, Profundidade Média `1.5`. Verifique se o sistema calcula corretamente o volume de <strong>75m³ (75.000 Litros)</strong>.</li><li>Mude a aba para <strong>Área de Revestimento</strong> e digite as mesmas dimensões com margem de <strong>10%</strong>. Verifique se a área líquida é de <strong>95.00m²</strong> e a área com margem é de <strong>104.50m²</strong>.</li><li>Na aba <strong>Dosagem de Concreto</strong>, insira o volume de `5m³`. Verifique se a dosagem indica <strong>35 sacos de cimento</strong>, <strong>3m³ de areia</strong> e <strong>4m³ de brita</strong>.</li><li>Na aba <strong>Conversor de Medidas</strong>, insira `5` em metros cúbicos. Confirme que o campo correspondente em Litros atualiza automaticamente para `5000`.</li></ol>
+
+<h3>Exercício 9: Teste de Comunicação Interna (Chat)</h3>
+<ol><li>Clique em <strong>Chat Interno</strong> no cabeçalho ou menu lateral.</li><li>Verifique se os canais de grupo correspondentes às suas obras ativas aparecem listados na barra esquerda (ex: `# Obra Vivant Eco Beach`), bem como a lista de outros usuários abaixo.</li><li>Abra uma janela de navegador privada (ou em outro dispositivo), faça o login com outro usuário e acesse a tela do Chat.</li><li>No primeiro navegador, clique no nome do outro usuário para abrir uma conversa privada (DM) e envie uma mensagem (ex: </em>"Olá, precisamos verificar o cimento de amanhã"*).</li><li>Verifique se o outro navegador recebe a mensagem automaticamente em até 3 segundos e emite um alerta sonoro discreto (beep), e se a mensagem enviada por ele aparece na sua tela com o mesmo comportamento.</li></ol>
+
+</body>
+</html>
