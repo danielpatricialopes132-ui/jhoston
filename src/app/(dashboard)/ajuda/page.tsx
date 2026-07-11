@@ -150,6 +150,7 @@ export default function AjudaPage() {
         <button className={`help-tab-btn ${activeTab === "DIARIO" ? "active" : ""}`} onClick={() => setActiveTab("DIARIO")}>Diário de Obra</button>
         <button className={`help-tab-btn ${activeTab === "FINANCEIRO" ? "active" : ""}`} onClick={() => setActiveTab("FINANCEIRO")}>Financeiro & Fornecedores</button>
         <button className={`help-tab-btn ${activeTab === "BOLETOS_WATCH" ? "active" : ""}`} onClick={() => setActiveTab("BOLETOS_WATCH")}>Boletos & Smartwatches (v1.1)</button>
+        <button className={`help-tab-btn ${activeTab === "CALC_CHAT" ? "active" : ""}`} onClick={() => setActiveTab("CALC_CHAT")}>Calculadora & Chat (v1.2)</button>
       </div>
 
       {/* Conteúdo do Manual */}
@@ -370,6 +371,35 @@ export default function AjudaPage() {
   }
 }`}
             </pre>
+          </div>
+        )}
+
+        {/* SEÇÃO 7: CALCULADORA & CHAT INTERNO (VERSÃO 1.2) */}
+        {(activeTab === "CALC_CHAT" || typeof window === "undefined" || window.matchMedia("print").matches) && (
+          <div className="help-section">
+            <h4>7. Calculadora de Obra e Comunicação Interna (v1.2)</h4>
+            
+            <h5>A. Calculadora de Obra</h5>
+            <p>
+              Disponível para todos os usuários através do menu lateral ou da Home, esta ferramenta ajuda no planejamento de insumos no canteiro de obras:
+            </p>
+            <ul>
+              <li><strong>Volume de Piscina:</strong> Escolha a forma geométrica (Retangular, Redonda, Oval), digite as dimensões e obtenha o volume em metros cúbicos ($m^3$) e litros ($L$).</li>
+              <li><strong>Área de Revestimento:</strong> Calcula a superfície total do fundo e das paredes de uma piscina retangular. Permite selecionar a margem de perda (ex: 10% padrão) para compra de pastilhas ou aplicação de revestimentos.</li>
+              <li><strong>Dosagem de Concreto:</strong> Calcula a quantidade estimada de sacos de cimento de 50kg, areia ($m^3$) e brita ($m^3$) para o preenchimento de um determinado volume usando o traço estrutural padrão (1:2:3).</li>
+              <li><strong>Conversor de Unidades:</strong> Conversão rápida bidirecional de metros cúbicos para litros, metros para polegadas, metros quadrados para pés quadrados, e litros para galões.</li>
+            </ul>
+
+            <h5>B. Chat Interno (Comunicação da Equipe)</h5>
+            <p>
+              Centraliza a conversa da equipe operacional de campo com a equipe administrativa do escritório.
+            </p>
+            <ul>
+              <li><strong>Grupos de Obras (Canais):</strong> Cada obra ativa possui um canal público automático (indicado com <code>#</code>). Todos os encarregados vinculados à obra e administradores podem visualizar o histórico e enviar novas mensagens.</li>
+              <li><strong>Mensagens Diretas (DMs):</strong> Conversas um-a-um privadas com qualquer usuário ativo da plataforma (indicadas com <code>👤</code> e uma bolinha colorida indicando a categoria de permissão).</li>
+              <li><strong>Poller em Tempo Real:</strong> A tela verifica novas mensagens de forma automática a cada 3 segundos, mantendo a conversa atualizada.</li>
+              <li><strong>Aviso Sonoro:</strong> O sistema toca um alerta sonoro discreto (beep) quando uma nova mensagem é recebida no canal ou chat direto ativo, desde que a mensagem não tenha sido enviada por você.</li>
+            </ul>
           </div>
         )}
 

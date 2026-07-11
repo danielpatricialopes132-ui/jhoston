@@ -1,6 +1,6 @@
-# Plano de Treinamento — Sistema de Gestão JHOSTON TEC (Versão 1.1)
+# Plano de Treinamento — Sistema de Gestão JHOSTON TEC (Versão 1.2)
 
-Este documento apresenta o cronograma de treinamento e roteiros de simulação prática para capacitar a equipe do escritório (Administrativo) e a equipe externa de campo nas funcionalidades de gestão comercial, controle de ponto diarista, diários de obra, fechamentos, boletos inteligentes e relógios.
+Este documento apresenta o cronograma de treinamento e roteiros de simulação prática para capacitar a equipe do escritório (Administrativo) e a equipe externa de campo nas funcionalidades de gestão comercial, controle de ponto diarista, diários de obra, fechamentos, boletos inteligentes, calculadora de obra, chat e relógios.
 
 ---
 
@@ -14,6 +14,7 @@ O treinamento será dividido em 3 sessões práticas focadas na rotina de uso:
 | **Sessão 2** | Operações de Campo | - Apontamento de Ponto Diarista pelo Campo (Presente, Chuvoso, Viagem, N/A)<br>- Lançamento de notas no Diário de Obra e atualização gráfica de fases (Sliders)<br>- Upload e compressão automática de fotos no navegador |
 | **Sessão 3** | Administrativo & Relatórios | - Validação e aprovação de pontos em lote<br>- Lançamento de Vales (Débito) e Bônus com descrição obrigatória (Crédito)<br>- Cadastro de Fornecedores integrado aos lançamentos do financeiro<br>- Emissão de Holerites e Relatórios de evolução física em PDF para o cliente |
 | **Sessão 4** | Boletos & Relógios Inteligentes (v1.1) | - Leitura e cadastro de boletos por prompt, voz e foto (OCR)<br>- Consulta ao widget de vencimentos críticos (Hoje, 1, 3 e 5 dias) no painel<br>- Configuração de atalhos e widgets no Apple/Galaxy Watch via API |
+| **Sessão 5** | Calculadora & Chat de Equipe (v1.2) | - Execução de cálculos de volumes, revestimentos e concretagem<br>- Uso do conversor de unidades de obras<br>- Comunicação direta por DMs e canais de Obras Ativas com alertas sonoros |
 
 ---
 
@@ -79,3 +80,17 @@ Realize os seguintes passos simulados para testar o fluxo de ponta a ponta:
 3.  No seu iPhone, abra o app **Atalhos (Shortcuts)**, crie um atalho com a ação "Obter conteúdo da URL" colando o endereço.
 4.  Extraia e exiba campos como `saldoCaixa` e `tarefasPendentes.total`.
 5.  Execute o atalho e verifique a exibição correta no relógio.
+
+### Exercício 8: Uso da Calculadora de Obra e Conversões
+1.  Na barra lateral ou no cabeçalho do Painel Principal, clique em **Calculadora de Obra**.
+2.  Na aba **Volume de Piscina**, digite: Comprimento `10`, Largura `5`, Profundidade Média `1.5`. Verifique se o sistema calcula corretamente o volume de **75m³ (75.000 Litros)**.
+3.  Mude a aba para **Área de Revestimento** e digite as mesmas dimensões com margem de **10%**. Verifique se a área líquida é de **95.00m²** e a área com margem é de **104.50m²**.
+4.  Na aba **Dosagem de Concreto**, insira o volume de `5m³`. Verifique se a dosagem indica **35 sacos de cimento**, **3m³ de areia** e **4m³ de brita**.
+5.  Na aba **Conversor de Medidas**, insira `5` em metros cúbicos. Confirme que o campo correspondente em Litros atualiza automaticamente para `5000`.
+
+### Exercício 9: Teste de Comunicação Interna (Chat)
+1.  Clique em **Chat Interno** no cabeçalho ou menu lateral.
+2.  Verifique se os canais de grupo correspondentes às suas obras ativas aparecem listados na barra esquerda (ex: `# Obra Vivant Eco Beach`), bem como a lista de outros usuários abaixo.
+3.  Abra uma janela de navegador privada (ou em outro dispositivo), faça o login com outro usuário e acesse a tela do Chat.
+4.  No primeiro navegador, clique no nome do outro usuário para abrir uma conversa privada (DM) e envie uma mensagem (ex: *"Olá, precisamos verificar o cimento de amanhã"*).
+5.  Verifique se o outro navegador recebe a mensagem automaticamente em até 3 segundos e emite um alerta sonoro discreto (beep), e se a mensagem enviada por ele aparece na sua tela com o mesmo comportamento.

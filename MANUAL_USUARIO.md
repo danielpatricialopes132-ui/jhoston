@@ -1,6 +1,6 @@
-# Manual do Usuário — Sistema de Gestão JHOSTON TEC (Versão 1.1)
+# Manual do Usuário — Sistema de Gestão JHOSTON TEC (Versão 1.2)
 
-Este manual orienta a equipe do escritório e de campo na operação do CRM, controle de ponto, diárias, diários de obra, vales, financeiro, gestão de boletos e integração com relógios inteligentes da **JHOSTON TEC Piscinas**.
+Este manual orienta a equipe do escritório e de campo na operação do CRM, controle de ponto, diárias, diários de obra, vales, financeiro, gestão de boletos, calculadora de obra, comunicação interna (chat) e integração com relógios inteligentes da **JHOSTON TEC Piscinas**.
 
 ---
 
@@ -129,3 +129,24 @@ A equipe de administração pode acompanhar os indicadores mais críticos do pai
 *   **API de Sincronização**: O relógio conecta-se à rota de API do sistema: `/api/watch/adm?token=JhostonTecWatchKey2026`.
 *   **Apple Watch (Atalhos/Shortcuts)**: Crie um atalho no iPhone utilizando a ação "Obter conteúdo da URL" apontando para a API do seu sistema, e configure um widget para mostrar as informações lidas na tela do Apple Watch.
 *   **Galaxy Watch**: Utilize aplicativos integrados de Wear OS compatíveis com a leitura de payloads JSON de APIs externas.
+
+---
+
+## 12. Calculadora de Obra & Conversor de Medidas (Disponível para Todos)
+A calculadora de obra ajuda a estimar e converter medidas na execução do projeto:
+1. Acesse o menu lateral **Calculadora de Obra** ou clique no atalho da Home.
+2. Escolha o módulo desejado nas abas superiores:
+   *   **Volume de Piscina**: Calcule o volume em metros cúbicos ($m^3$) e litros ($L$) para formatos retangulares, ovais ou redondos.
+   *   **Área de Revestimento**: Descubra a metragem quadrada necessária de revestimento (pastilhas, cerâmicas ou tintas) para recobrir fundo e paredes, com cálculo de recortes de perda automática (+10% padrão).
+   *   **Dosagem de Concreto**: Insira o volume desejado e obtenha a quantidade de sacos de cimento (50kg), metros cúbicos de areia e metros cúbicos de brita necessários no traço estrutural 1:2:3.
+   *   **Conversor de Medidas**: Realize conversões instantâneas bidirecionais (ex: metros cúbicos para litros, metros para polegadas, $m^2$ para pés quadrados, etc).
+
+---
+
+## 13. Comunicação Interna (Chat - Disponível para Todos)
+Permite a troca de informações rápidas e diretas entre a equipe técnica externa e administrativa:
+1. Acesse o menu lateral **Chat Interno** ou utilize o atalho rápido no topo da Home.
+2. **Canais de Obras (📢)**: Canais compartilhados de grupo de cada uma das Obras Ativas. Toda a equipe que opera no projeto e o escritório podem ler e enviar mensagens.
+3. **Conversas Diretas (👤)**: Mensagens um-a-um privadas. Escolha qualquer usuário listado para enviar uma mensagem exclusiva.
+4. **Alerta Sonoro**: Ao receber novas mensagens na janela de chat ativa que não tenham sido enviadas por você, o sistema emitirá um som discreto (beep).
+5. **Atualização**: O chat é atualizado automaticamente a cada 3 segundos, dispensando a necessidade de atualizar a página manualmente.

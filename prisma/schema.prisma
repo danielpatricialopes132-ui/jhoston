@@ -36,6 +36,7 @@ model Obra {
   viagens               Viagem[]
   transacoesFinanceiras TransacaoFinanceira[]
   diarios               DiarioObra[]
+  mensagensChat         MensagemChat[]
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
 }
@@ -139,6 +140,8 @@ model Usuario {
   statusReset   String          @default("NENHUM") // "NENHUM", "SOLICITADO", "AUTORIZADO"
   pontosCriados RegistroPonto[]
   diariosCriados DiarioObra[]
+  mensagensEnviadas  MensagemChat[]  @relation("Remetente")
+  mensagensRecebidas MensagemChat[]  @relation("Destinatario")
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }
@@ -189,6 +192,18 @@ model Boleto {
   codigoBarras String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model MensagemChat {
+  id             Int      @id @default(autoincrement())
+  conteudo       String
+  remetenteId    Int
+  remetente      Usuario  @relation("Remetente", fields: [remetenteId], references: [id], onDelete: Cascade)
+  destinatarioId Int?
+  destinatario   Usuario? @relation("Destinatario", fields: [destinatarioId], references: [id], onDelete: Cascade)
+  obraId         Int?
+  obra           Obra?    @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
 }
 
 

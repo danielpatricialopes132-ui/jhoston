@@ -175,6 +175,12 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div style={{ display: "inline-flex", gap: "10px" }}>
+          <Link href="/chat" className="btn btn-secondary" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            💬 Chat Interno
+          </Link>
+          <Link href="/calculadora" className="btn btn-secondary" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            📐 Calculadora
+          </Link>
           <Link href="/ponto" className="btn btn-secondary">
             Lançar Ponto
           </Link>
