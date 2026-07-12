@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
+import PopUpCalculator from "@/components/PopUpCalculator";
 
 export default function DashboardLayout({
   children,
@@ -62,6 +63,8 @@ export default function DashboardLayout({
         </header>
         <div className="main-body">{children}</div>
       </main>
+      <PopUpCalculator />
     </div>
   );
 }
+
