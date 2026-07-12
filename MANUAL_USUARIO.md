@@ -141,6 +141,15 @@ A calculadora de obra ajuda a estimar e converter medidas na execução do proje
    *   **Dosagem de Concreto**: Insira o volume desejado e obtenha a quantidade de sacos de cimento (50kg), metros cúbicos de areia e metros cúbicos de brita necessários no traço estrutural 1:2:3.
    *   **Conversor de Medidas**: Realize conversões instantâneas bidirecionais (ex: metros cúbicos para litros, metros para polegadas, $m^2$ para pés quadrados, etc).
 
+### Calculadora Rápida (POP-UP Global)
+Além das calculadoras de obra dedicadas, o sistema conta com uma calculadora flutuante disponível em qualquer página para agilizar os lançamentos nos formulários:
+*   **Ativação Rápida**: Clique no botão flutuante de calculadora no canto inferior direito ou pressione a tecla **F8** em seu teclado.
+*   **Vínculo Inteligente de Campo**: A calculadora rastreia automaticamente o último campo de entrada de dados numéricos que você focou antes de abri-la. O nome do campo aparecerá em destaque no cabeçalho da calculadora (ex: *🎯 Enviar para: Diária Padrão*).
+*   **Transferência Automática (Ctrl + Enter)**: Ao finalizar um cálculo, clique em **📥 Inserir no Campo** ou simplesmente pressione **Ctrl + Enter** no seu teclado. O valor calculado será preenchido diretamente no campo de texto focado, atualizando o estado do formulário e dando um sinal visual verde de sucesso no campo.
+*   **Arrastável**: Se a janela da calculadora estiver cobrindo alguma informação importante, clique no topo dela e arraste-a para qualquer canto da tela.
+*   **Memória e Histórico**: Suporta operações clássicas de memória (`MC`, `MR`, `M+`, `M-`) e mantém um histórico dos últimos 10 cálculos realizados na sessão (basta clicar em uma linha do histórico para carregar aquele valor de volta para a tela).
+
+
 ---
 
 ## 13. Comunicação Interna (Chat - Disponível para Todos)
