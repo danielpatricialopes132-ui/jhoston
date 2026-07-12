@@ -15,6 +15,8 @@ interface Oportunidade {
   valorProposta: number;
   status: string; // PENDENTE, PROPOSTA_GERADA, PROPOSTA_ENVIADA, ACEITO, RECUSADO
   observacoes: string | null;
+  precoUnitario?: number | null;
+  precoAditivo?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +41,18 @@ export default function CRMPage() {
   const [status, setStatus] = useState("PENDENTE");
   const [observacoes, setObservacoes] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [precoUnitario, setPrecoUnitario] = useState<number>(270);
+  const [precoAditivo, setPrecoAditivo] = useState<number>(25);
+
+  const handleProdutoChange = (newProd: "PREMIUM" | "SUPER_PREMIUM") => {
+    setProduto(newProd);
+    // Se o valor estiver no padrão anterior, atualiza para o novo padrão correspondente
+    if (newProd === "SUPER_PREMIUM" && precoUnitario === 270) {
+      setPrecoUnitario(350);
+    } else if (newProd === "PREMIUM" && precoUnitario === 350) {
+      setPrecoUnitario(270);
+    }
+  };
 
   // Convert form states
   const [nomeObra, setNomeObra] = useState("");
@@ -64,6 +78,8 @@ export default function CRMPage() {
     setAreaPiscina(0);
     setStatus("PENDENTE");
     setObservacoes("");
+    setPrecoUnitario(270);
+    setPrecoAditivo(25);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -79,6 +95,8 @@ export default function CRMPage() {
     setAreaPiscina(op.areaPiscina);
     setStatus(op.status);
     setObservacoes(op.observacoes || "");
+    setPrecoUnitario(op.precoUnitario ?? (op.produto === "SUPER_PREMIUM" ? 350 : 270));
+    setPrecoAditivo(op.precoAditivo ?? 25);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -121,6 +139,8 @@ export default function CRMPage() {
       areaPiscina,
       status,
       observacoes,
+      precoUnitario,
+      precoAditivo,
     };
 
     startTransition(async () => {
@@ -209,9 +229,8 @@ export default function CRMPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // Cálculo ao vivo no formulário
-  const livePriceM2 = produto === "SUPER_PREMIUM" ? 375 : 295;
-  const liveValorCalculado = areaPiscina * livePriceM2;
+  // Calculation based on custom unit price + aditive price
+  const liveValorCalculado = areaPiscina * (precoUnitario + precoAditivo);
 
   return (
     <div>
@@ -321,7 +340,12 @@ export default function CRMPage() {
               {filteredOportunidades.map((op) => (
                 <tr key={op.id}>
                   <td>
-                    <div style={{ fontWeight: 600, color: "var(--text-heading)" }}>{op.clienteNome}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", backgroundColor: "rgba(0,0,0,0.05)", color: "var(--text-muted)" }} title="Indexador/ID da Proposta">
+                        PROP-{op.id}
+                      </span>
+                      <div style={{ fontWeight: 600, color: "var(--text-heading)" }}>{op.clienteNome}</div>
+                    </div>
                     <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
                       {op.telefone ? `📞 ${op.telefone}` : ""} {op.email ? ` | ✉ ${op.email}` : ""}
                     </div>
@@ -472,7 +496,7 @@ export default function CRMPage() {
                     <select
                       className="form-control"
                       value={produto}
-                      onChange={(e) => setProduto(e.target.value as any)}
+                      onChange={(e) => handleProdutoChange(e.target.value as any)}
                     >
                       <option value="PREMIUM">Premium (Resina PU)</option>
                       <option value="SUPER_PREMIUM">Super Premium (Poliaspártica)</option>
@@ -488,6 +512,29 @@ export default function CRMPage() {
                       value={areaPiscina || ""}
                       onChange={(e) => setAreaPiscina(parseFloat(e.target.value) || 0)}
                       required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid-cols-2" style={{ gap: "12px", marginBottom: "12px" }}>
+                  <div className="form-group">
+                    <label className="form-label">Valor Unitário do Produto (R$/m²)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="form-control"
+                      value={precoUnitario || ""}
+                      onChange={(e) => setPrecoUnitario(parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Valor Unitário do Aditivo (R$/m²)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="form-control"
+                      value={precoAditivo || ""}
+                      onChange={(e) => setPrecoAditivo(parseFloat(e.target.value) || 0)}
                     />
                   </div>
                   <div className="form-group">
@@ -522,7 +569,11 @@ export default function CRMPage() {
                   <div>
                     <span style={{ fontSize: "11px", color: "var(--text-muted)", display: "block" }}>Cálculo Comercial Estimado:</span>
                     <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-heading)" }}>
-                      {areaPiscina} m² &times; {formatCurrency(livePriceM2)}/m²
+                      {areaPiscina} m² &times; {formatCurrency(precoUnitario + precoAditivo)}/m²
+                      <br />
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                        ({formatCurrency(precoUnitario)} produto + {formatCurrency(precoAditivo)} aditivo)
+                      </span>
                     </span>
                   </div>
                   <div style={{ textAlign: "right" }}>

@@ -41,6 +41,8 @@ export async function salvarOportunidade(data: {
   areaPiscina: number;
   status: string;
   observacoes?: string;
+  precoUnitario?: number;
+  precoAditivo?: number;
 }) {
   await requireAdmin();
 
@@ -56,14 +58,17 @@ export async function salvarOportunidade(data: {
     return { success: false, error: "A área da piscina não pode ser menor que zero." };
   }
 
+  // Preços unitários padrão se não informados customizados
+  const unitPrice = data.precoUnitario !== undefined && data.precoUnitario !== null 
+    ? data.precoUnitario 
+    : (data.produto === "SUPER_PREMIUM" ? 350.0 : 270.0);
+  
+  const aditivoPrice = data.precoAditivo !== undefined && data.precoAditivo !== null
+    ? data.precoAditivo
+    : 25.0;
+
   // Cálculo automático do valor final da proposta comercial:
-  // Premium: R$ 270,00/m² + R$ 25,00/m² (aditivo) = R$ 295,00/m²
-  // Super Premium: R$ 350,00/m² + R$ 25,00/m² (aditivo) = R$ 375,00/m²
-  let precoM2 = 295;
-  if (data.produto === "SUPER_PREMIUM") {
-    precoM2 = 375;
-  }
-  const valorProposta = data.areaPiscina * precoM2;
+  const valorProposta = data.areaPiscina * (unitPrice + aditivoPrice);
 
   const payload = {
     clienteNome: data.clienteNome.trim(),
@@ -76,6 +81,8 @@ export async function salvarOportunidade(data: {
     valorProposta: valorProposta,
     status: data.status,
     observacoes: data.observacoes?.trim() || null,
+    precoUnitario: unitPrice,
+    precoAditivo: aditivoPrice,
   };
 
   try {

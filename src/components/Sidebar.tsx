@@ -95,7 +95,7 @@ export default function Sidebar() {
     { name: "Controle de Vales", path: "/vales", icon: icons.vales, adminOnly: true, masterOnly: false },
     { name: "Contas a Pagar/Rec", path: "/financeiro", icon: icons.financeiro, adminOnly: true, masterOnly: false },
     { name: "Cad. Fornecedores", path: "/fornecedores", icon: icons.fornecedores, adminOnly: true, masterOnly: false },
-    { name: "Calculadora de Obra", path: "/calculadora", icon: icons.calculadora, adminOnly: false, masterOnly: false },
+    { name: "Calculadoras", path: "/calculadora", icon: icons.calculadora, adminOnly: false, masterOnly: false },
     { name: "Chat Interno", path: "/chat", icon: icons.chat, adminOnly: false, masterOnly: false },
     { name: "Relatórios", path: "/relatorios", icon: icons.relatorios, adminOnly: true, masterOnly: false },
     { name: "Ajuda (Manual)", path: "/ajuda", icon: icons.ajuda, adminOnly: false, masterOnly: false },

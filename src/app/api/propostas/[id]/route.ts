@@ -52,10 +52,17 @@ export async function GET(
       linebreaks: true,
     });
 
-    // Cálculos de Proposta
-    const precoUnitario = oportunidade.produto === "SUPER_PREMIUM" ? 350.0 : 270.0;
+    // Cálculos de Proposta com valores customizados (com fallbacks para retrocompatibilidade)
+    const precoUnitario = oportunidade.precoUnitario !== null && oportunidade.precoUnitario !== undefined
+      ? oportunidade.precoUnitario
+      : (oportunidade.produto === "SUPER_PREMIUM" ? 350.0 : 270.0);
+    
+    const precoAditivo = oportunidade.precoAditivo !== null && oportunidade.precoAditivo !== undefined
+      ? oportunidade.precoAditivo
+      : 25.0;
+
     const valorProduto = oportunidade.areaPiscina * precoUnitario;
-    const valorAditivo = oportunidade.areaPiscina * 25.0;
+    const valorAditivo = oportunidade.areaPiscina * precoAditivo;
     const valorTotal = valorProduto + valorAditivo;
 
     // Formatadores BR
@@ -77,6 +84,8 @@ export async function GET(
     };
 
     doc.setData({
+      id: oportunidade.id,
+      propostaId: oportunidade.id,
       clienteNome: oportunidade.clienteNome,
       clienteEndereco: oportunidade.endereco || "Não Informado",
       areaPiscina: formatNumberBR(oportunidade.areaPiscina),
@@ -101,8 +110,7 @@ export async function GET(
       .replace(/[^a-zA-Z0-9\s]/g, "") // remove caracteres especiais
       .replace(/\s+/g, "_"); // substitui espaços por underscores
 
-    const docxName = oportunidade.produto === "SUPER_PREMIUM" ? "Super_Premium" : "Premium";
-    const filename = `Proposta_${docxName}_${safeClientName}.docx`;
+    const filename = `PROP-${oportunidade.id}_${safeClientName}.docx`;
 
     return new NextResponse(buffer as any, {
       status: 200,

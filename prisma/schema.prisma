@@ -179,6 +179,8 @@ model Oportunidade {
   valorProposta    Float    @default(0)
   status           String   @default("PENDENTE") // "PENDENTE", "PROPOSTA_GERADA", "PROPOSTA_ENVIADA", "ACEITO", "RECUSADO"
   observacoes      String?
+  precoUnitario    Float?
+  precoAditivo     Float?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
