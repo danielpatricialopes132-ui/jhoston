@@ -70,9 +70,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - manifest.json (manifest file)
      * - logo.png (logo file)
      * - logo.svg (logo file)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|logo.png|logo.svg).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|logo.png|logo.svg).*)",
   ],
 };
