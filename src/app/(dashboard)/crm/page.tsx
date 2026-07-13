@@ -2,6 +2,7 @@
 
 import { useEffect, useState, startTransition } from "react";
 import { getOportunidadesList, salvarOportunidade, deleteOportunidade, converterParaObra } from "./actions";
+import Link from "next/link";
 
 interface Oportunidade {
   id: number;
@@ -378,15 +379,15 @@ export default function CRMPage() {
                   <td>
                     <div className="flex-gap-12" style={{ justifyContent: "center", flexWrap: "wrap" }}>
                       {/* Gerar Proposta */}
-                      <a
-                        href={`/api/propostas/${op.id}`}
+                      <Link
+                        href={`/crm/propostas/${op.id}`}
                         className="btn btn-sm btn-secondary"
                         style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
-                        title="Download da Proposta Word"
+                        title="Visualizar Proposta (Preview e PDF)"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M10 9h2"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                         Proposta
-                      </a>
+                      </Link>
 
                       {/* Converter em Obra */}
                       {op.status !== "ACEITO" ? (

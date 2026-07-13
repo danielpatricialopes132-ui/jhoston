@@ -185,3 +185,10 @@ export async function converterParaObra(id: number, nomeObra: string, valorFecha
     return { success: false, error: "Erro ao converter a oportunidade em cliente ativo/obra." };
   }
 }
+
+export async function getOportunidade(id: number) {
+  await requireAdmin();
+  return await prisma.oportunidade.findUnique({
+    where: { id },
+  });
+}
