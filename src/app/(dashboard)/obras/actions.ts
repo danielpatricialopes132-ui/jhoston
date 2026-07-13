@@ -239,3 +239,138 @@ export async function getAutorizacaoCompra(id: number) {
     },
   });
 }
+
+export async function analisarContratoComIA(base64Data: string) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return {
+      success: false,
+      error: "A chave de API do Gemini (GEMINI_API_KEY) não foi encontrada nas variáveis de ambiente (.env). Por favor, adicione-a para habilitar esta funcionalidade.",
+    };
+  }
+
+  const prompt = "Você é um assistente especialista em analisar contratos de prestação de serviços e construção civil da Jhoston Tec. Analise o documento em PDF anexo e extraia as seguintes informações no formato JSON estrito, sem formatação markdown ou blocos de código (não use ```json ... ```, apenas retorne o texto puro em JSON): { \"obraNome\": \"Nome resumido da obra/projeto\", \"endereco\": \"Endereço da obra ou local da construção\", \"valorFechado\": valor final do contrato como número decimal, \"clientes\": [ { \"nome\": \"Nome completo ou Razão Social\", \"tipo\": \"PF\" ou \"PJ\", \"cpfCnpj\": \"CPF ou CNPJ formatado se disponível\", \"rg\": \"RG se disponível (para PF)\", \"ie\": \"Inscrição Estadual se disponível (para PJ)\", \"contato\": \"Nome do representante/procurador legal (para PJ)\", \"telefone\": \"Telefone de contato se disponível\", \"email\": \"E-mail se disponível\", \"endereco\": \"Endereço completo do cliente se disponível\" } ], \"formaPagamento\": \"Resumo da forma de pagamento, parcelas, prazos, etc\" }";
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: "application/pdf",
+                    data: base64Data,
+                  },
+                },
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            responseMimeType: "application/json",
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Erro da API do Gemini:", errorText);
+      return { success: false, error: "Falha na chamada da API do Gemini. Verifique a chave de API ou tente novamente." };
+    }
+
+    const resJson = await response.json();
+    const textContent = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!textContent) {
+      return { success: false, error: "O Gemini não retornou nenhuma resposta válida." };
+    }
+
+    try {
+      const extractedData = JSON.parse(textContent.trim());
+      return { success: true, data: extractedData };
+    } catch (parseError) {
+      console.error("Erro ao parsear JSON do Gemini:", textContent, parseError);
+      return { success: false, error: "A resposta da inteligência artificial não veio no formato JSON esperado. Tente novamente." };
+    }
+  } catch (error) {
+    console.error("Erro na análise do contrato:", error);
+    return { success: false, error: "Erro interno ao processar a requisição com a IA." };
+  }
+}
+
+export async function importarObraComContrato(data: {
+  nome: string;
+  endereco: string;
+  valorFechado: number;
+  clientes: Array<{
+    tipo: string;
+    nome: string;
+    cpfCnpj?: string;
+    rg?: string;
+    ie?: string;
+    contato?: string;
+    telefone?: string;
+    email?: string;
+    endereco?: string;
+  }>;
+}) {
+  try {
+    const clientIds: number[] = [];
+
+    for (const c of data.clientes) {
+      if (!c.nome.trim()) continue;
+
+      // Busca se cliente já existe por nome (case-insensitive) ou CPF/CNPJ
+      let existingClient = await prisma.cliente.findFirst({
+        where: {
+          OR: [
+            { nome: { equals: c.nome.trim(), mode: "insensitive" } },
+            c.cpfCnpj ? { cpfCnpj: c.cpfCnpj.trim() } : undefined
+          ].filter(Boolean) as any
+        }
+      });
+
+      if (!existingClient) {
+        existingClient = await prisma.cliente.create({
+          data: {
+            tipo: c.tipo || "PF",
+            nome: c.nome.trim(),
+            cpfCnpj: c.cpfCnpj?.trim() || null,
+            rg: c.rg?.trim() || null,
+            ie: c.ie?.trim() || null,
+            contato: c.contato?.trim() || null,
+            telefone: c.telefone?.trim() || null,
+            email: c.email?.trim() || null,
+            endereco: c.endereco?.trim() || null,
+          }
+        });
+      }
+
+      clientIds.push(existingClient.id);
+    }
+
+    const res = await createObra({
+      nome: data.nome,
+      clientIds,
+      valorFechado: data.valorFechado,
+      endereco: data.endereco,
+      status: "ATIVA",
+    });
+
+    return res;
+  } catch (error) {
+    console.error("Erro ao importar obra com contrato:", error);
+    return { success: false, error: "Erro ao cadastrar obra e novos clientes." };
+  }
+}
+

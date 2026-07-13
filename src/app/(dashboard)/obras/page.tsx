@@ -11,6 +11,8 @@ import {
   getAutorizacoesCompra,
   createAutorizacaoCompra,
   deleteAutorizacaoCompra,
+  analisarContratoComIA,
+  importarObraComContrato,
 } from "./actions";
 import { getClientesList } from "../clientes/actions";
 import { getFornecedoresList } from "../fornecedores/actions";
@@ -91,6 +93,30 @@ export default function ObrasPage() {
   const [authError, setAuthError] = useState("");
   const [authSubmitting, setAuthSubmitting] = useState(false);
 
+  // IA Contract Reader states
+  const [isIAImportModalOpen, setIsIAImportModalOpen] = useState(false);
+  const [iaFileBase64, setIaFileBase64] = useState<string | null>(null);
+  const [iaFileName, setIaFileName] = useState("");
+  const [iaError, setIaError] = useState("");
+  const [iaSubmitting, setIaSubmitting] = useState(false);
+  const [iaResult, setIaResult] = useState<{
+    obraNome: string;
+    endereco: string;
+    valorFechado: number;
+    clientes: Array<{
+      tipo: "PF" | "PJ";
+      nome: string;
+      cpfCnpj?: string;
+      rg?: string;
+      ie?: string;
+      contato?: string;
+      telefone?: string;
+      email?: string;
+      endereco?: string;
+    }>;
+    formaPagamento: string;
+  } | null>(null);
+
   // Form states
   const [nome, setNome] = useState("");
   const [selectedClienteIds, setSelectedClienteIds] = useState<number[]>([]);
@@ -100,6 +126,9 @@ export default function ObrasPage() {
   const [status, setStatus] = useState("ATIVA");
   const [errorMsg, setErrorMsg] = useState("");
   const [clientSearchTerm, setClientSearchTerm] = useState("");
+
+  // Extracted clients from IA that will be created on save
+  const [extractedClients, setExtractedClients] = useState<any[]>([]);
 
   const refreshObras = () => {
     getObras().then((data) => setObras(data as any));
@@ -122,6 +151,7 @@ export default function ObrasPage() {
     setStatus("ATIVA");
     setErrorMsg("");
     setClientSearchTerm("");
+    setExtractedClients([]);
     setIsModalOpen(true);
   };
 
@@ -136,6 +166,7 @@ export default function ObrasPage() {
     setStatus(obra.status);
     setErrorMsg("");
     setClientSearchTerm("");
+    setExtractedClients([]);
     setIsModalOpen(true);
   };
 
@@ -173,6 +204,18 @@ export default function ObrasPage() {
     setIsAuthModalOpen(false);
     setActiveObraForAuth(null);
     setAutorizacoes([]);
+  };
+
+  const openIAImportModal = () => {
+    setIaFileBase64(null);
+    setIaFileName("");
+    setIaError("");
+    setIaResult(null);
+    setIsIAImportModalOpen(true);
+  };
+
+  const closeIAImportModal = () => {
+    setIsIAImportModalOpen(false);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -302,39 +345,134 @@ export default function ObrasPage() {
     }
   };
 
+  // IA Contract Upload Change
+  const handleIAFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIaError("");
+    setIaResult(null);
+
+    if (file.type !== "application/pdf") {
+      setIaError("Apenas arquivos PDF são suportados para leitura com IA.");
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      setIaError("Arquivo muito grande. O limite máximo é 8MB.");
+      return;
+    }
+
+    setIaFileName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Str = event.target?.result as string;
+      // Captura apenas a parte limpa do base64 (sem o cabeçalho data:...)
+      const rawBase64 = base64Str.split(",")[1];
+      setIaFileBase64(rawBase64);
+    };
+    reader.onerror = () => {
+      setIaError("Erro ao carregar o arquivo.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Process Contract PDF with Gemini
+  const handleIAProcess = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!iaFileBase64) {
+      setIaError("Por favor, selecione um arquivo de contrato em PDF.");
+      return;
+    }
+
+    setIaSubmitting(true);
+    setIaError("");
+
+    startTransition(async () => {
+      const res = await analisarContratoComIA(iaFileBase64);
+      setIaSubmitting(false);
+      if (res.success && res.data) {
+        setIaResult(res.data);
+      } else {
+        setIaError(res.error || "Erro desconhecido ao processar contrato.");
+      }
+    });
+  };
+
+  // Fill "Nova Obra" form using the IA results
+  const handleFillFromIA = () => {
+    if (!iaResult) return;
+
+    setNome(iaResult.obraNome || "");
+    setEndereco(iaResult.endereco || "");
+    setValorFechado(iaResult.valorFechado ? iaResult.valorFechado.toString() : "");
+    setStatus("ATIVA");
+    setErrorMsg("");
+
+    // Armazena os clientes extraídos para que sejam criados ao salvar
+    setExtractedClients(iaResult.clientes || []);
+    setSelectedClienteIds([]); // Limpa as seleções normais já que usaremos os da IA
+    setProcuradorId("");
+
+    // Fecha o modal da IA e abre o de cadastro
+    setIsIAImportModalOpen(false);
+    setEditingObra(null);
+    setIsModalOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nome.trim()) {
       setErrorMsg("Nome da obra é obrigatório.");
       return;
     }
-    if (selectedClienteIds.length === 0) {
+    
+    // Se não há clientes extraídos da IA, exige selecionar pelo menos um existente
+    if (extractedClients.length === 0 && selectedClienteIds.length === 0) {
       setErrorMsg("Selecione pelo menos um cliente para a obra.");
       return;
     }
 
-    const payload = {
-      nome,
-      clientIds: selectedClienteIds,
-      procuradorId: procuradorId ? parseInt(procuradorId, 10) : undefined,
-      valorFechado: parseFloat(valorFechado) || 0,
-      endereco,
-      status,
-    };
-
     startTransition(async () => {
       let res;
       if (editingObra) {
+        const payload = {
+          nome,
+          clientIds: selectedClienteIds,
+          procuradorId: procuradorId ? parseInt(procuradorId, 10) : undefined,
+          valorFechado: parseFloat(valorFechado) || 0,
+          endereco,
+          status,
+        };
         res = await updateObra(editingObra.id, payload);
       } else {
-        res = await createObra(payload);
+        // Se veio de importação por IA, usa a action especializada
+        if (extractedClients.length > 0) {
+          res = await importarObraComContrato({
+            nome,
+            endereco,
+            valorFechado: parseFloat(valorFechado) || 0,
+            clientes: extractedClients,
+          });
+        } else {
+          const payload = {
+            nome,
+            clientIds: selectedClienteIds,
+            procuradorId: procuradorId ? parseInt(procuradorId, 10) : undefined,
+            valorFechado: parseFloat(valorFechado) || 0,
+            endereco,
+            status,
+          };
+          res = await createObra(payload);
+        }
       }
 
       if (res.success) {
         refreshObras();
         closeModal();
       } else {
-        setErrorMsg("Erro ao salvar os dados.");
+        setErrorMsg((res as any).error || "Erro ao salvar os dados.");
       }
     });
   };
@@ -368,7 +506,6 @@ export default function ObrasPage() {
     }).format(val);
   };
 
-  // Filtrar apenas clientes PF para serem elegíveis como procuradores
   const clientesPF = allClientes.filter((c) => c.tipo === "PF");
 
   return (
@@ -382,10 +519,15 @@ export default function ObrasPage() {
             Gerencie os projetos de piscinas ativas, concluídas e suas documentações/autorizações.
           </p>
         </div>
-        <button className="btn btn-primary" onClick={openNewModal}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
-          Nova Obra
-        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button className="btn btn-secondary" onClick={openIAImportModal} style={{ borderColor: "var(--primary)", color: "var(--primary)", gap: "8px", display: "flex", alignItems: "center" }}>
+            ✨ Importar Contrato (IA)
+          </button>
+          <button className="btn btn-primary" onClick={openNewModal}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+            Nova Obra
+          </button>
+        </div>
       </div>
 
       {/* Barra de Filtros */}
@@ -459,7 +601,6 @@ export default function ObrasPage() {
                     )}
                   </td>
                   <td>
-                    {/* Clientes */}
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "4px" }}>
                       {obra.clientes && obra.clientes.length > 0 ? (
                         obra.clientes.map((c) => (
@@ -481,7 +622,6 @@ export default function ObrasPage() {
                         <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{obra.clienteNome}</span>
                       )}
                     </div>
-                    {/* Procurador */}
                     {obra.procurador && (
                       <div style={{ fontSize: "11px", color: "#e11d48", fontWeight: 500 }}>
                         👤 <strong>Procurador:</strong> {obra.procurador.nome}
@@ -577,6 +717,39 @@ export default function ObrasPage() {
                     {errorMsg}
                   </div>
                 )}
+
+                {/* Exibição de Proprietários extraídos pela IA, se houver */}
+                {extractedClients.length > 0 && (
+                  <div
+                    style={{
+                      backgroundColor: "rgba(13, 148, 136, 0.04)",
+                      border: "1px dashed var(--border-color)",
+                      padding: "12px",
+                      borderRadius: "var(--radius-md)",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    <strong style={{ fontSize: "13px", color: "var(--secondary)" }}>
+                      ✨ Proprietários Extraídos pelo Gemini (Serão criados e vinculados):
+                    </strong>
+                    <ul style={{ margin: "6px 0 0 16px", padding: 0, fontSize: "13px" }}>
+                      {extractedClients.map((c, idx) => (
+                        <li key={idx} style={{ color: "var(--text-heading)", marginBottom: "2px" }}>
+                          {c.nome} ({c.tipo === "PJ" ? `CNPJ: ${c.cpfCnpj || "não inf."}` : `CPF: ${c.cpfCnpj || "não inf."}`})
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      style={{ marginTop: "8px", padding: "4px 8px", fontSize: "11px" }}
+                      onClick={() => setExtractedClients([])}
+                    >
+                      Limpar Extraídos e Escolher da Lista Manual
+                    </button>
+                  </div>
+                )}
+
                 <div className="form-group">
                   <label className="form-label">Nome da Obra *</label>
                   <input
@@ -589,67 +762,70 @@ export default function ObrasPage() {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Clientes Proprietários (Selecione um ou mais) *</label>
-                  <input
-                    type="text"
-                    className="form-control form-control-sm"
-                    placeholder="🔍 Filtrar clientes..."
-                    value={clientSearchTerm}
-                    onChange={(e) => setClientSearchTerm(e.target.value)}
-                    style={{ marginBottom: "8px" }}
-                  />
-                  <div
-                    style={{
-                      maxHeight: "120px",
-                      overflowY: "auto",
-                      border: "1px solid var(--border-color)",
-                      padding: "8px",
-                      borderRadius: "var(--radius-md)",
-                      backgroundColor: "var(--bg-card)",
-                    }}
-                  >
-                    {allClientes.filter((c) =>
-                      c.nome.toLowerCase().includes(clientSearchTerm.toLowerCase())
-                    ).length === 0 ? (
-                      <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "4px 0" }}>
-                        Nenhum cliente encontrado.
-                      </div>
-                    ) : (
-                      allClientes
-                        .filter((c) =>
-                          c.nome.toLowerCase().includes(clientSearchTerm.toLowerCase())
-                        )
-                        .map((c) => (
-                          <label
-                            key={c.id}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              margin: "6px 0",
-                              fontSize: "14px",
-                              cursor: "pointer",
-                              color: "var(--text-heading)",
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedClienteIds.includes(c.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedClienteIds([...selectedClienteIds, c.id]);
-                                } else {
-                                  setSelectedClienteIds(selectedClienteIds.filter((id) => id !== c.id));
-                                }
+                {/* Se NÃO há proprietários extraídos da IA, exibe o seletor padrão */}
+                {extractedClients.length === 0 && (
+                  <div className="form-group">
+                    <label className="form-label">Clientes Proprietários (Selecione um ou mais) *</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      placeholder="🔍 Filtrar clientes..."
+                      value={clientSearchTerm}
+                      onChange={(e) => setClientSearchTerm(e.target.value)}
+                      style={{ marginBottom: "8px" }}
+                    />
+                    <div
+                      style={{
+                        maxHeight: "120px",
+                        overflowY: "auto",
+                        border: "1px solid var(--border-color)",
+                        padding: "8px",
+                        borderRadius: "var(--radius-md)",
+                        backgroundColor: "var(--bg-card)",
+                      }}
+                    >
+                      {allClientes.filter((c) =>
+                        c.nome.toLowerCase().includes(clientSearchTerm.toLowerCase())
+                      ).length === 0 ? (
+                        <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "4px 0" }}>
+                          Nenhum cliente encontrado.
+                        </div>
+                      ) : (
+                        allClientes
+                          .filter((c) =>
+                            c.nome.toLowerCase().includes(clientSearchTerm.toLowerCase())
+                          )
+                          .map((c) => (
+                            <label
+                              key={c.id}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                margin: "6px 0",
+                                fontSize: "14px",
+                                cursor: "pointer",
+                                color: "var(--text-heading)",
                               }}
-                            />
-                            {c.nome} {c.tipo === "PJ" ? <strong style={{ color: "var(--secondary)", fontSize: "11px" }}>(PJ)</strong> : <span style={{ color: "var(--success)", fontSize: "11px" }}>(PF)</span>}
-                          </label>
-                        ))
-                    )}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedClienteIds.includes(c.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedClienteIds([...selectedClienteIds, c.id]);
+                                  } else {
+                                    setSelectedClienteIds(selectedClienteIds.filter((id) => id !== c.id));
+                                  }
+                                }}
+                              />
+                              {c.nome} {c.tipo === "PJ" ? <strong style={{ color: "var(--secondary)", fontSize: "11px" }}>(PJ)</strong> : <span style={{ color: "var(--success)", fontSize: "11px" }}>(PF)</span>}
+                            </label>
+                          ))
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                   <div className="form-group">
@@ -713,7 +889,7 @@ export default function ObrasPage() {
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Salvar
+                  Salvar Obra
                 </button>
               </div>
             </form>
@@ -987,6 +1163,138 @@ export default function ObrasPage() {
 
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" onClick={closeAuthModal}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Importação com IA */}
+      {isIAImportModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "600px", width: "95%" }}>
+            <div className="modal-header">
+              <h4 style={{ fontSize: "18px", fontWeight: 600 }}>
+                ✨ Importar Contrato por Inteligência Artificial (Gemini)
+              </h4>
+              <button
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "var(--text-heading)" }}
+                onClick={closeIAImportModal}
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              {iaError && (
+                <div
+                  style={{
+                    backgroundColor: "var(--error-bg)",
+                    color: "var(--error)",
+                    padding: "12px",
+                    borderRadius: "var(--radius-md)",
+                    marginBottom: "16px",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                  }}
+                >
+                  {iaError}
+                </div>
+              )}
+
+              {!iaResult ? (
+                <form onSubmit={handleIAProcess}>
+                  <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "16px" }}>
+                    Carregue o contrato da obra em formato **PDF**. Nossa inteligência artificial irá extrair automaticamente o nome da obra, endereço, valor fechado, forma de pagamento e todos os proprietários envolvidos.
+                  </p>
+                  
+                  <div className="form-group" style={{ marginBottom: "20px" }}>
+                    <label className="form-label">Selecionar Contrato (PDF) *</label>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      className="form-control"
+                      onChange={handleIAFileChange}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={iaSubmitting || !iaFileBase64}
+                    style={{ width: "100%", justifyContent: "center", padding: "12px" }}
+                  >
+                    {iaSubmitting ? "Lendo contrato e analisando com IA..." : "Iniciar Análise do Contrato"}
+                  </button>
+                </form>
+              ) : (
+                <div>
+                  <div style={{ backgroundColor: "rgba(16, 185, 129, 0.05)", border: "1px solid #a7f3d0", padding: "14px", borderRadius: "var(--radius-md)", marginBottom: "16px" }}>
+                    <strong style={{ color: "#065f46", display: "block", fontSize: "14px" }}>
+                      ✓ Análise Concluída com Sucesso!
+                    </strong>
+                    <span style={{ fontSize: "12px", color: "#047857" }}>
+                      Extraímos as seguintes informações do contrato. Revise-as abaixo.
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "var(--bg-app)", padding: "16px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)" }}>
+                    <div>
+                      <strong style={{ fontSize: "12px", color: "var(--text-muted)", display: "block" }}>OBRA</strong>
+                      <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>{iaResult.obraNome}</span>
+                    </div>
+
+                    <div>
+                      <strong style={{ fontSize: "12px", color: "var(--text-muted)", display: "block" }}>ENDEREÇO DA OBRA</strong>
+                      <span style={{ fontSize: "13px", color: "var(--text-heading)" }}>{iaResult.endereco || "Não especificado"}</span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                      <div>
+                        <strong style={{ fontSize: "12px", color: "var(--text-muted)", display: "block" }}>VALOR FECHADO</strong>
+                        <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--primary)" }}>{formatCurrency(iaResult.valorFechado)}</span>
+                      </div>
+                      <div>
+                        <strong style={{ fontSize: "12px", color: "var(--text-muted)", display: "block" }}>PAGAMENTO</strong>
+                        <span style={{ fontSize: "13px", color: "var(--text-heading)", textOverflow: "ellipsis", overflow: "hidden", display: "block", whiteSpace: "nowrap" }} title={iaResult.formaPagamento}>
+                          {iaResult.formaPagamento || "Não especificado"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <strong style={{ fontSize: "12px", color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>PROPRIETÁRIOS DETECTADOS ({iaResult.clientes?.length || 0})</strong>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        {iaResult.clientes && iaResult.clientes.map((c, i) => (
+                          <div key={i} style={{ fontSize: "12px", padding: "6px 10px", backgroundColor: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "4px" }}>
+                            <strong>{c.nome}</strong> ({c.tipo})
+                            {c.cpfCnpj && <span style={{ marginLeft: "8px", color: "var(--text-muted)" }}>Doc: {c.cpfCnpj}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "12px", fontStyle: "italic" }}>
+                    * Ao clicar em "Preencher Cadastro", abriremos a tela padrão para você validar, ajustar qualquer informação e salvar a Obra.
+                  </p>
+
+                  <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
+                    <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setIaResult(null)}>
+                      Analisar Outro Contrato
+                    </button>
+                    <button type="button" className="btn btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={handleFillFromIA}>
+                      Preencher Cadastro
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={closeIAImportModal}>
                 Fechar
               </button>
             </div>
