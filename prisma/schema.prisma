@@ -29,6 +29,7 @@ model Obra {
   status                String                @default("ATIVA") // "ATIVA", "FINALIZADA", "SUSPENSA"
   valorFechado          Float                 @default(0)
   clientes              Cliente[]             @relation("ObraClientes")
+  documentos            DocumentoObra[]
   progressoEscavacao    Int                   @default(0)
   progressoEstrutura    Int                   @default(0)
   progressoHidraulica   Int                   @default(0)
@@ -50,6 +51,7 @@ model Cliente {
   telefone  String?
   email     String?
   obras     Obra[]   @relation("ObraClientes")
+  documentos DocumentoCliente[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -219,6 +221,28 @@ model MensagemChat {
   obraId         Int?
   obra           Obra?    @relation(fields: [obraId], references: [id], onDelete: Cascade)
   createdAt      DateTime @default(now())
+}
+
+model DocumentoObra {
+  id           Int      @id @default(autoincrement())
+  obraId       Int
+  obra         Obra     @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  nome         String
+  fileName     String
+  base64Data   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model DocumentoCliente {
+  id           Int      @id @default(autoincrement())
+  clienteId    Int
+  cliente      Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  nome         String
+  fileName     String
+  base64Data   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 

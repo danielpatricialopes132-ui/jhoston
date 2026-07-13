@@ -1,12 +1,27 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
-import { getObras, createObra, updateObra, deleteObra } from "./actions";
+import {
+  getObras,
+  createObra,
+  updateObra,
+  deleteObra,
+  addDocumentoObra,
+  deleteDocumentoObra,
+} from "./actions";
 import { getClientesList } from "../clientes/actions";
 
 interface Cliente {
   id: number;
   nome: string;
+}
+
+interface Documento {
+  id: number;
+  nome: string;
+  fileName: string;
+  base64Data: string;
+  createdAt: Date;
 }
 
 interface Obra {
@@ -17,6 +32,7 @@ interface Obra {
   status: string;
   valorFechado: number;
   clientes: Cliente[];
+  documentos: Documento[];
 }
 
 export default function ObrasPage() {
@@ -26,6 +42,14 @@ export default function ObrasPage() {
   const [statusFilter, setStatusFilter] = useState("TODAS");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingObra, setEditingObra] = useState<Obra | null>(null);
+
+  // Document management states
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [activeObra, setActiveObra] = useState<Obra | null>(null);
+  const [docNome, setDocNome] = useState("");
+  const [docFile, setDocFile] = useState<{ fileName: string; base64Data: string } | null>(null);
+  const [docError, setDocError] = useState("");
+  const [docSubmitting, setDocSubmitting] = useState(false);
 
   // Form states
   const [nome, setNome] = useState("");
@@ -74,6 +98,101 @@ export default function ObrasPage() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingObra(null);
+  };
+
+  const openDocModal = (obra: Obra) => {
+    setActiveObra(obra);
+    setDocNome("");
+    setDocFile(null);
+    setDocError("");
+    setIsDocModalOpen(true);
+  };
+
+  const closeDocModal = () => {
+    setIsDocModalOpen(false);
+    setActiveObra(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setDocError("");
+
+    if (file.size > 5 * 1024 * 1024) {
+      setDocError("Arquivo muito grande. O limite máximo é 5MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setDocFile({
+        fileName: file.name,
+        base64Data: base64,
+      });
+      if (!docNome.trim()) {
+        const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
+        setDocNome(nameWithoutExt);
+      }
+    };
+    reader.onerror = () => {
+      setDocError("Erro ao ler o arquivo.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDocSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeObra || !docFile || !docNome.trim()) {
+      setDocError("Nome do documento e arquivo são obrigatórios.");
+      return;
+    }
+
+    setDocSubmitting(true);
+    setDocError("");
+
+    startTransition(async () => {
+      const res = await addDocumentoObra({
+        obraId: activeObra.id,
+        nome: docNome,
+        fileName: docFile.fileName,
+        base64Data: docFile.base64Data,
+      });
+
+      setDocSubmitting(false);
+      if (res.success) {
+        getObras().then((data) => {
+          setObras(data as any);
+          const up = data.find((ob) => ob.id === activeObra.id);
+          if (up) {
+            setActiveObra(up as any);
+          }
+        });
+        setDocNome("");
+        setDocFile(null);
+      } else {
+        setDocError(res.error || "Erro ao salvar o documento.");
+      }
+    });
+  };
+
+  const handleDocDelete = async (docId: number) => {
+    if (!activeObra) return;
+    if (confirm("Tem certeza que deseja excluir este documento?")) {
+      const res = await deleteDocumentoObra(docId);
+      if (res.success) {
+        getObras().then((data) => {
+          setObras(data as any);
+          const up = data.find((ob) => ob.id === activeObra.id);
+          if (up) {
+            setActiveObra(up as any);
+          }
+        });
+      } else {
+        alert(res.error || "Erro ao excluir o documento.");
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -196,7 +315,7 @@ export default function ObrasPage() {
               <th>Valor Fechado</th>
               <th>Endereço</th>
               <th>Status</th>
-              <th style={{ width: "160px", textAlign: "right" }}>Ações</th>
+              <th style={{ width: "240px", textAlign: "right" }}>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -210,7 +329,24 @@ export default function ObrasPage() {
               filteredObras.map((obra) => (
                 <tr key={obra.id}>
                   <td style={{ fontWeight: 600, color: "var(--text-muted)" }}>#{obra.id}</td>
-                  <td style={{ fontWeight: 600, color: "var(--text-heading)" }}>{obra.nome}</td>
+                  <td style={{ fontWeight: 600, color: "var(--text-heading)" }}>
+                    {obra.nome}{" "}
+                    {obra.documentos && obra.documentos.length > 0 && (
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          marginLeft: "6px",
+                          padding: "1px 5px",
+                          backgroundColor: "rgba(16, 185, 129, 0.1)",
+                          color: "#10b981",
+                          borderRadius: "4px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        📂 {obra.documentos.length} doc{obra.documentos.length > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </td>
                   <td>
                     {obra.clientes && obra.clientes.length > 0 ? (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
@@ -257,6 +393,12 @@ export default function ObrasPage() {
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <div style={{ display: "inline-flex", gap: "8px" }}>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => openDocModal(obra)}
+                      >
+                        📂 Documentos
+                      </button>
                       <button
                         className="btn btn-secondary btn-sm"
                         onClick={() => openEditModal(obra)}
@@ -432,6 +574,123 @@ export default function ObrasPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Documentos da Obra */}
+      {isDocModalOpen && activeObra && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "550px", width: "95%" }}>
+            <div className="modal-header">
+              <h4 style={{ fontSize: "18px", fontWeight: 600 }}>
+                Documentos da Obra: {activeObra.nome}
+              </h4>
+              <button
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "var(--text-heading)" }}
+                onClick={closeDocModal}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {/* Seção de Upload */}
+              <div style={{ padding: "16px", backgroundColor: "var(--bg-app)", borderRadius: "var(--radius-md)", marginBottom: "20px", border: "1px dashed var(--border-color)" }}>
+                <h5 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px", color: "var(--text-heading)" }}>
+                  Adicionar Novo Documento (Ex: Contrato, Autorização de Compra, Projeto...)
+                </h5>
+                <form onSubmit={handleDocSubmit}>
+                  {docError && (
+                    <div style={{ color: "var(--error)", fontSize: "13px", marginBottom: "8px", fontWeight: 500 }}>
+                      {docError}
+                    </div>
+                  )}
+                  <div className="form-group" style={{ marginBottom: "12px" }}>
+                    <label className="form-label" style={{ fontSize: "12px" }}>Nome / Tipo do Documento *</label>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      placeholder="Ex: Contrato Assinado"
+                      value={docNome}
+                      onChange={(e) => setDocNome(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: "12px" }}>
+                    <label className="form-label" style={{ fontSize: "12px" }}>Selecionar Arquivo *</label>
+                    <input
+                      type="file"
+                      className="form-control form-control-sm"
+                      onChange={handleFileChange}
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary btn-sm" disabled={docSubmitting || !docFile} style={{ width: "100%", justifyContent: "center" }}>
+                    {docSubmitting ? "Enviando..." : "Fazer Upload do Documento"}
+                  </button>
+                </form>
+              </div>
+
+              {/* Seção de Lista de Documentos */}
+              <h5 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px", color: "var(--text-heading)" }}>
+                Documentos Cadastrados
+              </h5>
+              <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+                {!activeObra.documentos || activeObra.documentos.length === 0 ? (
+                  <p style={{ color: "var(--text-muted)", fontSize: "13px", fontStyle: "italic", textAlign: "center", padding: "16px 0" }}>
+                    Nenhum documento anexado para esta obra.
+                  </p>
+                ) : (
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                    {activeObra.documentos.map((d) => (
+                      <li
+                        key={d.id}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "10px 12px",
+                          borderBottom: "1px solid var(--border-color)",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <div style={{ flex: 1, marginRight: "16px", minWidth: 0 }}>
+                          <strong style={{ color: "var(--text-heading)", display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{d.nome}</strong>
+                          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                            {d.fileName}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+                          <a
+                            href={d.base64Data}
+                            download={d.fileName}
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: "4px 8px", fontSize: "11px", display: "inline-flex", alignItems: "center" }}
+                          >
+                            Baixar
+                          </a>
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleDocDelete(d.id)}
+                            style={{ padding: "4px 8px", fontSize: "11px" }}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={closeDocModal}>
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
       )}

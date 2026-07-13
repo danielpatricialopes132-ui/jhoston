@@ -7,6 +7,7 @@ export async function getObras() {
   return await prisma.obra.findMany({
     include: {
       clientes: true,
+      documentos: true,
     },
     orderBy: { id: "desc" },
   });
@@ -100,5 +101,47 @@ export async function deleteObra(id: number) {
     return { success: true };
   } catch (error) {
     return { success: false, error: "Não foi possível excluir a obra pois existem registros (ponto, viagens ou financeiro) vinculados a ela." };
+  }
+}
+
+export async function addDocumentoObra(data: {
+  obraId: number;
+  nome: string;
+  fileName: string;
+  base64Data: string;
+}) {
+  if (!data.nome.trim()) {
+    return { success: false, error: "O nome do documento é obrigatório." };
+  }
+
+  try {
+    const doc = await prisma.documentoObra.create({
+      data: {
+        obraId: data.obraId,
+        nome: data.nome.trim(),
+        fileName: data.fileName,
+        base64Data: data.base64Data,
+      },
+    });
+
+    revalidatePath("/obras");
+    return { success: true, data: doc };
+  } catch (error) {
+    console.error("Erro ao salvar documento da obra:", error);
+    return { success: false, error: "Erro ao salvar o documento no banco de dados." };
+  }
+}
+
+export async function deleteDocumentoObra(id: number) {
+  try {
+    await prisma.documentoObra.delete({
+      where: { id },
+    });
+
+    revalidatePath("/obras");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao excluir documento da obra:", error);
+    return { success: false, error: "Erro ao excluir o documento." };
   }
 }

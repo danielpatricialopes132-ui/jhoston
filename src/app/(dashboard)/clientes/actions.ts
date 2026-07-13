@@ -25,6 +25,7 @@ export async function getClientesList() {
           status: true,
         },
       },
+      documentos: true,
     },
     orderBy: {
       nome: "asc",
@@ -92,5 +93,51 @@ export async function deleteCliente(id: number) {
   } catch (error) {
     console.error("Erro ao excluir cliente:", error);
     return { success: false, error: "Erro ao excluir o cliente." };
+  }
+}
+
+export async function addDocumentoCliente(data: {
+  clienteId: number;
+  nome: string;
+  fileName: string;
+  base64Data: string;
+}) {
+  await requireAdmin();
+
+  if (!data.nome.trim()) {
+    return { success: false, error: "O nome do documento é obrigatório." };
+  }
+
+  try {
+    const doc = await prisma.documentoCliente.create({
+      data: {
+        clienteId: data.clienteId,
+        nome: data.nome.trim(),
+        fileName: data.fileName,
+        base64Data: data.base64Data,
+      },
+    });
+
+    revalidatePath("/clientes");
+    return { success: true, data: doc };
+  } catch (error) {
+    console.error("Erro ao salvar documento do cliente:", error);
+    return { success: false, error: "Erro ao salvar o documento no banco de dados." };
+  }
+}
+
+export async function deleteDocumentoCliente(id: number) {
+  await requireAdmin();
+
+  try {
+    await prisma.documentoCliente.delete({
+      where: { id },
+    });
+
+    revalidatePath("/clientes");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao excluir documento do cliente:", error);
+    return { success: false, error: "Erro ao excluir o documento." };
   }
 }
