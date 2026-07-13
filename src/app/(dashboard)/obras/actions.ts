@@ -21,6 +21,7 @@ export async function createObra(data: {
   valorFechado: number;
   endereco?: string;
   status?: string;
+  observacoesPermuta?: string;
 }) {
   const clientIds = data.clientIds || [];
   
@@ -39,6 +40,7 @@ export async function createObra(data: {
       endereco: data.endereco || "",
       status: data.status || "ATIVA",
       valorFechado: data.valorFechado,
+      observacoesPermuta: data.observacoesPermuta || null,
       procuradorId: data.procuradorId || null,
       clientes: {
         connect: clientIds.map(id => ({ id })),
@@ -63,6 +65,7 @@ export async function updateObra(
     valorFechado: number;
     endereco?: string;
     status?: string;
+    observacoesPermuta?: string;
   }
 ) {
   const clientIds = data.clientIds || [];
@@ -83,6 +86,7 @@ export async function updateObra(
       endereco: data.endereco || "",
       status: data.status || "ATIVA",
       valorFechado: data.valorFechado,
+      observacoesPermuta: data.observacoesPermuta || null,
       procuradorId: data.procuradorId || null,
       clientes: {
         set: clientIds.map(id => ({ id })),

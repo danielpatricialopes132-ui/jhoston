@@ -38,6 +38,7 @@ interface Obra {
   endereco: string | null;
   status: string;
   valorFechado: number;
+  observacoesPermuta: string | null;
   clientes: Cliente[];
   documentos: Documento[];
   procuradorId: number | null;
@@ -124,6 +125,7 @@ export default function ObrasPage() {
   const [valorFechado, setValorFechado] = useState("");
   const [endereco, setEndereco] = useState("");
   const [status, setStatus] = useState("ATIVA");
+  const [observacoesPermuta, setObservacoesPermuta] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [clientSearchTerm, setClientSearchTerm] = useState("");
 
@@ -149,6 +151,7 @@ export default function ObrasPage() {
     setValorFechado("");
     setEndereco("");
     setStatus("ATIVA");
+    setObservacoesPermuta("");
     setErrorMsg("");
     setClientSearchTerm("");
     setExtractedClients([]);
@@ -164,6 +167,7 @@ export default function ObrasPage() {
     setValorFechado(obra.valorFechado?.toString() || "");
     setEndereco(obra.endereco || "");
     setStatus(obra.status);
+    setObservacoesPermuta(obra.observacoesPermuta || "");
     setErrorMsg("");
     setClientSearchTerm("");
     setExtractedClients([]);
@@ -444,6 +448,7 @@ export default function ObrasPage() {
           valorFechado: parseFloat(valorFechado) || 0,
           endereco,
           status,
+          observacoesPermuta,
         };
         res = await updateObra(editingObra.id, payload);
       } else {
@@ -463,6 +468,7 @@ export default function ObrasPage() {
             valorFechado: parseFloat(valorFechado) || 0,
             endereco,
             status,
+            observacoesPermuta,
           };
           res = await createObra(payload);
         }
@@ -582,22 +588,28 @@ export default function ObrasPage() {
               filteredObras.map((obra) => (
                 <tr key={obra.id}>
                   <td style={{ fontWeight: 600, color: "var(--text-muted)" }}>#{obra.id}</td>
-                  <td style={{ fontWeight: 600, color: "var(--text-heading)" }}>
-                    {obra.nome}{" "}
-                    {obra.documentos && obra.documentos.length > 0 && (
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          marginLeft: "6px",
-                          padding: "1px 5px",
-                          backgroundColor: "rgba(16, 185, 129, 0.1)",
-                          color: "#10b981",
-                          borderRadius: "4px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        📂 {obra.documentos.length} doc{obra.documentos.length > 1 ? "s" : ""}
-                      </span>
+                  <td style={{ fontWeight: 600, color: "var(--text-heading)", verticalAlign: "middle" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span>{obra.nome}</span>
+                      {obra.documentos && obra.documentos.length > 0 && (
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            padding: "1px 5px",
+                            backgroundColor: "rgba(16, 185, 129, 0.1)",
+                            color: "#10b981",
+                            borderRadius: "4px",
+                            fontWeight: 600,
+                          }}
+                        >
+                          📂 {obra.documentos.length} doc{obra.documentos.length > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                    {obra.observacoesPermuta && (
+                      <div style={{ fontSize: "11.5px", color: "var(--primary)", fontWeight: 600, marginTop: "4px", display: "inline-flex", alignItems: "center", gap: "4px", backgroundColor: "rgba(2, 132, 199, 0.05)", padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(2, 132, 199, 0.15)" }}>
+                        🏡 <strong>Permuta:</strong> {obra.observacoesPermuta}
+                      </div>
                     )}
                   </td>
                   <td>
@@ -869,6 +881,16 @@ export default function ObrasPage() {
                     placeholder="Ex: Av. das Palmeiras, 120"
                     value={endereco}
                     onChange={(e) => setEndereco(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Observações de Permuta / Terreno Recebido</label>
+                  <textarea
+                    className="form-control"
+                    placeholder="Descreva aqui se houver permuta de terreno/lote envolvida no pagamento deste projeto (ex: Lote 12, Quadra B...)"
+                    value={observacoesPermuta}
+                    onChange={(e) => setObservacoesPermuta(e.target.value)}
+                    rows={2}
                   />
                 </div>
                 <div className="form-group">
