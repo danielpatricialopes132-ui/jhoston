@@ -25,10 +25,15 @@ interface Documento {
 
 interface Cliente {
   id: number;
+  tipo: "PF" | "PJ";
   nome: string;
   cpfCnpj: string | null;
+  rg: string | null;
+  ie: string | null;
+  contato: string | null;
   telefone: string | null;
   email: string | null;
+  endereco: string | null;
   obras: ObraInfo[];
   documentos: Documento[];
 }
@@ -48,10 +53,15 @@ export default function ClientesPage() {
   const [docSubmitting, setDocSubmitting] = useState(false);
 
   // Form states
-  const [nome, setNome] = useState("");
+  const [tipo, setTipo] = useState<"PF" | "PJ">("PF");
+  const [nome, setNome] = useState(""); // Nome Completo (PF) ou Razão Social (PJ)
   const [cpfCnpj, setCpfCnpj] = useState("");
+  const [rg, setRg] = useState("");
+  const [ie, setIe] = useState("");
+  const [contato, setContato] = useState(""); // Procurador ou Representante
   const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
+  const [endereco, setEndereco] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
   const refreshData = () => {
@@ -66,20 +76,30 @@ export default function ClientesPage() {
 
   const openNewModal = () => {
     setEditingCliente(null);
+    setTipo("PF");
     setNome("");
     setCpfCnpj("");
+    setRg("");
+    setIe("");
+    setContato("");
     setTelefone("");
     setEmail("");
+    setEndereco("");
     setErrorMsg("");
     setIsModalOpen(true);
   };
 
   const openEditModal = (c: Cliente) => {
     setEditingCliente(c);
+    setTipo(c.tipo || "PF");
     setNome(c.nome);
     setCpfCnpj(c.cpfCnpj || "");
+    setRg(c.rg || "");
+    setIe(c.ie || "");
+    setContato(c.contato || "");
     setTelefone(c.telefone || "");
     setEmail(c.email || "");
+    setEndereco(c.endereco || "");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -187,16 +207,21 @@ export default function ClientesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nome.trim()) {
-      setErrorMsg("O nome do cliente é obrigatório.");
+      setErrorMsg("O nome ou razão social é obrigatório.");
       return;
     }
 
     const payload = {
       id: editingCliente?.id,
+      tipo,
       nome,
       cpfCnpj,
+      rg: tipo === "PF" ? rg : undefined,
+      ie: tipo === "PJ" ? ie : undefined,
+      contato: tipo === "PJ" ? contato : undefined,
       telefone,
       email,
+      endereco,
     };
 
     startTransition(async () => {
@@ -231,7 +256,8 @@ export default function ClientesPage() {
       c.nome.toLowerCase().includes(term) ||
       (c.cpfCnpj && c.cpfCnpj.toLowerCase().includes(term)) ||
       (c.telefone && c.telefone.toLowerCase().includes(term)) ||
-      (c.email && c.email.toLowerCase().includes(term))
+      (c.email && c.email.toLowerCase().includes(term)) ||
+      (c.contato && c.contato.toLowerCase().includes(term))
     );
   });
 
@@ -243,7 +269,7 @@ export default function ClientesPage() {
             Cadastro de Clientes / Proprietários
           </h3>
           <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
-            Gerencie os proprietários e clientes vinculados às obras de piscinas.
+            Gerencie os proprietários e clientes de obras (Pessoa Física e Pessoa Jurídica).
           </p>
         </div>
         <button className="btn btn-primary" onClick={openNewModal}>
@@ -273,7 +299,7 @@ export default function ClientesPage() {
           <input
             type="text"
             className="form-control"
-            placeholder="Digite o nome, CPF/CNPJ, telefone ou e-mail..."
+            placeholder="Digite o nome, representação, documento, telefone ou e-mail..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -286,10 +312,10 @@ export default function ClientesPage() {
           <thead>
             <tr>
               <th style={{ width: "80px" }}>ID</th>
-              <th>Nome</th>
-              <th>CPF / CNPJ</th>
-              <th>Telefone</th>
-              <th>E-mail</th>
+              <th>Tipo</th>
+              <th>Nome / Razão Social</th>
+              <th>Documentos Cadastrais</th>
+              <th>Contato / Telefone / E-mail</th>
               <th>Obras Vinculadas</th>
               <th style={{ width: "240px", textAlign: "right" }}>Ações</th>
             </tr>
@@ -305,6 +331,14 @@ export default function ClientesPage() {
               filteredClientes.map((c) => (
                 <tr key={c.id}>
                   <td style={{ fontWeight: 600, color: "var(--text-muted)" }}>#{c.id}</td>
+                  <td>
+                    <span
+                      className={`badge ${c.tipo === "PJ" ? "badge-info" : "badge-success"}`}
+                      style={{ fontSize: "11px", fontWeight: 700 }}
+                    >
+                      {c.tipo === "PJ" ? "PJ" : "PF"}
+                    </span>
+                  </td>
                   <td style={{ fontWeight: 600, color: "var(--text-heading)" }}>
                     {c.nome}{" "}
                     {c.documentos && c.documentos.length > 0 && (
@@ -318,14 +352,48 @@ export default function ClientesPage() {
                           borderRadius: "4px",
                           fontWeight: 600,
                         }}
+                        title={`${c.documentos.length} arquivo(s) anexados`}
                       >
                         📂 {c.documentos.length} doc{c.documentos.length > 1 ? "s" : ""}
                       </span>
                     )}
                   </td>
-                  <td>{c.cpfCnpj || <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Não informado</span>}</td>
-                  <td>{c.telefone || <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Não informado</span>}</td>
-                  <td>{c.email || <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Não informado</span>}</td>
+                  <td>
+                    <div style={{ fontSize: "13px" }}>
+                      {c.tipo === "PJ" ? (
+                        <>
+                          <strong>CNPJ:</strong> {c.cpfCnpj || "Não informado"}
+                          {c.ie && (
+                            <>
+                              <br />
+                              <strong>IE:</strong> {c.ie}
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <strong>CPF:</strong> {c.cpfCnpj || "Não informado"}
+                          {c.rg && (
+                            <>
+                              <br />
+                              <strong>RG:</strong> {c.rg}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ fontSize: "13px" }}>
+                      {c.tipo === "PJ" && c.contato && (
+                        <div style={{ marginBottom: "2px" }}>
+                          <strong>Representante:</strong> {c.contato}
+                        </div>
+                      )}
+                      {c.telefone && <div>📞 {c.telefone}</div>}
+                      {c.email && <div style={{ color: "var(--text-muted)" }}>✉️ {c.email}</div>}
+                    </div>
+                  </td>
                   <td>
                     {c.obras.length === 0 ? (
                       <span style={{ color: "var(--text-muted)", fontStyle: "italic", fontSize: "13px" }}>Nenhuma obra</span>
@@ -372,7 +440,7 @@ export default function ClientesPage() {
       {/* Modal de Novo/Editar Cliente */}
       {isModalOpen && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content" style={{ maxWidth: "600px", width: "95%" }}>
             <div className="modal-header">
               <h4 style={{ fontSize: "18px", fontWeight: 600 }}>
                 {editingCliente ? "Editar Cliente" : "Novo Cliente"}
@@ -401,45 +469,142 @@ export default function ClientesPage() {
                     {errorMsg}
                   </div>
                 )}
+
+                {/* Seleção de Tipo de Cliente */}
                 <div className="form-group">
-                  <label className="form-label">Nome Completo *</label>
+                  <label className="form-label">Tipo de Cliente *</label>
+                  <div style={{ display: "flex", gap: "24px", marginTop: "6px" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", color: "var(--text-heading)" }}>
+                      <input
+                        type="radio"
+                        name="tipoCliente"
+                        value="PF"
+                        checked={tipo === "PF"}
+                        onChange={() => setTipo("PF")}
+                      />
+                      Pessoa Física (PF)
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", color: "var(--text-heading)" }}>
+                      <input
+                        type="radio"
+                        name="tipoCliente"
+                        value="PJ"
+                        checked={tipo === "PJ"}
+                        onChange={() => setTipo("PJ")}
+                      />
+                      Pessoa Jurídica (PJ)
+                    </label>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    {tipo === "PJ" ? "Razão Social *" : "Nome Completo *"}
+                  </label>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Ex: João Silva"
+                    placeholder={tipo === "PJ" ? "Ex: Jhoston Tintas Ltda" : "Ex: João Silva"}
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
                     required
                   />
                 </div>
+
+                {tipo === "PJ" ? (
+                  // Campos específicos de Pessoa Jurídica
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                    <div className="form-group">
+                      <label className="form-label">CNPJ</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Ex: 00.000.000/0001-00"
+                        value={cpfCnpj}
+                        onChange={(e) => setCpfCnpj(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Inscrição Estadual (IE)</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Ex: 123456789.00-11"
+                        value={ie}
+                        onChange={(e) => setIe(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  // Campos específicos de Pessoa Física
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                    <div className="form-group">
+                      <label className="form-label">CPF</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Ex: 000.000.000-00"
+                        value={cpfCnpj}
+                        onChange={(e) => setCpfCnpj(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">RG</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Ex: MG-12.345.678"
+                        value={rg}
+                        onChange={(e) => setRg(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {tipo === "PJ" && (
+                  <div className="form-group">
+                    <label className="form-label">Nome de Contato / Procurador / Representante</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Ex: Carlos (Gerente Financeiro)"
+                      value={contato}
+                      onChange={(e) => setContato(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                  <div className="form-group">
+                    <label className="form-label">Telefone</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Ex: (35) 99999-9999"
+                      value={telefone}
+                      onChange={(e) => setTelefone(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">E-mail</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      placeholder="Ex: contato@cliente.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+
                 <div className="form-group">
-                  <label className="form-label">CPF / CNPJ</label>
+                  <label className="form-label">Endereço Completo</label>
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Ex: 000.000.000-00"
-                    value={cpfCnpj}
-                    onChange={(e) => setCpfCnpj(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Telefone</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Ex: (11) 99999-9999"
-                    value={telefone}
-                    onChange={(e) => setTelefone(e.target.value)}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">E-mail</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    placeholder="Ex: joao@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Ex: Rua das Flores, 100 - Centro - Monte Santo de Minas - MG"
+                    value={endereco}
+                    onChange={(e) => setEndereco(e.target.value)}
                   />
                 </div>
               </div>
@@ -476,7 +641,7 @@ export default function ClientesPage() {
               {/* Seção de Upload */}
               <div style={{ padding: "16px", backgroundColor: "var(--bg-app)", borderRadius: "var(--radius-md)", marginBottom: "20px", border: "1px dashed var(--border-color)" }}>
                 <h5 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px", color: "var(--text-heading)" }}>
-                  Adicionar Novo Documento (Ex: RG, CPF, Contrato...)
+                  Adicionar Novo Anexo (Contrato Social, Procuração, RG, CPF, etc.)
                 </h5>
                 <form onSubmit={handleDocSubmit}>
                   {docError && (
@@ -485,11 +650,11 @@ export default function ClientesPage() {
                     </div>
                   )}
                   <div className="form-group" style={{ marginBottom: "12px" }}>
-                    <label className="form-label" style={{ fontSize: "12px" }}>Nome / Tipo do Documento *</label>
+                    <label className="form-label" style={{ fontSize: "12px" }}>Descrição do Anexo *</label>
                     <input
                       type="text"
                       className="form-control form-control-sm"
-                      placeholder="Ex: RG do Proprietário"
+                      placeholder={tipo === "PJ" ? "Ex: Contrato Social Consolidado" : "Ex: Procuração Registrada"}
                       value={docNome}
                       onChange={(e) => setDocNome(e.target.value)}
                       required
@@ -512,7 +677,7 @@ export default function ClientesPage() {
 
               {/* Seção de Lista de Documentos */}
               <h5 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px", color: "var(--text-heading)" }}>
-                Documentos Cadastrados
+                Arquivos Anexados
               </h5>
               <div style={{ maxHeight: "220px", overflowY: "auto" }}>
                 {!activeCliente.documentos || activeCliente.documentos.length === 0 ? (

@@ -8,6 +8,7 @@ export async function getObras() {
     include: {
       clientes: true,
       documentos: true,
+      procurador: true,
     },
     orderBy: { id: "desc" },
   });
@@ -16,6 +17,7 @@ export async function getObras() {
 export async function createObra(data: {
   nome: string;
   clientIds?: number[];
+  procuradorId?: number;
   valorFechado: number;
   endereco?: string;
   status?: string;
@@ -37,12 +39,14 @@ export async function createObra(data: {
       endereco: data.endereco || "",
       status: data.status || "ATIVA",
       valorFechado: data.valorFechado,
+      procuradorId: data.procuradorId || null,
       clientes: {
         connect: clientIds.map(id => ({ id })),
       },
     },
     include: {
       clientes: true,
+      procurador: true,
     },
   });
   revalidatePath("/obras");
@@ -55,6 +59,7 @@ export async function updateObra(
   data: {
     nome: string;
     clientIds?: number[];
+    procuradorId?: number;
     valorFechado: number;
     endereco?: string;
     status?: string;
@@ -78,12 +83,14 @@ export async function updateObra(
       endereco: data.endereco || "",
       status: data.status || "ATIVA",
       valorFechado: data.valorFechado,
+      procuradorId: data.procuradorId || null,
       clientes: {
         set: clientIds.map(id => ({ id })),
       },
     },
     include: {
       clientes: true,
+      procurador: true,
     },
   });
   revalidatePath("/obras");
@@ -144,4 +151,91 @@ export async function deleteDocumentoObra(id: number) {
     console.error("Erro ao excluir documento da obra:", error);
     return { success: false, error: "Erro ao excluir o documento." };
   }
+}
+
+export async function getAutorizacoesCompra(obraId: number) {
+  return await prisma.autorizacaoCompra.findMany({
+    where: { obraId },
+    include: {
+      fornecedor: {
+        select: {
+          id: true,
+          nome: true,
+          cnpj: true,
+          contato: true,
+        },
+      },
+    },
+    orderBy: { id: "desc" },
+  });
+}
+
+export async function createAutorizacaoCompra(data: {
+  obraId: number;
+  fornecedorId: number;
+  itens: string;
+  valorLimite: number;
+  observacoes?: string;
+}) {
+  if (!data.itens.trim()) {
+    return { success: false, error: "A descrição dos itens autorizados é obrigatória." };
+  }
+  if (data.valorLimite < 0) {
+    return { success: false, error: "O valor limite não pode ser negativo." };
+  }
+
+  try {
+    const auth = await prisma.autorizacaoCompra.create({
+      data: {
+        obraId: data.obraId,
+        fornecedorId: data.fornecedorId,
+        itens: data.itens.trim(),
+        valorLimite: data.valorLimite,
+        observacoes: data.observacoes?.trim() || null,
+      },
+    });
+
+    revalidatePath("/obras");
+    return { success: true, data: auth };
+  } catch (error) {
+    console.error("Erro ao criar autorização de compra:", error);
+    return { success: false, error: "Erro ao criar a autorização de compra no banco de dados." };
+  }
+}
+
+export async function deleteAutorizacaoCompra(id: number) {
+  try {
+    await prisma.autorizacaoCompra.delete({
+      where: { id },
+    });
+
+    revalidatePath("/obras");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao excluir autorização de compra:", error);
+    return { success: false, error: "Erro ao excluir a autorização de compra." };
+  }
+}
+
+export async function getAutorizacaoCompra(id: number) {
+  return await prisma.autorizacaoCompra.findUnique({
+    where: { id },
+    include: {
+      obra: {
+        select: {
+          nome: true,
+          endereco: true,
+        },
+      },
+      fornecedor: {
+        select: {
+          nome: true,
+          cnpj: true,
+          telefone: true,
+          email: true,
+          contato: true,
+        },
+      },
+    },
+  });
 }

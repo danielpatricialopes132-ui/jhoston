@@ -37,22 +37,32 @@ export async function getClientesList() {
 
 export async function salvarCliente(data: {
   id?: number;
+  tipo: string;
   nome: string;
   cpfCnpj?: string;
+  rg?: string;
+  ie?: string;
+  contato?: string;
   telefone?: string;
   email?: string;
+  endereco?: string;
 }) {
   await requireAdmin();
 
   if (!data.nome.trim()) {
-    return { success: false, error: "O nome do cliente é obrigatório." };
+    return { success: false, error: "O nome ou razão social é obrigatório." };
   }
 
   const payload = {
+    tipo: data.tipo || "PF",
     nome: data.nome.trim(),
     cpfCnpj: data.cpfCnpj?.trim() || null,
+    rg: data.rg?.trim() || null,
+    ie: data.ie?.trim() || null,
+    contato: data.contato?.trim() || null,
     telefone: data.telefone?.trim() || null,
     email: data.email?.trim() || null,
+    endereco: data.endereco?.trim() || null,
   };
 
   try {
