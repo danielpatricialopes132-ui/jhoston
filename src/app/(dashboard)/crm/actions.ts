@@ -122,7 +122,7 @@ export async function deleteOportunidade(id: number) {
   }
 }
 
-export async function converterParaObra(id: number, nomeObra?: string) {
+export async function converterParaObra(id: number, nomeObra: string, valorFechado: number) {
   await requireAdmin();
 
   try {
@@ -134,18 +134,37 @@ export async function converterParaObra(id: number, nomeObra?: string) {
       return { success: false, error: "Oportunidade não encontrada." };
     }
 
-    // Cria a Obra com status Ativa
+    // Tenta encontrar ou criar o Cliente correspondente
+    let cliente = await prisma.cliente.findFirst({
+      where: { nome: { equals: oportunidade.clienteNome.trim(), mode: "insensitive" } },
+    });
+
+    if (!cliente) {
+      cliente = await prisma.cliente.create({
+        data: {
+          nome: oportunidade.clienteNome.trim(),
+          telefone: oportunidade.telefone,
+          email: oportunidade.email,
+        },
+      });
+    }
+
+    // Cria a Obra com status Ativa e valor fechado informado
     const novaObra = await prisma.obra.create({
       data: {
         nome: nomeObra?.trim() || `Obra ${oportunidade.clienteNome}`,
         clienteNome: oportunidade.clienteNome,
         endereco: oportunidade.endereco,
         status: "ATIVA",
+        valorFechado: valorFechado,
         progressoEscavacao: 0,
         progressoEstrutura: 0,
         progressoHidraulica: 0,
         progressoRevestimento: 0,
         progressoAcabamento: 0,
+        clientes: {
+          connect: { id: cliente.id },
+        },
       },
     });
 

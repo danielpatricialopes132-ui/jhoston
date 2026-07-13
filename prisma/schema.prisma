@@ -27,6 +27,8 @@ model Obra {
   clienteNome           String
   endereco              String?
   status                String                @default("ATIVA") // "ATIVA", "FINALIZADA", "SUSPENSA"
+  valorFechado          Float                 @default(0)
+  clientes              Cliente[]             @relation("ObraClientes")
   progressoEscavacao    Int                   @default(0)
   progressoEstrutura    Int                   @default(0)
   progressoHidraulica   Int                   @default(0)
@@ -39,6 +41,17 @@ model Obra {
   mensagensChat         MensagemChat[]
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
+}
+
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  cpfCnpj   String?
+  telefone  String?
+  email     String?
+  obras     Obra[]   @relation("ObraClientes")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model RegistroPonto {

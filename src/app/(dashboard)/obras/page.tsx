@@ -2,6 +2,12 @@
 
 import { useEffect, useState, startTransition } from "react";
 import { getObras, createObra, updateObra, deleteObra } from "./actions";
+import { getClientesList } from "../clientes/actions";
+
+interface Cliente {
+  id: number;
+  nome: string;
+}
 
 interface Obra {
   id: number;
@@ -9,10 +15,13 @@ interface Obra {
   clienteNome: string;
   endereco: string | null;
   status: string;
+  valorFechado: number;
+  clientes: Cliente[];
 }
 
 export default function ObrasPage() {
   const [obras, setObras] = useState<Obra[]>([]);
+  const [allClientes, setAllClientes] = useState<Cliente[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("TODAS");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,36 +29,45 @@ export default function ObrasPage() {
 
   // Form states
   const [nome, setNome] = useState("");
-  const [clienteNome, setClienteNome] = useState("");
+  const [selectedClienteIds, setSelectedClienteIds] = useState<number[]>([]);
+  const [valorFechado, setValorFechado] = useState("");
   const [endereco, setEndereco] = useState("");
   const [status, setStatus] = useState("ATIVA");
   const [errorMsg, setErrorMsg] = useState("");
+  const [clientSearchTerm, setClientSearchTerm] = useState("");
 
   const refreshObras = () => {
-    getObras().then((data) => setObras(data));
+    getObras().then((data) => setObras(data as any));
   };
 
   useEffect(() => {
     refreshObras();
+    getClientesList().then((data) => setAllClientes(data as any));
   }, []);
 
   const openNewModal = () => {
+    getClientesList().then((data) => setAllClientes(data as any));
     setEditingObra(null);
     setNome("");
-    setClienteNome("");
+    setSelectedClienteIds([]);
+    setValorFechado("");
     setEndereco("");
     setStatus("ATIVA");
     setErrorMsg("");
+    setClientSearchTerm("");
     setIsModalOpen(true);
   };
 
   const openEditModal = (obra: Obra) => {
+    getClientesList().then((data) => setAllClientes(data as any));
     setEditingObra(obra);
     setNome(obra.nome);
-    setClienteNome(obra.clienteNome);
+    setSelectedClienteIds(obra.clientes ? obra.clientes.map((c) => c.id) : []);
+    setValorFechado(obra.valorFechado?.toString() || "");
     setEndereco(obra.endereco || "");
     setStatus(obra.status);
     setErrorMsg("");
+    setClientSearchTerm("");
     setIsModalOpen(true);
   };
 
@@ -60,12 +78,22 @@ export default function ObrasPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome.trim() || !clienteNome.trim()) {
-      setErrorMsg("Nome da obra e Cliente são obrigatórios.");
+    if (!nome.trim()) {
+      setErrorMsg("Nome da obra é obrigatório.");
+      return;
+    }
+    if (selectedClienteIds.length === 0) {
+      setErrorMsg("Selecione pelo menos um cliente para a obra.");
       return;
     }
 
-    const payload = { nome, clienteNome, endereco, status };
+    const payload = {
+      nome,
+      clientIds: selectedClienteIds,
+      valorFechado: parseFloat(valorFechado) || 0,
+      endereco,
+      status,
+    };
 
     startTransition(async () => {
       let res;
@@ -105,6 +133,13 @@ export default function ObrasPage() {
 
     return matchesSearch && matchesStatus;
   });
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(val);
+  };
 
   return (
     <div>
@@ -157,7 +192,8 @@ export default function ObrasPage() {
             <tr>
               <th style={{ width: "80px" }}>ID</th>
               <th>Nome da Obra</th>
-              <th>Cliente</th>
+              <th>Clientes (Proprietários)</th>
+              <th>Valor Fechado</th>
               <th>Endereço</th>
               <th>Status</th>
               <th style={{ width: "160px", textAlign: "right" }}>Ações</th>
@@ -166,7 +202,7 @@ export default function ObrasPage() {
           <tbody>
             {filteredObras.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
+                <td colSpan={7} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
                   Nenhuma obra cadastrada ou encontrada.
                 </td>
               </tr>
@@ -175,7 +211,32 @@ export default function ObrasPage() {
                 <tr key={obra.id}>
                   <td style={{ fontWeight: 600, color: "var(--text-muted)" }}>#{obra.id}</td>
                   <td style={{ fontWeight: 600, color: "var(--text-heading)" }}>{obra.nome}</td>
-                  <td>{obra.clienteNome}</td>
+                  <td>
+                    {obra.clientes && obra.clientes.length > 0 ? (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                        {obra.clientes.map((c) => (
+                          <span
+                            key={c.id}
+                            style={{
+                              fontSize: "12px",
+                              padding: "2px 6px",
+                              backgroundColor: "var(--bg-accent)",
+                              color: "var(--primary)",
+                              borderRadius: "4px",
+                              fontWeight: 500,
+                            }}
+                          >
+                            {c.nome}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      obra.clienteNome || <em style={{ color: "var(--text-muted)" }}>Sem cliente</em>
+                    )}
+                  </td>
+                  <td style={{ fontWeight: 600, color: "var(--text-heading)" }}>
+                    {formatCurrency(obra.valorFechado || 0)}
+                  </td>
                   <td>{obra.endereco || <em style={{ color: "var(--text-muted)" }}>Não informado</em>}</td>
                   <td>
                     <span
@@ -226,7 +287,7 @@ export default function ObrasPage() {
                 {editingObra ? "Editar Obra" : "Nova Obra"}
               </h4>
               <button
-                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px" }}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "var(--text-heading)" }}
                 onClick={closeModal}
               >
                 &times;
@@ -260,17 +321,85 @@ export default function ObrasPage() {
                     required
                   />
                 </div>
+
                 <div className="form-group">
-                  <label className="form-label">Nome do Cliente *</label>
+                  <label className="form-label">Clientes (Proprietários) *</label>
                   <input
                     type="text"
+                    className="form-control form-control-sm"
+                    placeholder="🔍 Filtrar clientes..."
+                    value={clientSearchTerm}
+                    onChange={(e) => setClientSearchTerm(e.target.value)}
+                    style={{ marginBottom: "8px" }}
+                  />
+                  <div
+                    style={{
+                      maxHeight: "130px",
+                      overflowY: "auto",
+                      border: "1px solid var(--border-color)",
+                      padding: "8px",
+                      borderRadius: "var(--radius-md)",
+                      backgroundColor: "var(--bg-card)",
+                    }}
+                  >
+                    {allClientes.filter((c) =>
+                      c.nome.toLowerCase().includes(clientSearchTerm.toLowerCase())
+                    ).length === 0 ? (
+                      <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "4px 0" }}>
+                        Nenhum cliente encontrado.
+                      </div>
+                    ) : (
+                      allClientes
+                        .filter((c) =>
+                          c.nome.toLowerCase().includes(clientSearchTerm.toLowerCase())
+                        )
+                        .map((c) => (
+                          <label
+                            key={c.id}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              margin: "6px 0",
+                              fontSize: "14px",
+                              cursor: "pointer",
+                              color: "var(--text-heading)",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedClienteIds.includes(c.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedClienteIds([...selectedClienteIds, c.id]);
+                                } else {
+                                  setSelectedClienteIds(selectedClienteIds.filter((id) => id !== c.id));
+                                }
+                              }}
+                            />
+                            {c.nome}
+                          </label>
+                        ))
+                    )}
+                  </div>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                    Marque um ou mais proprietários. Caso não encontre o cliente na lista, cadastre-o primeiro no menu "Clientes".
+                  </p>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Valor Fechado (R$) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
                     className="form-control"
-                    placeholder="Ex: Jhoston Tech Ltda"
-                    value={clienteNome}
-                    onChange={(e) => setClienteNome(e.target.value)}
+                    placeholder="Ex: 150000.00"
+                    value={valorFechado}
+                    onChange={(e) => setValorFechado(e.target.value)}
                     required
                   />
                 </div>
+
                 <div className="form-group">
                   <label className="form-label">Endereço da Obra</label>
                   <input

@@ -56,6 +56,7 @@ export default function CRMPage() {
 
   // Convert form states
   const [nomeObra, setNomeObra] = useState("");
+  const [valorFechadoConvert, setValorFechadoConvert] = useState("");
 
   const refreshData = () => {
     getOportunidadesList().then((data) => {
@@ -104,6 +105,7 @@ export default function CRMPage() {
   const openConvertModal = (op: Oportunidade) => {
     setConvertingOportunidade(op);
     setNomeObra(`Obra de ${op.clienteNome}`);
+    setValorFechadoConvert(op.valorProposta ? op.valorProposta.toString() : "0");
     setIsConvertModalOpen(true);
   };
 
@@ -158,8 +160,10 @@ export default function CRMPage() {
     e.preventDefault();
     if (!convertingOportunidade) return;
 
+    const val = parseFloat(valorFechadoConvert) || 0;
+
     startTransition(async () => {
-      const res = await converterParaObra(convertingOportunidade.id, nomeObra);
+      const res = await converterParaObra(convertingOportunidade.id, nomeObra, val);
       if (res.success) {
         refreshData();
         closeConvertModal();
@@ -631,6 +635,21 @@ export default function CRMPage() {
                     onChange={(e) => setNomeObra(e.target.value)}
                     required
                   />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Valor Fechado (R$) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="form-control"
+                    value={valorFechadoConvert}
+                    onChange={(e) => setValorFechadoConvert(e.target.value)}
+                    required
+                  />
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                    Iniciado automaticamente com o valor da proposta comercial. Você pode alterá-lo se necessário.
+                  </p>
                 </div>
 
                 <div style={{ marginTop: "12px", fontSize: "13px", color: "var(--text-muted)" }}>
