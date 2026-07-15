@@ -45,19 +45,24 @@ export default function CRMPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [precoUnitario, setPrecoUnitario] = useState<number>(270);
   const [precoAditivo, setPrecoAditivo] = useState<number>(25);
+  const [empresa, setEmpresa] = useState("JHOSTON");
+  const [empresaFilter, setEmpresaFilter] = useState("TODOS");
 
   const handleProdutoChange = (newProd: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA") => {
     setProduto(newProd);
     if (newProd === "SUPER_PREMIUM" && (precoUnitario === 270 || precoUnitario === 18000)) {
       setPrecoUnitario(350);
       setPrecoAditivo(25);
+      setEmpresa("JHOSTON");
     } else if (newProd === "PREMIUM" && (precoUnitario === 350 || precoUnitario === 18000)) {
       setPrecoUnitario(270);
       setPrecoAditivo(25);
+      setEmpresa("JHOSTON");
     } else if (newProd === "CASCATA") {
       setPrecoUnitario(18000);
       setPrecoAditivo(5000);
       setAreaPiscina(1);
+      setEmpresa("ECO_STONE");
     }
   };
 
@@ -88,6 +93,7 @@ export default function CRMPage() {
     setObservacoes("");
     setPrecoUnitario(270);
     setPrecoAditivo(25);
+    setEmpresa("JHOSTON");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -105,6 +111,7 @@ export default function CRMPage() {
     setObservacoes(op.observacoes || "");
     setPrecoUnitario(op.precoUnitario ?? (op.produto === "SUPER_PREMIUM" ? 350 : 270));
     setPrecoAditivo(op.precoAditivo ?? 25);
+    setEmpresa(op.empresa || "JHOSTON");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -150,6 +157,7 @@ export default function CRMPage() {
       observacoes,
       precoUnitario,
       precoAditivo,
+      empresa,
     };
 
     startTransition(async () => {
@@ -217,11 +225,16 @@ export default function CRMPage() {
     }
   };
 
+  // Filtragem inicial por empresa para KPIs
+  const oportunidadesFiltradasEmpresa = oportunidades.filter(
+    (op) => empresaFilter === "TODOS" || op.empresa === empresaFilter
+  );
+
   // KPIs
-  const totalOps = oportunidades.length;
-  const inNegotiation = oportunidades.filter(o => o.status !== "ACEITO" && o.status !== "RECUSADO");
+  const totalOps = oportunidadesFiltradasEmpresa.length;
+  const inNegotiation = oportunidadesFiltradasEmpresa.filter(o => o.status !== "ACEITO" && o.status !== "RECUSADO");
   const valNegotiation = inNegotiation.reduce((acc, o) => acc + o.valorProposta, 0);
-  const acceptedOps = oportunidades.filter(o => o.status === "ACEITO");
+  const acceptedOps = oportunidadesFiltradasEmpresa.filter(o => o.status === "ACEITO");
   const totalAccepted = acceptedOps.length;
   const valAccepted = acceptedOps.reduce((acc, o) => acc + o.valorProposta, 0);
   const conversionRate = totalOps > 0 ? Math.round((totalAccepted / totalOps) * 100) : 0;
@@ -236,8 +249,9 @@ export default function CRMPage() {
       (op.telefone && op.telefone.includes(term));
 
     const matchesStatus = statusFilter === "TODAS" || op.status === statusFilter;
+    const matchesEmpresa = empresaFilter === "TODOS" || op.empresa === empresaFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesEmpresa;
   });
 
   // Calculation based on custom unit price + aditive price
@@ -258,6 +272,26 @@ export default function CRMPage() {
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
           Nova Oportunidade
         </button>
+      </div>
+
+      {/* Seletor de Empresa */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }}>
+        <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Filtrar Funil:</span>
+        <div style={{ display: "inline-flex", gap: "8px" }}>
+          {[
+            { id: "TODOS", name: "Consolidado" },
+            { id: "JHOSTON", name: "Jhoston Pools" },
+            { id: "ECO_STONE", name: "Eco Stone" }
+          ].map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setEmpresaFilter(c.id)}
+              className={`btn btn-sm ${empresaFilter === c.id ? "btn-primary" : "btn-secondary"}`}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Cards de KPIs */}
@@ -354,6 +388,18 @@ export default function CRMPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", backgroundColor: "rgba(0,0,0,0.05)", color: "var(--text-muted)" }} title="Indexador/ID da Proposta">
                         PROP-{op.id}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          padding: "1px 4px",
+                          backgroundColor: op.empresa === "ECO_STONE" ? "rgba(34, 197, 94, 0.12)" : "rgba(59, 130, 246, 0.12)",
+                          color: op.empresa === "ECO_STONE" ? "#4ade80" : "#60a5fa",
+                          borderRadius: "4px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {op.empresa === "ECO_STONE" ? "Eco Stone" : "Jhoston"}
                       </span>
                       <div style={{ fontWeight: 600, color: "var(--text-heading)" }}>{op.clienteNome}</div>
                     </div>
@@ -573,6 +619,18 @@ export default function CRMPage() {
                       <option value="PROPOSTA_ENVIADA">Proposta Enviada</option>
                       <option value="ACEITO">Aceito (Obra Ativa)</option>
                       <option value="RECUSADO">Recusado</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Empresa Vinculada *</label>
+                    <select
+                      className="form-control"
+                      value={empresa}
+                      onChange={(e) => setEmpresa(e.target.value)}
+                      required
+                    >
+                      <option value="JHOSTON">Jhoston Pools</option>
+                      <option value="ECO_STONE">Eco Stone</option>
                     </select>
                   </div>
                 </div>

@@ -229,6 +229,7 @@ export async function getAutorizacaoCompra(id: number) {
         select: {
           nome: true,
           endereco: true,
+          empresa: true,
         },
       },
       fornecedor: {

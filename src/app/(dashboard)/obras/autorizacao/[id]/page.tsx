@@ -47,6 +47,14 @@ export default function AutorizacaoPreviewPage({
       });
   }, [authId]);
 
+  const isEco = auth?.obra && (auth.obra as any).empresa === "ECO_STONE";
+  const primaryColor = isEco ? "#16a34a" : "#0d9488";
+  const lightBgColor = isEco ? "#f0fdf4" : "#f0fdfa";
+  const borderLightColor = isEco ? "#bbf7d0" : "#99f6e4";
+  const companyName = isEco ? "ECO STONE CASCATAS" : "JHOSTON TEC PISCINAS";
+  const corporateName = isEco ? "ECO STONE" : "VERANO POOLS COMERCIO LTDA";
+  const corporateCNPJ = "63.013.022/0001-06";
+
   if (loading) {
     return (
       <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
@@ -190,28 +198,28 @@ export default function AutorizacaoPreviewPage({
         }}
       >
         {/* Cabeçalho do Documento */}
-        <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "2px solid #0d9488", paddingBottom: "20px", marginBottom: "30px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `2px solid ${primaryColor}`, paddingBottom: "20px", marginBottom: "30px" }}>
           <div>
             <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" }}>
               AUTORIZAÇÃO DE COMPRA
             </h1>
-            <p style={{ margin: "4px 0 0 0", color: "#0d9488", fontSize: "13px", fontWeight: 700 }}>
-              JHOSTON TEC PISCINAS
+            <p style={{ margin: "4px 0 0 0", color: primaryColor, fontSize: "13px", fontWeight: 700 }}>
+              {companyName}
             </p>
           </div>
           <div style={{ textAlign: "right" }}>
             <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#475569", margin: 0 }}>
-              VERANO POOLS COMERCIO LTDA
+              {corporateName}
             </h3>
             <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "#64748b" }}>
-              CNPJ: 63.013.022/0001-06
+              CNPJ: {corporateCNPJ}
             </p>
           </div>
         </div>
 
         {/* Declaração Principal */}
         <p style={{ fontSize: "14px", color: "#1e293b", textAlign: "justify", marginBottom: "24px" }}>
-          A empresa <strong>JHOSTON TEC (VERANO POOLS COMERCIO LTDA)</strong>, por meio desta, autoriza o fornecimento dos materiais e insumos listados abaixo para atendimento à obra indicada, responsabilizando-se pelo faturamento correspondente até o limite financeiro estipulado.
+          A empresa <strong>{isEco ? "ECO STONE" : "JHOSTON TEC (VERANO POOLS COMERCIO LTDA)"}</strong>, por meio desta, autoriza o fornecimento dos materiais e insumos listados abaixo para atendimento à obra indicada, responsabilizando-se pelo faturamento correspondente até o limite financeiro estipulado.
         </p>
 
         {/* Informações da Obra de Destino */}
@@ -288,23 +296,23 @@ export default function AutorizacaoPreviewPage({
             gridTemplateColumns: "1fr 1.5fr",
             gap: "20px",
             marginBottom: "30px",
-            backgroundColor: "#f0fdfa",
-            border: "1px solid #99f6e4",
+            backgroundColor: lightBgColor,
+            border: `1px solid ${borderLightColor}`,
             padding: "16px",
             borderRadius: "6px",
           }}
         >
           <div>
-            <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#0d9488" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: primaryColor }}>
               Valor Limite de Compra
             </span>
-            <div style={{ fontSize: "20px", fontWeight: 800, color: "#0d9488", marginTop: "4px" }}>
+            <div style={{ fontSize: "20px", fontWeight: 800, color: primaryColor, marginTop: "4px" }}>
               {formatCurrency(auth.valorLimite)}
             </div>
           </div>
-          <div style={{ fontSize: "12px", color: "#0f766e" }}>
+          <div style={{ fontSize: "12px", color: isEco ? "#15803d" : "#0f766e" }}>
             <strong>Condição de Faturamento:</strong><br />
-            Esta autorização garante o pagamento pela <strong>JHOSTON TEC (Verano Pools Comercio Ltda)</strong> de notas fiscais emitidas no CNPJ 63.013.022/0001-06, exclusivamente até o limite indicado. Vendas acima deste valor devem receber autorização prévia por escrito.
+            Esta autorização garante o pagamento pela empresa <strong>{isEco ? "ECO STONE" : "JHOSTON TEC (Verano Pools Comercio Ltda)"}</strong> de notas fiscais emitidas no CNPJ {corporateCNPJ}, exclusivamente até o limite indicado. Vendas acima deste valor devem receber autorização prévia por escrito.
           </div>
         </div>
 
@@ -328,7 +336,7 @@ export default function AutorizacaoPreviewPage({
           <div style={{ display: "flex", justifyContent: "space-between", gap: "40px", marginTop: "40px" }}>
             <div style={{ flex: 1, textAlign: "center" }}>
               <div style={{ borderBottom: "1px solid #94a3b8", height: "30px", marginBottom: "6px" }}></div>
-              <strong style={{ fontSize: "13px", color: "#0f172a" }}>JHOSTON TEC PISCINAS</strong>
+              <strong style={{ fontSize: "13px", color: "#0f172a" }}>{companyName}</strong>
               <div style={{ fontSize: "12px", color: "#64748b" }}>Emissor Autorizado</div>
             </div>
             <div style={{ flex: 1, textAlign: "center" }}>
