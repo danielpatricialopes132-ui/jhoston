@@ -13,6 +13,7 @@ interface Obra {
   progressoHidraulica: number;
   progressoRevestimento: number;
   progressoAcabamento: number;
+  empresa: string;
 }
 
 interface Foto {
@@ -63,6 +64,9 @@ export default function DiarioObraPage() {
   const [progressoHidraulica, setProgressoHidraulica] = useState(0);
   const [progressoRevestimento, setProgressoRevestimento] = useState(0);
   const [progressoAcabamento, setProgressoAcabamento] = useState(0);
+
+  const obraAtual = obras.find((o) => o.id === parseInt(selectedObraId));
+  const isEcoStone = obraAtual?.empresa === "ECO_STONE";
 
   useEffect(() => {
     getSession().then((sess) => {
@@ -227,10 +231,12 @@ export default function DiarioObraPage() {
       <div className="flex-row-between">
         <div>
           <h3 style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-heading)" }}>
-            Diário de Obra e Fases da Piscina
+            {isEcoStone ? "Diário de Obra e Fases da Cascata" : "Diário de Obra e Fases da Piscina"}
           </h3>
           <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
-            Registre notas técnicas, anexe fotos do andamento e acompanhe as fases de escavação, estrutura e hidráulica.
+            {isEcoStone
+              ? "Registre notas técnicas, anexe fotos do andamento e acompanhe as fases de vistoria, adequação hidráulica e impermeabilização."
+              : "Registre notas técnicas, anexe fotos do andamento e acompanhe as fases de escavação, estrutura e hidráulica."}
           </p>
         </div>
       </div>
@@ -302,90 +308,35 @@ export default function DiarioObraPage() {
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {/* Escavação */}
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
-                      <span>1. Escavação</span>
-                      <strong>{progressoEscavacao}%</strong>
+                  {(isEcoStone ? [
+                    { label: "1. Vistoria e Proteção", key: "escavacao", val: progressoEscavacao, set: setProgressoEscavacao },
+                    { label: "2. Adequação Hidráulica", key: "hidraulica", val: progressoHidraulica, set: setProgressoHidraulica },
+                    { label: "3. Estruturação e Impermeabilização", key: "estrutura", val: progressoEstrutura, set: setProgressoEstrutura },
+                    { label: "4. Modelagem e Acabamento", key: "revestimento", val: progressoRevestimento, set: setProgressoRevestimento },
+                    { label: "5. Testes e Entrega Técnica", key: "acabamento", val: progressoAcabamento, set: setProgressoAcabamento },
+                  ] : [
+                    { label: "1. Escavação", key: "escavacao", val: progressoEscavacao, set: setProgressoEscavacao },
+                    { label: "2. Alvenaria/Estrutura", key: "estrutura", val: progressoEstrutura, set: setProgressoEstrutura },
+                    { label: "3. Hidráulica/Tubulação", key: "hidraulica", val: progressoHidraulica, set: setProgressoHidraulica },
+                    { label: "4. Revestimento/Azulejo", key: "revestimento", val: progressoRevestimento, set: setProgressoRevestimento },
+                    { label: "5. Acabamento/Tratamento", key: "acabamento", val: progressoAcabamento, set: setProgressoAcabamento },
+                  ]).map((phase) => (
+                    <div key={phase.key}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
+                        <span>{phase.label}</span>
+                        <strong>{phase.val}%</strong>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="10"
+                        style={{ width: "100%", cursor: "pointer" }}
+                        value={phase.val}
+                        onChange={(e) => phase.set(parseInt(e.target.value))}
+                      />
                     </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="10"
-                      style={{ width: "100%", cursor: "pointer" }}
-                      value={progressoEscavacao}
-                      onChange={(e) => setProgressoEscavacao(parseInt(e.target.value))}
-                    />
-                  </div>
-
-                  {/* Estrutura */}
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
-                      <span>2. Alvenaria/Estrutura</span>
-                      <strong>{progressoEstrutura}%</strong>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="10"
-                      style={{ width: "100%", cursor: "pointer" }}
-                      value={progressoEstrutura}
-                      onChange={(e) => setProgressoEstrutura(parseInt(e.target.value))}
-                    />
-                  </div>
-
-                  {/* Hidráulica */}
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
-                      <span>3. Hidráulica/Tubulação</span>
-                      <strong>{progressoHidraulica}%</strong>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="10"
-                      style={{ width: "100%", cursor: "pointer" }}
-                      value={progressoHidraulica}
-                      onChange={(e) => setProgressoHidraulica(parseInt(e.target.value))}
-                    />
-                  </div>
-
-                  {/* Revestimento */}
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
-                      <span>4. Revestimento/Azulejo</span>
-                      <strong>{progressoRevestimento}%</strong>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="10"
-                      style={{ width: "100%", cursor: "pointer" }}
-                      value={progressoRevestimento}
-                      onChange={(e) => setProgressoRevestimento(parseInt(e.target.value))}
-                    />
-                  </div>
-
-                  {/* Acabamento */}
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
-                      <span>5. Acabamento/Tratamento</span>
-                      <strong>{progressoAcabamento}%</strong>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="10"
-                      style={{ width: "100%", cursor: "pointer" }}
-                      value={progressoAcabamento}
-                      onChange={(e) => setProgressoAcabamento(parseInt(e.target.value))}
-                    />
-                  </div>
+                  ))}
                 </div>
               </div>
 

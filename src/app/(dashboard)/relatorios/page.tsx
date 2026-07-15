@@ -13,6 +13,7 @@ interface Obra {
   progressoRevestimento?: number;
   progressoAcabamento?: number;
   createdAt?: string | Date;
+  empresa?: string;
 }
 
 interface Funcionario {
@@ -55,6 +56,7 @@ export default function RelatoriosPage() {
   const [obras, setObras] = useState<Obra[]>([]);
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [empresaFilter, setEmpresaFilter] = useState("TODOS");
 
   // States: Aba 1 (Ponto por Obra)
   const [selectedObraId, setSelectedObraId] = useState("");
@@ -194,6 +196,30 @@ export default function RelatoriosPage() {
         </p>
       </div>
 
+      {/* Seletor de Empresa */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }} className="no-print">
+        <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Filtrar Empresa:</span>
+        <div style={{ display: "inline-flex", gap: "8px" }}>
+          {[
+            { id: "TODOS", name: "Consolidado" },
+            { id: "JHOSTON", name: "Jhoston Pools" },
+            { id: "ECO_STONE", name: "Eco Stone" }
+          ].map((c) => (
+            <button
+              key={c.id}
+              onClick={() => {
+                setEmpresaFilter(c.id);
+                setSelectedObraId("");
+                setAndamentoObraId("");
+              }}
+              className={`btn btn-sm ${empresaFilter === c.id ? "btn-primary" : "btn-secondary"}`}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Tabs */}
       <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-color)", marginBottom: "24px" }} className="no-print">
         <button
@@ -238,7 +264,7 @@ export default function RelatoriosPage() {
                 onChange={(e) => setSelectedObraId(e.target.value)}
               >
                 <option value="">Selecione uma Obra</option>
-                {obras.map((o) => (
+                {obras.filter(o => empresaFilter === "TODOS" || (o as any).empresa === empresaFilter).map((o) => (
                   <option key={o.id} value={o.id}>{o.nome}</option>
                 ))}
               </select>
@@ -571,7 +597,7 @@ export default function RelatoriosPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {lucratividadeReport.map((item) => {
+                    {lucratividadeReport.filter(item => empresaFilter === "TODOS" || item.obra.empresa === empresaFilter).map((item) => {
                       const margemColor =
                         item.margem > 20
                           ? "var(--success)"
@@ -621,7 +647,7 @@ export default function RelatoriosPage() {
                 onChange={(e) => setAndamentoObraId(e.target.value)}
               >
                 <option value="">Selecione uma Obra</option>
-                {obras.map((o) => (
+                {obras.filter(o => empresaFilter === "TODOS" || (o as any).empresa === empresaFilter).map((o) => (
                   <option key={o.id} value={o.id}>{o.nome}</option>
                 ))}
               </select>
@@ -682,7 +708,7 @@ export default function RelatoriosPage() {
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: 700, color: "var(--text-heading)" }}>
-                  <span>Progresso Físico de Instalação (Piscina)</span>
+                  <span>Progresso Físico de Instalação ({andamentoReport.obra.empresa === "ECO_STONE" ? "Cascata" : "Piscina"})</span>
                   <span>Geral: {Math.round((
                     andamentoReport.obra.progressoEscavacao +
                     andamentoReport.obra.progressoEstrutura +
@@ -694,13 +720,19 @@ export default function RelatoriosPage() {
                 
                 {/* 5 barras de progresso */}
                 <div className="progress-print-stack" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px", marginTop: "8px" }}>
-                  {[
+                  {(andamentoReport.obra.empresa === "ECO_STONE" ? [
+                    { label: "1. Vistoria e Proteção", val: andamentoReport.obra.progressoEscavacao },
+                    { label: "2. Adequação Hidráulica", val: andamentoReport.obra.progressoHidraulica },
+                    { label: "3. Estrutura e Impermeab.", val: andamentoReport.obra.progressoEstrutura },
+                    { label: "4. Modelagem e Acabamento", val: andamentoReport.obra.progressoRevestimento },
+                    { label: "5. Testes e Entrega", val: andamentoReport.obra.progressoAcabamento }
+                  ] : [
                     { label: "1. Escavação", val: andamentoReport.obra.progressoEscavacao },
                     { label: "2. Alvenaria/Estrutura", val: andamentoReport.obra.progressoEstrutura },
                     { label: "3. Hidráulica/Instalações", val: andamentoReport.obra.progressoHidraulica },
                     { label: "4. Revestimento/Azulejo", val: andamentoReport.obra.progressoRevestimento },
                     { label: "5. Acabamento/Entrega", val: andamentoReport.obra.progressoAcabamento }
-                  ].map((fase) => (
+                  ]).map((fase) => (
                     <div key={fase.label} style={{ fontSize: "12px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", color: "var(--text-main)", fontWeight: 600 }}>
                         <span>{fase.label}</span>

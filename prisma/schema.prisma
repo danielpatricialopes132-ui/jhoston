@@ -29,6 +29,7 @@ model Obra {
   status                String                @default("ATIVA") // "ATIVA", "FINALIZADA", "SUSPENSA"
   valorFechado          Float                 @default(0)
   observacoesPermuta    String?
+  empresa               String                @default("JHOSTON")
   clientes              Cliente[]             @relation("ObraClientes")
   documentos            DocumentoObra[]
   procuradorId          Int?
@@ -138,6 +139,7 @@ model TransacaoFinanceira {
   clienteFornecedor String?
   fornecedorId      Int?
   fornecedor        Fornecedor? @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
+  empresa           String      @default("JHOSTON")
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 }
@@ -207,6 +209,7 @@ model Oportunidade {
   observacoes      String?
   precoUnitario    Float?
   precoAditivo     Float?
+  empresa          String   @default("JHOSTON")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }

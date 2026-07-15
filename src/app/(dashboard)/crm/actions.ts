@@ -43,6 +43,7 @@ export async function salvarOportunidade(data: {
   observacoes?: string;
   precoUnitario?: number;
   precoAditivo?: number;
+  empresa?: string;
 }) {
   await requireAdmin();
 
@@ -50,7 +51,7 @@ export async function salvarOportunidade(data: {
     return { success: false, error: "O nome do cliente é obrigatório." };
   }
 
-  if (data.produto !== "PREMIUM" && data.produto !== "SUPER_PREMIUM") {
+  if (data.produto !== "PREMIUM" && data.produto !== "SUPER_PREMIUM" && data.produto !== "CASCATA") {
     return { success: false, error: "O tipo do produto selecionado é inválido." };
   }
 
@@ -61,14 +62,16 @@ export async function salvarOportunidade(data: {
   // Preços unitários padrão se não informados customizados
   const unitPrice = data.precoUnitario !== undefined && data.precoUnitario !== null 
     ? data.precoUnitario 
-    : (data.produto === "SUPER_PREMIUM" ? 350.0 : 270.0);
+    : (data.produto === "CASCATA" ? 18000.0 : (data.produto === "SUPER_PREMIUM" ? 350.0 : 270.0));
   
   const aditivoPrice = data.precoAditivo !== undefined && data.precoAditivo !== null
     ? data.precoAditivo
-    : 25.0;
+    : (data.produto === "CASCATA" ? 5000.0 : 25.0);
 
   // Cálculo automático do valor final da proposta comercial:
   const valorProposta = data.areaPiscina * (unitPrice + aditivoPrice);
+
+  const empresa = data.produto === "CASCATA" ? "ECO_STONE" : (data.empresa || "JHOSTON");
 
   const payload = {
     clienteNome: data.clienteNome.trim(),
@@ -83,6 +86,7 @@ export async function salvarOportunidade(data: {
     observacoes: data.observacoes?.trim() || null,
     precoUnitario: unitPrice,
     precoAditivo: aditivoPrice,
+    empresa: empresa,
   };
 
   try {
@@ -157,6 +161,7 @@ export async function converterParaObra(id: number, nomeObra: string, valorFecha
         endereco: oportunidade.endereco,
         status: "ATIVA",
         valorFechado: valorFechado,
+        empresa: oportunidade.empresa,
         progressoEscavacao: 0,
         progressoEstrutura: 0,
         progressoHidraulica: 0,

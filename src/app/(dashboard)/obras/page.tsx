@@ -43,6 +43,7 @@ interface Obra {
   documentos: Documento[];
   procuradorId: number | null;
   procurador: Cliente | null;
+  empresa: string;
 }
 
 interface FornecedorInfo {
@@ -126,8 +127,10 @@ export default function ObrasPage() {
   const [endereco, setEndereco] = useState("");
   const [status, setStatus] = useState("ATIVA");
   const [observacoesPermuta, setObservacoesPermuta] = useState("");
+  const [empresa, setEmpresa] = useState("JHOSTON");
   const [errorMsg, setErrorMsg] = useState("");
   const [clientSearchTerm, setClientSearchTerm] = useState("");
+  const [empresaFilter, setEmpresaFilter] = useState("TODAS");
 
   // Extracted clients from IA that will be created on save
   const [extractedClients, setExtractedClients] = useState<any[]>([]);
@@ -152,6 +155,7 @@ export default function ObrasPage() {
     setEndereco("");
     setStatus("ATIVA");
     setObservacoesPermuta("");
+    setEmpresa("JHOSTON");
     setErrorMsg("");
     setClientSearchTerm("");
     setExtractedClients([]);
@@ -168,6 +172,7 @@ export default function ObrasPage() {
     setEndereco(obra.endereco || "");
     setStatus(obra.status);
     setObservacoesPermuta(obra.observacoesPermuta || "");
+    setEmpresa(obra.empresa || "JHOSTON");
     setErrorMsg("");
     setClientSearchTerm("");
     setExtractedClients([]);
@@ -449,6 +454,7 @@ export default function ObrasPage() {
           endereco,
           status,
           observacoesPermuta,
+          empresa,
         };
         res = await updateObra(editingObra.id, payload);
       } else {
@@ -469,6 +475,7 @@ export default function ObrasPage() {
             endereco,
             status,
             observacoesPermuta,
+            empresa,
           };
           res = await createObra(payload);
         }
@@ -501,8 +508,9 @@ export default function ObrasPage() {
       (o.endereco && o.endereco.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus = statusFilter === "TODAS" || o.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
+    const matchesEmpresa = empresaFilter === "TODAS" || o.empresa === empresaFilter;
+ 
+    return matchesSearch && matchesStatus && matchesEmpresa;
   });
 
   const formatCurrency = (val: number) => {
@@ -549,6 +557,18 @@ export default function ObrasPage() {
           />
         </div>
         <div className="form-group" style={{ flex: 1 }}>
+          <label className="form-label">Filtrar por Empresa</label>
+          <select
+            className="form-control"
+            value={empresaFilter}
+            onChange={(e) => setEmpresaFilter(e.target.value)}
+          >
+            <option value="TODAS">Todas as Empresas</option>
+            <option value="JHOSTON">Jhoston Pools</option>
+            <option value="ECO_STONE">Eco Stone</option>
+          </select>
+        </div>
+        <div className="form-group" style={{ flex: 1 }}>
           <label className="form-label">Filtrar por Status</label>
           <select
             className="form-control"
@@ -590,6 +610,18 @@ export default function ObrasPage() {
                   <td style={{ fontWeight: 600, color: "var(--text-muted)" }}>#{obra.id}</td>
                   <td style={{ fontWeight: 600, color: "var(--text-heading)", verticalAlign: "middle" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          padding: "2px 6px",
+                          backgroundColor: obra.empresa === "ECO_STONE" ? "rgba(34, 197, 94, 0.15)" : "rgba(59, 130, 246, 0.15)",
+                          color: obra.empresa === "ECO_STONE" ? "#4ade80" : "#60a5fa",
+                          borderRadius: "4px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {obra.empresa === "ECO_STONE" ? "Eco Stone" : "Jhoston"}
+                      </span>
                       <span>{obra.nome}</span>
                       {obra.documentos && obra.documentos.length > 0 && (
                         <span
@@ -893,18 +925,32 @@ export default function ObrasPage() {
                     rows={2}
                   />
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Status da Obra</label>
-                  <select
-                    className="form-control"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                  >
-                    <option value="ATIVA">Ativa</option>
-                    <option value="FINALIZADA">Finalizada</option>
-                    <option value="SUSPENSA">Suspensa</option>
-                  </select>
-                </div>
+                <div className="grid-cols-2" style={{ gap: "16px" }}>
+                   <div className="form-group">
+                     <label className="form-label">Status da Obra</label>
+                     <select
+                       className="form-control"
+                       value={status}
+                       onChange={(e) => setStatus(e.target.value)}
+                     >
+                       <option value="ATIVA">Ativa</option>
+                       <option value="FINALIZADA">Finalizada</option>
+                       <option value="SUSPENSA">Suspensa</option>
+                     </select>
+                   </div>
+                   <div className="form-group">
+                     <label className="form-label">Empresa Responsável *</label>
+                     <select
+                       className="form-control"
+                       value={empresa}
+                       onChange={(e) => setEmpresa(e.target.value)}
+                       required
+                     >
+                       <option value="JHOSTON">Jhoston Pools</option>
+                       <option value="ECO_STONE">Eco Stone</option>
+                     </select>
+                   </div>
+                 </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>

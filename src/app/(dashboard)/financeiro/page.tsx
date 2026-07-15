@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
-import { getFinanceiroData, salvarTransacao, deleteTransacao, alterarStatusTransacao } from "./actions";
+import { getFinanceiroData, salvarTransacao, deleteTransacao, alterarStatusTransacao, salvarTransferenciaIntercompany } from "./actions";
 import { salvarFornecedor } from "../fornecedores/actions";
 import { getSession } from "@/app/login/actions";
 import Link from "next/link";
@@ -69,7 +69,19 @@ export default function FinanceiroPage() {
   const [dataPagamento, setDataPagamento] = useState("");
   const [clienteFornecedor, setClienteFornecedor] = useState("");
   const [fornecedorId, setFornecedorId] = useState("");
+  const [empresa, setEmpresa] = useState("JHOSTON");
   const [errorMsg, setErrorMsg] = useState("");
+  const [empresaFilter, setEmpresaFilter] = useState("TODOS");
+
+  // Intercompany Transfer Modal states
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [transferOrigem, setTransferOrigem] = useState<"JHOSTON" | "ECO_STONE">("JHOSTON");
+  const [transferDestino, setTransferDestino] = useState<"JHOSTON" | "ECO_STONE">("ECO_STONE");
+  const [transferValor, setTransferValor] = useState("");
+  const [transferData, setTransferData] = useState(new Date().toISOString().split("T")[0]);
+  const [transferDescricao, setTransferDescricao] = useState("");
+  const [transferError, setTransferError] = useState("");
+  const [transferSubmitting, setTransferSubmitting] = useState(false);
 
   // Quick Fornecedor Modal states
   const [isQuickFornecedorOpen, setIsQuickFornecedorOpen] = useState(false);
@@ -109,6 +121,7 @@ export default function FinanceiroPage() {
     setDataPagamento("");
     setClienteFornecedor("");
     setFornecedorId("");
+    setEmpresa("JHOSTON");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -125,6 +138,7 @@ export default function FinanceiroPage() {
     setDataPagamento(t.dataPagamento || "");
     setClienteFornecedor(t.clienteFornecedor || "");
     setFornecedorId(t.fornecedorId ? t.fornecedorId.toString() : "");
+    setEmpresa((t as any).empresa || "JHOSTON");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -163,6 +177,7 @@ export default function FinanceiroPage() {
       status,
       clienteFornecedor: tipo === "DESPESA" && categoria === "Fornecedores" ? "" : clienteFornecedor,
       fornecedorId: tipo === "DESPESA" && categoria === "Fornecedores" && fornecedorId ? parseInt(fornecedorId) : null,
+      empresa,
     };
 
     startTransition(async () => {
@@ -172,6 +187,45 @@ export default function FinanceiroPage() {
         closeModal();
       } else {
         setErrorMsg("Erro ao salvar a transação.");
+      }
+    });
+  };
+
+  const handleTransferSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (transferOrigem === transferDestino) {
+      setTransferError("As empresas de origem e destino devem ser diferentes.");
+      return;
+    }
+    const val = parseFloat(transferValor);
+    if (isNaN(val) || val <= 0) {
+      setTransferError("Insira um valor válido maior que zero.");
+      return;
+    }
+    if (!transferDescricao.trim()) {
+      setTransferError("A descrição do empréstimo é obrigatória.");
+      return;
+    }
+
+    setTransferSubmitting(true);
+    setTransferError("");
+
+    startTransition(async () => {
+      const res = await salvarTransferenciaIntercompany({
+        origem: transferOrigem,
+        destino: transferDestino,
+        valor: val,
+        dataVencimento: transferData,
+        descricao: transferDescricao,
+      });
+      setTransferSubmitting(false);
+      if (res.success) {
+        loadData();
+        setIsTransferModalOpen(false);
+        setTransferValor("");
+        setTransferDescricao("");
+      } else {
+        setTransferError(res.error || "Erro ao salvar transferência.");
       }
     });
   };
@@ -224,13 +278,18 @@ export default function FinanceiroPage() {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
   };
 
+  // Filtrar transações globais para os cálculos dependendo da empresa
+  const transacoesFiltradasEmpresa = transacoes.filter(
+    (t) => empresaFilter === "TODOS" || (t as any).empresa === empresaFilter
+  );
+
   // Cálculos Financeiros Globais
-  const receitasRecebidas = transacoes.filter((t) => t.tipo === "RECEITA" && t.status === "PAGO").reduce((acc, t) => acc + t.valor, 0);
-  const despesasPagas = transacoes.filter((t) => t.tipo === "DESPESA" && t.status === "PAGO").reduce((acc, t) => acc + t.valor, 0);
+  const receitasRecebidas = transacoesFiltradasEmpresa.filter((t) => t.tipo === "RECEITA" && t.status === "PAGO").reduce((acc, t) => acc + t.valor, 0);
+  const despesasPagas = transacoesFiltradasEmpresa.filter((t) => t.tipo === "DESPESA" && t.status === "PAGO").reduce((acc, t) => acc + t.valor, 0);
   const caixaAtual = receitasRecebidas - despesasPagas;
 
-  const contasAReceberPendente = transacoes.filter((t) => t.tipo === "RECEITA" && t.status !== "PAGO").reduce((acc, t) => acc + t.valor, 0);
-  const contasAPagarPendente = transacoes.filter((t) => t.tipo === "DESPESA" && t.status !== "PAGO").reduce((acc, t) => acc + t.valor, 0);
+  const contasAReceberPendente = transacoesFiltradasEmpresa.filter((t) => t.tipo === "RECEITA" && t.status !== "PAGO").reduce((acc, t) => acc + t.valor, 0);
+  const contasAPagarPendente = transacoesFiltradasEmpresa.filter((t) => t.tipo === "DESPESA" && t.status !== "PAGO").reduce((acc, t) => acc + t.valor, 0);
 
   // Filtragem da lista
   const filteredTransacoes = transacoes.filter((t) => {
@@ -241,8 +300,9 @@ export default function FinanceiroPage() {
     const matchesTipo = tipoFilter === "TODOS" || t.tipo === tipoFilter;
     const matchesStatus = statusFilter === "TODOS" || t.status === statusFilter;
     const matchesObra = obraFilter === "TODOS" || t.obraId?.toString() === obraFilter;
+    const matchesEmpresa = empresaFilter === "TODOS" || (t as any).empresa === empresaFilter;
 
-    return matchesSearch && matchesTipo && matchesStatus && matchesObra;
+    return matchesSearch && matchesTipo && matchesStatus && matchesObra && matchesEmpresa;
   });
 
   // Carga e processamento dos gráficos
@@ -265,7 +325,7 @@ export default function FinanceiroPage() {
   };
 
   const monthlyData = getLast6Months();
-  transacoes.forEach((t) => {
+  transacoesFiltradasEmpresa.forEach((t) => {
     if (t.status === "PAGO") {
       const dateStr = t.dataPagamento || t.dataVencimento;
       if (dateStr) {
@@ -289,7 +349,7 @@ export default function FinanceiroPage() {
     "Outros": 0,
   };
   let totalDespesasRealizadas = 0;
-  transacoes.forEach((t) => {
+  transacoesFiltradasEmpresa.forEach((t) => {
     if (t.tipo === "DESPESA" && t.status === "PAGO") {
       const cat = t.categoria || "Outros";
       if (cat in categoriesMap) {
@@ -466,6 +526,31 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
+      {/* Seletor de Empresa */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }}>
+        <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Visualizar Empresa:</span>
+        <div style={{ display: "inline-flex", gap: "8px" }}>
+          {[
+            { id: "TODOS", name: "Consolidado" },
+            { id: "JHOSTON", name: "Jhoston Pools" },
+            { id: "ECO_STONE", name: "Eco Stone" }
+          ].map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setEmpresaFilter(c.id)}
+              className={`btn btn-sm ${empresaFilter === c.id ? "btn-primary" : "btn-secondary"}`}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+        <div style={{ marginLeft: "auto" }}>
+          <button className="btn btn-secondary btn-sm" onClick={() => setIsTransferModalOpen(true)} style={{ gap: "6px", display: "inline-flex", alignItems: "center", borderColor: "#f59e0b", color: "#f59e0b" }}>
+            🤝 Transferência Intercompany
+          </button>
+        </div>
+      </div>
+
       {/* Cards de Resumo */}
       <div className="grid-cols-4">
         <div className="card">
@@ -621,15 +706,15 @@ export default function FinanceiroPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {obras.filter(o => o.status === "ATIVA").length === 0 ? (
+                  {obras.filter(o => o.status === "ATIVA" && (empresaFilter === "TODOS" || (o as any).empresa === empresaFilter)).length === 0 ? (
                     <tr>
                       <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "24px", fontStyle: "italic" }}>
                         Nenhuma obra ativa encontrada para análise.
                       </td>
                     </tr>
                   ) : (
-                    obras.filter(o => o.status === "ATIVA").map((o) => {
-                      const despesas = transacoes
+                    obras.filter(o => o.status === "ATIVA" && (empresaFilter === "TODOS" || (o as any).empresa === empresaFilter)).map((o) => {
+                      const despesas = transacoesFiltradasEmpresa
                         .filter((t) => t.obraId === o.id && t.tipo === "DESPESA")
                         .reduce((acc, t) => acc + t.valor, 0);
                       const valorFechado = o.valorFechado || 0;
@@ -741,9 +826,25 @@ export default function FinanceiroPage() {
               filteredTransacoes.map((t) => (
                 <tr key={t.id}>
                   <td>
-                    <span className={`badge ${t.tipo === "RECEITA" ? "badge-success" : "badge-danger"}`}>
-                      {t.tipo === "RECEITA" ? "Receita" : "Despesa"}
-                    </span>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <span className={`badge ${t.tipo === "RECEITA" ? "badge-success" : "badge-danger"}`} style={{ display: "inline-block", textAlign: "center" }}>
+                        {t.tipo === "RECEITA" ? "Receita" : "Despesa"}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          padding: "1px 4px",
+                          backgroundColor: (t as any).empresa === "ECO_STONE" ? "rgba(34, 197, 94, 0.12)" : "rgba(59, 130, 246, 0.12)",
+                          color: (t as any).empresa === "ECO_STONE" ? "#4ade80" : "#60a5fa",
+                          borderRadius: "4px",
+                          fontWeight: 600,
+                          textAlign: "center",
+                          display: "inline-block"
+                        }}
+                      >
+                        {(t as any).empresa === "ECO_STONE" ? "Eco Stone" : "Jhoston"}
+                      </span>
+                    </div>
                   </td>
                   <td style={{ fontWeight: 600 }}>
                     {t.clienteFornecedor || <em style={{ color: "var(--text-muted)" }}>Não informado</em>}
@@ -935,24 +1036,31 @@ export default function FinanceiroPage() {
 
                 <div className="form-row">
                   <div className="form-group">
+                    <label className="form-label">Empresa *</label>
+                    <select className="form-control" value={empresa} onChange={(e) => setEmpresa(e.target.value)} required>
+                      <option value="JHOSTON">Jhoston Pools</option>
+                      <option value="ECO_STONE">Eco Stone</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
                     <label className="form-label">Status da Transação</label>
                     <select className="form-control" value={status} onChange={(e) => setStatus(e.target.value)}>
                       <option value="PENDENTE">Pendente</option>
                       <option value="PAGO">Pago / Liquidado</option>
                     </select>
                   </div>
-                  {status === "PAGO" && (
-                    <div className="form-group">
-                      <label className="form-label">Data do Pagamento</label>
-                      <input
-                        type="date"
-                        className="form-control"
-                        value={dataPagamento}
-                        onChange={(e) => setDataPagamento(e.target.value)}
-                      />
-                    </div>
-                  )}
                 </div>
+                {status === "PAGO" && (
+                  <div className="form-group">
+                    <label className="form-label">Data do Pagamento</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={dataPagamento}
+                      onChange={(e) => setDataPagamento(e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>
@@ -1015,6 +1123,113 @@ export default function FinanceiroPage() {
                 </button>
                 <button type="submit" className="btn btn-primary">
                   Cadastrar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Modal de Transferência Intercompany */}
+      {isTransferModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "450px" }}>
+            <div className="modal-header">
+              <h4 style={{ fontSize: "16px", fontWeight: 600 }}>🤝 Nova Transferência Intercompany</h4>
+              <button 
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px" }} 
+                onClick={() => setIsTransferModalOpen(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleTransferSubmit}>
+              <div className="modal-body">
+                {transferError && (
+                  <div style={{ backgroundColor: "var(--error-bg)", color: "var(--error)", padding: "12px", borderRadius: "var(--radius-md)", marginBottom: "16px", fontSize: "13px", fontWeight: 500 }}>
+                    {transferError}
+                  </div>
+                )}
+                <div className="form-group">
+                  <label className="form-label">Empresa de Origem (Debitará R$)</label>
+                  <select 
+                    className="form-control" 
+                    value={transferOrigem} 
+                    onChange={(e) => {
+                      const val = e.target.value as "JHOSTON" | "ECO_STONE";
+                      setTransferOrigem(val);
+                      setTransferDestino(val === "JHOSTON" ? "ECO_STONE" : "JHOSTON");
+                    }}
+                    required
+                  >
+                    <option value="JHOSTON">Jhoston Pools</option>
+                    <option value="ECO_STONE">Eco Stone</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Empresa de Destino (Receberá R$)</label>
+                  <select 
+                    className="form-control" 
+                    value={transferDestino} 
+                    onChange={(e) => {
+                      const val = e.target.value as "JHOSTON" | "ECO_STONE";
+                      setTransferDestino(val);
+                      setTransferOrigem(val === "JHOSTON" ? "ECO_STONE" : "JHOSTON");
+                    }}
+                    required
+                  >
+                    <option value="JHOSTON">Jhoston Pools</option>
+                    <option value="ECO_STONE">Eco Stone</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Valor do Empréstimo (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    className="form-control"
+                    placeholder="Ex: 5000.00"
+                    value={transferValor}
+                    onChange={(e) => setTransferValor(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Data do Lançamento</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={transferData}
+                    onChange={(e) => setTransferData(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Descrição / Motivo</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Ex: Empréstimo para fluxo de caixa / folha Eco Stone"
+                    value={transferDescricao}
+                    onChange={(e) => setTransferDescricao(e.target.value)}
+                    required
+                  />
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                    Esta ação criará simultaneamente uma DESPESA na origem e uma RECEITA no destino sob a categoria &quot;Empréstimo Intercompany&quot;.
+                  </p>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setIsTransferModalOpen(false)}
+                  disabled={transferSubmitting}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={transferSubmitting}>
+                  {transferSubmitting ? "Processando..." : "Confirmar Transferência"}
                 </button>
               </div>
             </form>

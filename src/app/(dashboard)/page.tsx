@@ -4,7 +4,7 @@ import { getSession } from "@/app/login/actions";
 
 export const dynamic = "force-dynamic";
 
-async function getDashboardData() {
+async function getDashboardData(empresaFilter: string) {
   const [
     obrasAtivasCount,
     funcionariosCount,
@@ -13,14 +13,27 @@ async function getDashboardData() {
     vales,
     obrasAtivasLista,
   ] = await Promise.all([
-    prisma.obra.count({ where: { status: "ATIVA" } }),
+    prisma.obra.count({ 
+      where: { 
+        status: "ATIVA",
+        ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+      } 
+    }),
     prisma.funcionario.count({ where: { ativo: true } }),
     prisma.transacaoFinanceira.findMany({
+      where: {
+        ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+      },
       include: { obra: true },
       orderBy: { dataVencimento: "desc" },
       take: 5,
     }),
     prisma.viagem.findMany({
+      where: {
+        obra: {
+          ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+        }
+      },
       include: { obra: true },
       orderBy: { id: "desc" },
       take: 5,
@@ -32,7 +45,10 @@ async function getDashboardData() {
       take: 5,
     }),
     prisma.obra.findMany({
-      where: { status: "ATIVA" },
+      where: { 
+        status: "ATIVA",
+        ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+      },
       orderBy: { nome: "asc" },
     }),
   ]);
@@ -40,10 +56,17 @@ async function getDashboardData() {
   // Cálculos Financeiros
   const [transacoesPagas, despesasPendentes] = await Promise.all([
     prisma.transacaoFinanceira.findMany({
-      where: { status: "PAGO" },
+      where: { 
+        status: "PAGO",
+        ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+      },
     }),
     prisma.transacaoFinanceira.findMany({
-      where: { tipo: "DESPESA", status: "PENDENTE" },
+      where: { 
+        tipo: "DESPESA", 
+        status: "PENDENTE",
+        ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+      },
     }),
   ]);
 
@@ -94,6 +117,24 @@ async function getDashboardData() {
     }
   });
 
+  // Empréstimo Intercompany
+  const intercompanyTransacoes = await prisma.transacaoFinanceira.findMany({
+    where: {
+      categoria: "Empréstimo Intercompany",
+      status: "PAGO",
+    },
+  });
+
+  const jhostonOutflows = intercompanyTransacoes
+    .filter((t) => t.empresa === "JHOSTON" && t.tipo === "DESPESA")
+    .reduce((acc, t) => acc + t.valor, 0);
+
+  const jhostonInflows = intercompanyTransacoes
+    .filter((t) => t.empresa === "JHOSTON" && t.tipo === "RECEITA")
+    .reduce((acc, t) => acc + t.valor, 0);
+
+  const saldoEmprestimo = jhostonOutflows - jhostonInflows;
+
   return {
     obrasAtivasCount,
     funcionariosCount,
@@ -104,6 +145,7 @@ async function getDashboardData() {
     despesasPagas,
     saldoCaixa,
     obrasAtivasLista,
+    saldoEmprestimo,
     vencimentoAlerts: {
       hoje: { count: contasHojeCount, valor: contasHojeValor },
       amanha: { count: contas1DiaCount, valor: contas1DiaValor },
@@ -113,8 +155,14 @@ async function getDashboardData() {
   };
 }
 
-export default async function DashboardPage() {
-  const data = await getDashboardData();
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ empresa?: string }> | { empresa?: string } | undefined;
+}) {
+  const resolvedParams = searchParams ? (searchParams instanceof Promise ? await searchParams : searchParams) : {};
+  const empresaFilter = resolvedParams.empresa || "TODOS";
+  const data = await getDashboardData(empresaFilter);
   const session = await getSession();
   const isMaster = session?.userRole === "MASTER";
 
@@ -171,7 +219,7 @@ export default async function DashboardPage() {
             Painel Financeiro Geral
           </h3>
           <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
-            JHOSTON TEC Piscinas — Resumo do fluxo de caixa e status das operações.
+            JHOSTON TEC — Resumo do fluxo de caixa e status das operações.
           </p>
         </div>
         <div style={{ display: "inline-flex", gap: "10px" }}>
@@ -189,6 +237,73 @@ export default async function DashboardPage() {
           </Link>
           <Link href="/financeiro" className="btn btn-primary">
             Lançar Finanças
+          </Link>
+        </div>
+      </div>
+
+      {/* Seletor de Empresa */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "24px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }}>
+        <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Visualizar Empresa:</span>
+        <div style={{ display: "inline-flex", gap: "8px" }}>
+          {[
+            { id: "TODOS", name: "Consolidado" },
+            { id: "JHOSTON", name: "Jhoston Pools" },
+            { id: "ECO_STONE", name: "Eco Stone" }
+          ].map((c) => (
+            <Link
+              key={c.id}
+              href={c.id === "TODOS" ? "/" : `/?empresa=${c.id}`}
+              className={`btn btn-sm ${empresaFilter === c.id ? "btn-primary" : "btn-secondary"}`}
+              style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+            >
+              {c.name}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Widget de Saldo de Empréstimos Intercompany */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "16px",
+          backgroundColor: "var(--bg-card)",
+          border: "1px solid var(--border-color)",
+          borderLeft: `5px solid ${data.saldoEmprestimo !== 0 ? "#f59e0b" : "var(--success)"}`,
+          borderRadius: "var(--radius-md)",
+          padding: "16px 20px",
+          marginBottom: "24px",
+          boxShadow: "var(--shadow-sm)",
+        }}
+      >
+        <div style={{ fontSize: "24px" }}>🤝</div>
+        <div>
+          <h4 style={{ fontSize: "14px", fontWeight: 700, margin: 0, color: "var(--text-heading)" }}>
+            Saldo de Empréstimos Intercompany
+          </h4>
+          <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: "4px 0 0 0", lineHeight: 1.4 }}>
+            {data.saldoEmprestimo > 0 ? (
+              <>
+                A <strong>ECO STONE</strong> deve ao caixa da <strong>JHOSTON POOLS</strong> o valor líquido de{" "}
+                <strong style={{ color: "#d97706" }}>{formatCurrency(data.saldoEmprestimo)}</strong>.
+              </>
+            ) : data.saldoEmprestimo < 0 ? (
+              <>
+                A <strong>JHOSTON POOLS</strong> deve ao caixa da <strong>ECO STONE</strong> o valor líquido de{" "}
+                <strong style={{ color: "#d97706" }}>{formatCurrency(Math.abs(data.saldoEmprestimo))}</strong>.
+              </>
+            ) : (
+              <>
+                As contas de empréstimos mútuos entre <strong>JHOSTON POOLS</strong> e <strong>ECO STONE</strong> estão{" "}
+                <strong style={{ color: "var(--success)" }}>100% equilibradas</strong>.
+              </>
+            )}
+          </p>
+        </div>
+        <div style={{ marginLeft: "auto" }}>
+          <Link href="/financeiro" className="btn btn-secondary btn-sm" style={{ textDecoration: "none" }}>
+            Realizar Transferência
           </Link>
         </div>
       </div>
@@ -381,6 +496,21 @@ export default async function DashboardPage() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             {data.obrasAtivasLista.map((o) => {
+               const isEco = o.empresa === "ECO_STONE";
+               const phases = isEco ? [
+                 { label: "1. Vistoria", val: o.progressoEscavacao },
+                 { label: "2. Adeq. Hidráu.", val: o.progressoHidraulica },
+                 { label: "3. Estruturação", val: o.progressoEstrutura },
+                 { label: "4. Modelagem", val: o.progressoRevestimento },
+                 { label: "5. Testes", val: o.progressoAcabamento },
+               ] : [
+                 { label: "1. Escavação", val: o.progressoEscavacao },
+                 { label: "2. Alvenaria", val: o.progressoEstrutura },
+                 { label: "3. Hidráulica", val: o.progressoHidraulica },
+                 { label: "4. Revestimento", val: o.progressoRevestimento },
+                 { label: "5. Entrega", val: o.progressoAcabamento },
+               ];
+
               const geral = Math.round(
                 (o.progressoEscavacao +
                   o.progressoEstrutura +
@@ -401,7 +531,19 @@ export default async function DashboardPage() {
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                    <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                       <span
+                         style={{
+                           fontSize: "10px",
+                           padding: "1px 5px",
+                           backgroundColor: isEco ? "rgba(34, 197, 94, 0.15)" : "rgba(59, 130, 246, 0.15)",
+                           color: isEco ? "#4ade80" : "#60a5fa",
+                           borderRadius: "4px",
+                           fontWeight: 600
+                         }}
+                       >
+                         {isEco ? "Eco Stone" : "Jhoston"}
+                       </span>
                       <strong style={{ fontSize: "15px", color: "var(--text-heading)" }}>{o.nome}</strong>
                       <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "12px" }}>Cliente: {o.clienteNome}</span>
                     </div>
@@ -410,45 +552,16 @@ export default async function DashboardPage() {
 
                   {/* Barras de progresso das 5 etapas */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "12px" }}>
-                    {/* Escavação */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>1. Escavação ({o.progressoEscavacao}%)</span>
-                      <div style={{ width: "100%", height: "6px", backgroundColor: "#e2e8f0", borderRadius: "3px", overflow: "hidden" }}>
-                        <div style={{ width: `${o.progressoEscavacao}%`, height: "100%", backgroundColor: o.progressoEscavacao === 100 ? "var(--success)" : "var(--primary)" }} />
+                    {phases.map((phase, idx) => (
+                      <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                        <span style={{ fontSize: "11px", color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {phase.label} ({phase.val}%)
+                        </span>
+                        <div style={{ width: "100%", height: "6px", backgroundColor: "#e2e8f0", borderRadius: "3px", overflow: "hidden" }}>
+                          <div style={{ width: `${phase.val}%`, height: "100%", backgroundColor: phase.val === 100 ? "var(--success)" : "var(--primary)" }} />
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Estrutura */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>2. Alvenaria ({o.progressoEstrutura}%)</span>
-                      <div style={{ width: "100%", height: "6px", backgroundColor: "#e2e8f0", borderRadius: "3px", overflow: "hidden" }}>
-                        <div style={{ width: `${o.progressoEstrutura}%`, height: "100%", backgroundColor: o.progressoEstrutura === 100 ? "var(--success)" : "var(--primary)" }} />
-                      </div>
-                    </div>
-
-                    {/* Hidráulica */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>3. Hidráulica ({o.progressoHidraulica}%)</span>
-                      <div style={{ width: "100%", height: "6px", backgroundColor: "#e2e8f0", borderRadius: "3px", overflow: "hidden" }}>
-                        <div style={{ width: `${o.progressoHidraulica}%`, height: "100%", backgroundColor: o.progressoHidraulica === 100 ? "var(--success)" : "var(--primary)" }} />
-                      </div>
-                    </div>
-
-                    {/* Revestimento */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>4. Revestimento ({o.progressoRevestimento}%)</span>
-                      <div style={{ width: "100%", height: "6px", backgroundColor: "#e2e8f0", borderRadius: "3px", overflow: "hidden" }}>
-                        <div style={{ width: `${o.progressoRevestimento}%`, height: "100%", backgroundColor: o.progressoRevestimento === 100 ? "var(--success)" : "var(--primary)" }} />
-                      </div>
-                    </div>
-
-                    {/* Acabamento */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>5. Entrega ({o.progressoAcabamento}%)</span>
-                      <div style={{ width: "100%", height: "6px", backgroundColor: "#e2e8f0", borderRadius: "3px", overflow: "hidden" }}>
-                        <div style={{ width: `${o.progressoAcabamento}%`, height: "100%", backgroundColor: o.progressoAcabamento === 100 ? "var(--success)" : "var(--primary)" }} />
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               );

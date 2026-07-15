@@ -34,9 +34,12 @@ export async function GET(
     }
 
     // 4. Definir arquivo de template
-    const templateName = oportunidade.produto === "SUPER_PREMIUM"
-      ? "Proposta_Super_Premium_Template.docx"
-      : "Proposta_Premium_Template.docx";
+    let templateName = "Proposta_Premium_Template.docx";
+    if (oportunidade.produto === "SUPER_PREMIUM") {
+      templateName = "Proposta_Super_Premium_Template.docx";
+    } else if (oportunidade.produto === "CASCATA") {
+      templateName = "Proposta_Cascata_Template.docx";
+    }
 
     const templatePath = path.join(process.cwd(), "src", "templates", templateName);
 
@@ -55,15 +58,19 @@ export async function GET(
     // Cálculos de Proposta com valores customizados (com fallbacks para retrocompatibilidade)
     const precoUnitario = oportunidade.precoUnitario !== null && oportunidade.precoUnitario !== undefined
       ? oportunidade.precoUnitario
-      : (oportunidade.produto === "SUPER_PREMIUM" ? 350.0 : 270.0);
+      : (oportunidade.produto === "CASCATA" ? 18000.0 : (oportunidade.produto === "SUPER_PREMIUM" ? 350.0 : 270.0));
     
     const precoAditivo = oportunidade.precoAditivo !== null && oportunidade.precoAditivo !== undefined
       ? oportunidade.precoAditivo
-      : 25.0;
+      : (oportunidade.produto === "CASCATA" ? 5000.0 : 25.0);
 
     const valorProduto = oportunidade.areaPiscina * precoUnitario;
     const valorAditivo = oportunidade.areaPiscina * precoAditivo;
     const valorTotal = valorProduto + valorAditivo;
+
+    const valorEntrada = precoUnitario * 0.5;
+    const valorIntermediaria = precoUnitario * 0.3;
+    const valorFinal = precoUnitario * 0.2;
 
     // Formatadores BR
     const formatNumberBR = (num: number) => {
@@ -80,19 +87,24 @@ export async function GET(
       const day = String(d.getDate()).padStart(2, '0');
       const month = months[d.getMonth()];
       const year = d.getFullYear();
-      return `${day} de ${month} de ${year}.`;
+      return `${day} de ${month} de ${year}`;
     };
 
     doc.setData({
       id: oportunidade.id,
       propostaId: oportunidade.id,
+      propostaNumero: String(oportunidade.id).padStart(4, "0") + "/2026",
       clienteNome: oportunidade.clienteNome,
       clienteEndereco: oportunidade.endereco || "Não Informado",
       areaPiscina: formatNumberBR(oportunidade.areaPiscina),
       precoUnitario: formatNumberBR(precoUnitario),
+      precoAditivo: formatNumberBR(precoAditivo),
       valorProduto: formatNumberBR(valorProduto),
       valorAditivo: formatNumberBR(valorAditivo),
       valorTotal: formatNumberBR(valorTotal),
+      valorEntrada: formatNumberBR(valorEntrada),
+      valorIntermediaria: formatNumberBR(valorIntermediaria),
+      valorFinal: formatNumberBR(valorFinal),
       dataProposta: formatDateBR(oportunidade.createdAt),
     });
 

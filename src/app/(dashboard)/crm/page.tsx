@@ -11,13 +11,14 @@ interface Oportunidade {
   email: string | null;
   endereco: string | null;
   descricaoPiscina: string | null;
-  produto: "PREMIUM" | "SUPER_PREMIUM";
+  produto: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA";
   areaPiscina: number;
   valorProposta: number;
   status: string; // PENDENTE, PROPOSTA_GERADA, PROPOSTA_ENVIADA, ACEITO, RECUSADO
   observacoes: string | null;
   precoUnitario?: number | null;
   precoAditivo?: number | null;
+  empresa: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,7 +38,7 @@ export default function CRMPage() {
   const [email, setEmail] = useState("");
   const [endereco, setEndereco] = useState("");
   const [descricaoPiscina, setDescricaoPiscina] = useState("");
-  const [produto, setProduto] = useState<"PREMIUM" | "SUPER_PREMIUM">("PREMIUM");
+  const [produto, setProduto] = useState<"PREMIUM" | "SUPER_PREMIUM" | "CASCATA">("PREMIUM");
   const [areaPiscina, setAreaPiscina] = useState<number>(0);
   const [status, setStatus] = useState("PENDENTE");
   const [observacoes, setObservacoes] = useState("");
@@ -45,13 +46,18 @@ export default function CRMPage() {
   const [precoUnitario, setPrecoUnitario] = useState<number>(270);
   const [precoAditivo, setPrecoAditivo] = useState<number>(25);
 
-  const handleProdutoChange = (newProd: "PREMIUM" | "SUPER_PREMIUM") => {
+  const handleProdutoChange = (newProd: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA") => {
     setProduto(newProd);
-    // Se o valor estiver no padrão anterior, atualiza para o novo padrão correspondente
-    if (newProd === "SUPER_PREMIUM" && precoUnitario === 270) {
+    if (newProd === "SUPER_PREMIUM" && (precoUnitario === 270 || precoUnitario === 18000)) {
       setPrecoUnitario(350);
-    } else if (newProd === "PREMIUM" && precoUnitario === 350) {
+      setPrecoAditivo(25);
+    } else if (newProd === "PREMIUM" && (precoUnitario === 350 || precoUnitario === 18000)) {
       setPrecoUnitario(270);
+      setPrecoAditivo(25);
+    } else if (newProd === "CASCATA") {
+      setPrecoUnitario(18000);
+      setPrecoAditivo(5000);
+      setAreaPiscina(1);
     }
   };
 
@@ -363,14 +369,20 @@ export default function CRMPage() {
                         borderRadius: "4px",
                         fontSize: "11px",
                         fontWeight: 600,
-                        backgroundColor: op.produto === "SUPER_PREMIUM" ? "rgba(168, 85, 247, 0.15)" : "rgba(59, 130, 246, 0.15)",
-                        color: op.produto === "SUPER_PREMIUM" ? "#c084fc" : "#60a5fa",
+                        backgroundColor: 
+                          op.produto === "CASCATA" ? "rgba(34, 197, 94, 0.15)" :
+                          op.produto === "SUPER_PREMIUM" ? "rgba(168, 85, 247, 0.15)" : "rgba(59, 130, 246, 0.15)",
+                        color: 
+                          op.produto === "CASCATA" ? "#4ade80" :
+                          op.produto === "SUPER_PREMIUM" ? "#c084fc" : "#60a5fa",
                         marginRight: "6px"
                       }}
                     >
-                      {op.produto === "SUPER_PREMIUM" ? "Super Premium" : "Premium"}
+                      {op.produto === "CASCATA" ? "Cascata" : op.produto === "SUPER_PREMIUM" ? "Super Premium" : "Premium"}
                     </span>
-                    <span style={{ fontSize: "13px" }}>{formatArea(op.areaPiscina)}</span>
+                    <span style={{ fontSize: "13px" }}>
+                      {op.produto === "CASCATA" ? `${op.areaPiscina} un` : formatArea(op.areaPiscina)}
+                    </span>
                   </td>
                   <td style={{ textAlign: "right", fontWeight: 700, color: "var(--text-heading)" }}>
                     {formatCurrency(op.valorProposta)}
@@ -505,10 +517,13 @@ export default function CRMPage() {
                     >
                       <option value="PREMIUM">Premium (Resina PU)</option>
                       <option value="SUPER_PREMIUM">Super Premium (Poliaspártica)</option>
+                      <option value="CASCATA">Cascata (Eco Stone)</option>
                     </select>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Área da Piscina (m²) *</label>
+                    <label className="form-label">
+                      {produto === "CASCATA" ? "Quantidade de Cascatas *" : "Área da Piscina (m²) *"}
+                    </label>
                     <input
                       type="number"
                       step="0.01"
@@ -523,7 +538,9 @@ export default function CRMPage() {
 
                 <div className="grid-cols-2" style={{ gap: "12px", marginBottom: "12px" }}>
                   <div className="form-group">
-                    <label className="form-label">Valor Unitário do Produto (R$/m²)</label>
+                    <label className="form-label">
+                      {produto === "CASCATA" ? "Valor de Mão de Obra (R$)" : "Valor Unitário do Produto (R$/m²)"}
+                    </label>
                     <input
                       type="number"
                       step="0.01"
@@ -533,7 +550,9 @@ export default function CRMPage() {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Valor Unitário do Aditivo (R$/m²)</label>
+                    <label className="form-label">
+                      {produto === "CASCATA" ? "Previsão de Material (R$)" : "Valor Unitário do Aditivo (R$/m²)"}
+                    </label>
                     <input
                       type="number"
                       step="0.01"
@@ -574,11 +593,19 @@ export default function CRMPage() {
                   <div>
                     <span style={{ fontSize: "11px", color: "var(--text-muted)", display: "block" }}>Cálculo Comercial Estimado:</span>
                     <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--text-heading)" }}>
-                      {areaPiscina} m² &times; {formatCurrency(precoUnitario + precoAditivo)}/m²
-                      <br />
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                        ({formatCurrency(precoUnitario)} produto + {formatCurrency(precoAditivo)} aditivo)
-                      </span>
+                      {produto === "CASCATA" ? (
+                        <>
+                          {areaPiscina} cascata(s) &times; ({formatCurrency(precoUnitario)} mão de obra + {formatCurrency(precoAditivo)} material)
+                        </>
+                      ) : (
+                        <>
+                          {areaPiscina} m² &times; {formatCurrency(precoUnitario + precoAditivo)}/m²
+                          <br />
+                          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                            ({formatCurrency(precoUnitario)} produto + {formatCurrency(precoAditivo)} aditivo)
+                          </span>
+                        </>
+                      )}
                     </span>
                   </div>
                   <div style={{ textAlign: "right" }}>
