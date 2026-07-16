@@ -515,6 +515,18 @@ export default function CRMPage() {
                         Proposta
                       </Link>
 
+                      {/* Pacote ZIP para Pools */}
+                      {(op.produto === "PREMIUM" || op.produto === "SUPER_PREMIUM") && (
+                        <a
+                          href={`/api/propostas/${op.id}?bundle=true`}
+                          className="btn btn-sm btn-success"
+                          style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+                          title="Baixar Pacote de Propostas (ZIP)"
+                        >
+                          📦 Pacote ZIP
+                        </a>
+                      )}
+
                       {/* Converter em Obra */}
                       {op.status !== "ACEITO" ? (
                         <button
