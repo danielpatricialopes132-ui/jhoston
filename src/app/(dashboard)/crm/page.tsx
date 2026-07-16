@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
-import { getOportunidadesList, salvarOportunidade, deleteOportunidade, converterParaObra } from "./actions";
+import { getOportunidadesList, salvarOportunidade, deleteOportunidade, converterParaObra, getActiveContasBancarias } from "./actions";
 import Link from "next/link";
+
+interface ContaBancaria {
+  id: number;
+  banco: string;
+  titular: string;
+  empresa: string;
+  ativa: boolean;
+}
 
 interface Oportunidade {
   id: number;
@@ -11,7 +19,7 @@ interface Oportunidade {
   email: string | null;
   endereco: string | null;
   descricaoPiscina: string | null;
-  produto: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA";
+  produto: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA" | "REVESTIMENTO";
   areaPiscina: number;
   valorProposta: number;
   status: string; // PENDENTE, PROPOSTA_GERADA, PROPOSTA_ENVIADA, ACEITO, RECUSADO
@@ -21,7 +29,16 @@ interface Oportunidade {
   empresa: string;
   createdAt: string;
   updatedAt: string;
+  descricaoServico?: string | null;
+  valorInsumos?: number | null;
+  valorEstadia?: number | null;
+  imposto?: number | null;
+  desconto?: number | null;
+  prazoAplicacao?: number | null;
+  contaBancariaId?: number | null;
+  contaBancaria?: ContaBancaria | null;
 }
+
 
 export default function CRMPage() {
   const [oportunidades, setOportunidades] = useState<Oportunidade[]>([]);
@@ -38,7 +55,7 @@ export default function CRMPage() {
   const [email, setEmail] = useState("");
   const [endereco, setEndereco] = useState("");
   const [descricaoPiscina, setDescricaoPiscina] = useState("");
-  const [produto, setProduto] = useState<"PREMIUM" | "SUPER_PREMIUM" | "CASCATA">("PREMIUM");
+  const [produto, setProduto] = useState<"PREMIUM" | "SUPER_PREMIUM" | "CASCATA" | "REVESTIMENTO">("PREMIUM");
   const [areaPiscina, setAreaPiscina] = useState<number>(0);
   const [status, setStatus] = useState("PENDENTE");
   const [observacoes, setObservacoes] = useState("");
@@ -48,13 +65,23 @@ export default function CRMPage() {
   const [empresa, setEmpresa] = useState("JHOSTON");
   const [empresaFilter, setEmpresaFilter] = useState("TODOS");
 
-  const handleProdutoChange = (newProd: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA") => {
+  // Novos campos Jhoston Revest
+  const [descricaoServico, setDescricaoServico] = useState("Aplicação de revestimento resinado Verano Pools");
+  const [valorInsumos, setValorInsumos] = useState<number>(0);
+  const [valorEstadia, setValorEstadia] = useState<number>(0);
+  const [imposto, setImposto] = useState<number>(0);
+  const [desconto, setDesconto] = useState<number>(0);
+  const [prazoAplicacao, setPrazoAplicacao] = useState<number>(15);
+  const [contaBancariaId, setContaBancariaId] = useState<number | null>(null);
+  const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
+
+  const handleProdutoChange = (newProd: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA" | "REVESTIMENTO") => {
     setProduto(newProd);
-    if (newProd === "SUPER_PREMIUM" && (precoUnitario === 270 || precoUnitario === 18000)) {
+    if (newProd === "SUPER_PREMIUM" && (precoUnitario === 270 || precoUnitario === 18000 || precoUnitario === 120)) {
       setPrecoUnitario(350);
       setPrecoAditivo(25);
       setEmpresa("JHOSTON");
-    } else if (newProd === "PREMIUM" && (precoUnitario === 350 || precoUnitario === 18000)) {
+    } else if (newProd === "PREMIUM" && (precoUnitario === 350 || precoUnitario === 18000 || precoUnitario === 120)) {
       setPrecoUnitario(270);
       setPrecoAditivo(25);
       setEmpresa("JHOSTON");
@@ -63,6 +90,18 @@ export default function CRMPage() {
       setPrecoAditivo(5000);
       setAreaPiscina(1);
       setEmpresa("ECO_STONE");
+    } else if (newProd === "REVESTIMENTO") {
+      setPrecoUnitario(120);
+      setPrecoAditivo(0);
+      setEmpresa("JHOSTON_REVEST");
+      setDescricaoServico("Aplicação de revestimento resinado Verano Pools");
+      setValorInsumos(1640);
+      setValorEstadia(3250);
+      setPrazoAplicacao(15);
+      const revestConta = contasBancarias.find(c => c.empresa === "JHOSTON_REVEST" || c.empresa === "AMBAS");
+      if (revestConta) {
+        setContaBancariaId(revestConta.id);
+      }
     }
   };
 
@@ -73,6 +112,9 @@ export default function CRMPage() {
   const refreshData = () => {
     getOportunidadesList().then((data) => {
       setOportunidades(data as any);
+    });
+    getActiveContasBancarias().then((data) => {
+      setContasBancarias(data as any);
     });
   };
 
@@ -94,6 +136,13 @@ export default function CRMPage() {
     setPrecoUnitario(270);
     setPrecoAditivo(25);
     setEmpresa("JHOSTON");
+    setDescricaoServico("Aplicação de revestimento resinado Verano Pools");
+    setValorInsumos(0);
+    setValorEstadia(0);
+    setImposto(0);
+    setDesconto(0);
+    setPrazoAplicacao(15);
+    setContaBancariaId(null);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -109,9 +158,16 @@ export default function CRMPage() {
     setAreaPiscina(op.areaPiscina);
     setStatus(op.status);
     setObservacoes(op.observacoes || "");
-    setPrecoUnitario(op.precoUnitario ?? (op.produto === "SUPER_PREMIUM" ? 350 : 270));
-    setPrecoAditivo(op.precoAditivo ?? 25);
+    setPrecoUnitario(op.precoUnitario ?? (op.produto === "SUPER_PREMIUM" ? 350 : (op.produto === "REVESTIMENTO" ? 120 : 270)));
+    setPrecoAditivo(op.precoAditivo ?? (op.produto === "REVESTIMENTO" ? 0 : 25));
     setEmpresa(op.empresa || "JHOSTON");
+    setDescricaoServico(op.descricaoServico || "Aplicação de revestimento resinado Verano Pools");
+    setValorInsumos(op.valorInsumos ?? 0);
+    setValorEstadia(op.valorEstadia ?? 0);
+    setImposto(op.imposto ?? 0);
+    setDesconto(op.desconto ?? 0);
+    setPrazoAplicacao(op.prazoAplicacao ?? 15);
+    setContaBancariaId(op.contaBancariaId ?? null);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -158,6 +214,13 @@ export default function CRMPage() {
       precoUnitario,
       precoAditivo,
       empresa,
+      descricaoServico,
+      valorInsumos,
+      valorEstadia,
+      imposto,
+      desconto,
+      prazoAplicacao,
+      contaBancariaId: contaBancariaId ? Number(contaBancariaId) : null,
     };
 
     startTransition(async () => {
@@ -254,8 +317,10 @@ export default function CRMPage() {
     return matchesSearch && matchesStatus && matchesEmpresa;
   });
 
-  // Calculation based on custom unit price + aditive price
-  const liveValorCalculado = areaPiscina * (precoUnitario + precoAditivo);
+  // Calculation based on custom unit price + aditive price + insumos + estadia
+  const liveValorCalculado = produto === "REVESTIMENTO"
+    ? (areaPiscina * precoUnitario) + valorInsumos + valorEstadia + imposto - desconto
+    : areaPiscina * (precoUnitario + precoAditivo);
 
   return (
     <div>
@@ -281,7 +346,8 @@ export default function CRMPage() {
           {[
             { id: "TODOS", name: "Consolidado" },
             { id: "JHOSTON", name: "Jhoston Pools" },
-            { id: "ECO_STONE", name: "Eco Stone" }
+            { id: "ECO_STONE", name: "Eco Stone" },
+            { id: "JHOSTON_REVEST", name: "Jhoston Revest" }
           ].map((c) => (
             <button
               key={c.id}
@@ -399,7 +465,7 @@ export default function CRMPage() {
                           fontWeight: 600,
                         }}
                       >
-                        {op.empresa === "ECO_STONE" ? "Eco Stone" : "Jhoston"}
+                        {op.empresa === "ECO_STONE" ? "Eco Stone" : op.empresa === "JHOSTON_REVEST" ? "Jhoston Revest" : "Jhoston"}
                       </span>
                       <div style={{ fontWeight: 600, color: "var(--text-heading)" }}>{op.clienteNome}</div>
                     </div>
@@ -417,14 +483,16 @@ export default function CRMPage() {
                         fontWeight: 600,
                         backgroundColor: 
                           op.produto === "CASCATA" ? "rgba(34, 197, 94, 0.15)" :
-                          op.produto === "SUPER_PREMIUM" ? "rgba(168, 85, 247, 0.15)" : "rgba(59, 130, 246, 0.15)",
+                          op.produto === "SUPER_PREMIUM" ? "rgba(168, 85, 247, 0.15)" :
+                          op.produto === "REVESTIMENTO" ? "rgba(249, 115, 22, 0.15)" : "rgba(59, 130, 246, 0.15)",
                         color: 
                           op.produto === "CASCATA" ? "#4ade80" :
-                          op.produto === "SUPER_PREMIUM" ? "#c084fc" : "#60a5fa",
+                          op.produto === "SUPER_PREMIUM" ? "#c084fc" :
+                          op.produto === "REVESTIMENTO" ? "#fdba74" : "#60a5fa",
                         marginRight: "6px"
                       }}
                     >
-                      {op.produto === "CASCATA" ? "Cascata" : op.produto === "SUPER_PREMIUM" ? "Super Premium" : "Premium"}
+                      {op.produto === "CASCATA" ? "Cascata" : op.produto === "SUPER_PREMIUM" ? "Super Premium" : op.produto === "REVESTIMENTO" ? "Revestimento" : "Premium"}
                     </span>
                     <span style={{ fontSize: "13px" }}>
                       {op.produto === "CASCATA" ? `${op.areaPiscina} un` : formatArea(op.areaPiscina)}
@@ -564,11 +632,12 @@ export default function CRMPage() {
                       <option value="PREMIUM">Premium (Resina PU)</option>
                       <option value="SUPER_PREMIUM">Super Premium (Poliaspártica)</option>
                       <option value="CASCATA">Cascata (Eco Stone)</option>
+                      <option value="REVESTIMENTO">Revestimento (Jhoston Revest)</option>
                     </select>
                   </div>
                   <div className="form-group">
                     <label className="form-label">
-                      {produto === "CASCATA" ? "Quantidade de Cascatas *" : "Área da Piscina (m²) *"}
+                      {produto === "CASCATA" ? "Quantidade de Cascatas *" : produto === "REVESTIMENTO" ? "Área de Aplicação (m²) *" : "Área da Piscina (m²) *"}
                     </label>
                     <input
                       type="number"
@@ -631,9 +700,114 @@ export default function CRMPage() {
                     >
                       <option value="JHOSTON">Jhoston Pools</option>
                       <option value="ECO_STONE">Eco Stone</option>
+                      <option value="JHOSTON_REVEST">Jhoston Revest</option>
                     </select>
                   </div>
                 </div>
+
+                {/* Planilha de orçamento Jhoston Revest se selecionado */}
+                {produto === "REVESTIMENTO" && (
+                  <div style={{
+                    border: "1px solid rgba(249, 115, 22, 0.2)",
+                    backgroundColor: "rgba(249, 115, 22, 0.02)",
+                    padding: "14px",
+                    borderRadius: "6px",
+                    marginBottom: "12px",
+                    display: "grid",
+                    gap: "12px"
+                  }}>
+                    <h5 style={{ fontSize: "13px", fontWeight: 700, color: "#fdba74", margin: "0 0 4px 0" }}>
+                      Planilha de Orçamento - Jhoston Revest
+                    </h5>
+                    
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: "var(--text-heading)" }}>Descrição do Serviço na Proposta</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={descricaoServico}
+                        onChange={(e) => setDescricaoServico(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid-cols-2" style={{ gap: "12px" }}>
+                      <div className="form-group">
+                        <label className="form-label">Valor de Insumos (R$)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="form-control"
+                          value={valorInsumos}
+                          onChange={(e) => setValorInsumos(parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Estadia e Deslocamento (R$)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="form-control"
+                          value={valorEstadia}
+                          onChange={(e) => setValorEstadia(parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid-cols-3" style={{ gap: "12px" }}>
+                      <div className="form-group">
+                        <label className="form-label">Imposto (R$)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="form-control"
+                          value={imposto}
+                          onChange={(e) => setImposto(parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Desconto (R$)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="form-control"
+                          value={desconto}
+                          onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Prazo Aplicação (dias)</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={prazoAplicacao}
+                          onChange={(e) => setPrazoAplicacao(parseInt(e.target.value, 10) || 15)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: "var(--text-heading)" }}>Conta Bancária para a Proposta *</label>
+                      <select
+                        className="form-control"
+                        value={contaBancariaId || ""}
+                        onChange={(e) => setContaBancariaId(e.target.value ? Number(e.target.value) : null)}
+                        required
+                      >
+                        <option value="">-- Selecione uma conta --</option>
+                        {contasBancarias.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.banco} - {c.titular} ({c.empresa === "JHOSTON" ? "Jhoston" : c.empresa === "ECO_STONE" ? "Eco Stone" : c.empresa === "JHOSTON_REVEST" ? "Jhoston Revest" : "Ambas"})
+                          </option>
+                        ))}
+                      </select>
+                      {contasBancarias.length === 0 && (
+                        <p style={{ fontSize: "11px", color: "var(--warning)", marginTop: "4px" }}>
+                          Atenção: Nenhuma conta bancária cadastrada. Cadastre uma conta ativa primeiro!
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Previsualização Financeira */}
                 <div
@@ -654,6 +828,16 @@ export default function CRMPage() {
                       {produto === "CASCATA" ? (
                         <>
                           {areaPiscina} cascata(s) &times; ({formatCurrency(precoUnitario)} mão de obra + {formatCurrency(precoAditivo)} material)
+                        </>
+                      ) : produto === "REVESTIMENTO" ? (
+                        <>
+                          Revestimento: {areaPiscina} m² &times; {formatCurrency(precoUnitario)}/m²
+                          <br />
+                          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                            (+ {formatCurrency(valorInsumos)} Insumos) (+ {formatCurrency(valorEstadia)} Deslocamento)
+                            {imposto > 0 && ` (+ ${formatCurrency(imposto)} Imposto)`}
+                            {desconto > 0 && ` (- ${formatCurrency(desconto)} Desconto)`}
+                          </span>
                         </>
                       ) : (
                         <>

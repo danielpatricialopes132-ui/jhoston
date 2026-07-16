@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Manual de Integração do Canva - JHOSTON TEC</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #0284c7;
+      --text-main: #334155;
+      --text-heading: #0f172a;
+      --border-color: #e2e8f0;
+      --bg-pre: #f1f5f9;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      color: var(--text-main);
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 24px;
+      background-color: #ffffff;
+    }
+
+    h1, h2, h3, h4 {
+      color: var(--text-heading);
+      font-weight: 700;
+      margin-top: 1.8em;
+      margin-bottom: 0.6em;
+    }
+
+    h1 {
+      font-size: 32px;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 12px;
+      margin-top: 0;
+    }
+
+    h2 {
+      font-size: 22px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+
+    p {
+      margin-bottom: 16px;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    ul, ol {
+      margin-bottom: 16px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    pre {
+      background-color: var(--bg-pre);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 13px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f8fafc;
+      color: var(--text-heading);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--border-color);
+      margin: 40px 0;
+    }
+
+    .no-print-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .no-print-btn:hover {
+      background-color: #0369a1;
+    }
+
+    @media print {
+      body {
+        margin: 20px auto;
+        padding: 0;
+      }
+      .no-print-btn {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="no-print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  <h1>Manual: Como Usar Modelos do Canva como Proposta Comercial</h1>
+
+<p>Este guia passo a passo orienta sobre como criar, diagramar, configurar e integrar propostas comerciais criadas no <strong>Canva</strong> para serem preenchidas automaticamente pelo sistema <strong>JHOSTON TEC Piscinas</strong>.</p>
+<hr />
+<h2>Passo 1: Criar o Design no Canva</h2>
+<ol><li>Acesse o <a href="https://www.canva.com" target="_blank">Canva</a> e crie um novo design ou use um modelo existente de Proposta Comercial.</li><li>Diagrame todo o documento livremente com as cores, logotipos e fontes da sua empresa.</li></ol>
+<hr />
+<h2>Passo 2: Inserir as Variáveis (Placeholders)</h2>
+<p>Nos locais do documento onde devem aparecer os dados dinâmicos do cliente e os valores da proposta, adicione as variáveis exatamente no formato `{variavel}` (com chaves). O sistema lerá estes marcadores e substituirá pelos dados correspondentes:</p>
+
+<h3>Variáveis Cadastrais:</h3>
+<p><em>   `{propostaNumero}`: Número de identificação formatado da proposta (ex: `0042/2026`).</p>
+<p></em>   `{clienteNome}`: Nome completo ou Razão Social do cliente.</p>
+<p><em>   `{clienteEndereco}`: Endereço completo informado no cadastro do CRM.</p>
+<p></em>   `{dataProposta}`: Data atual de geração por extenso (ex: `16 de Julho de 2026`).</p>
+
+<h3>Variáveis de Valores e Áreas:</h3>
+<p><em>   `{areaPiscina}`: Área total em metros quadrados (m²).</p>
+<p></em>   `{precoUnitario}`: Preço do m² do produto (ex: `270,00` para Premium ou `350,00` para Super Premium).</p>
+<p><em>   `{precoAditivo}`: Preço do m² do aditivo de salinidade (ex: `25,00`).</p>
+<p></em>   `{valorProduto}`: Subtotal correspondente ao produto (Área x Preço Unitário).</p>
+<p><em>   `{valorAditivo}`: Subtotal correspondente ao aditivo (Área x Preço Aditivo).</p>
+<p></em>   `{valorTotal}`: Soma total dos valores da proposta comercial.</p>
+
+<h3>Variáveis de Condições de Pagamento (Forma de Parcelamento):</h3>
+<p><em>   `{valorEntrada}`: Valor de entrada correspondente a 50% do valor do produto.</p>
+<p></em>   `{valorIntermediaria}`: Parcela intermediária correspondente a 30% do valor do produto.</p>
+<p><em>   `{valorFinal}`: Parcela final na entrega correspondente a 20% do valor do produto.</p>
+<hr />
+<h2>Passo 3: Exportar o Design em PDF</h2>
+<ol><li>No Canva, clique no botão <strong>Compartilhar</strong> no canto superior direito.</li><li>Clique em <strong>Baixar</strong>.</li><li>No campo </em>Tipo de arquivo<em>, selecione <strong>PDF padrão</strong> ou <strong>PDF para impressão</strong>.</li><li>Clique em <strong>Baixar</strong> para salvar o arquivo em seu computador.</li></ol>
+<hr />
+<h2>Passo 4: Converter o PDF para Word (.docx)</h2>
+<p>Como o sistema processa modelos em formato Word (`.docx`), você deve converter o PDF exportado pelo Canva:</p>
+<ol><li>Acesse uma ferramenta de conversão online gratuita e confiável, como:</li></ol>
+<p>   </em>   <a href="https://www.adobe.com/acrobat/online/pdf-to-word.html" target="_blank">Adobe Acrobat PDF to Word Converter</a></p>
+<p>   <em>   <a href="https://www.ilovepdf.com/pdf_to_word" target="_blank">ILovePDF (PDF para Word)</a></p>
+<p>   </em>   <a href="https://smallpdf.com/pdf-to-word" target="_blank">Smallpdf (PDF para Word)</a></p>
+<ol><li>Faça o upload do arquivo PDF baixado do Canva.</li><li>Inicie a conversão de alta fidelidade e baixe o arquivo `.docx` gerado.</li></ol>
+<hr />
+<h2>Passo 5: Renomear e Instalar no Sistema</h2>
+<p>Substitua o arquivo de template correspondente na pasta de modelos do sistema (`src/templates/`) renomeando o arquivo baixado exatamente para um dos nomes abaixo, dependendo da linha do produto:</p>
+
+<p><em>   Para propostas da linha <strong>Premium</strong>: `Proposta_Premium_Template.docx`</p>
+<p></em>   Para propostas da linha <strong>Super Premium</strong>: `Proposta_Super_Premium_Template.docx`</p>
+<ol><li>Para propostas da linha <strong>Cascata</strong>: `Proposta_Cascata_Template.docx`</li></ol>
+<hr />
+<h2>Passo 6: Testar e Validar</h2>
+<p>Acesse a aba <strong>CRM / Oportunidades</strong> no painel do escritório, crie uma oportunidade de teste com o produto configurado e clique no botão <strong>Proposta</strong>. Abra o arquivo baixado e certifique-se de que a diagramação visual permaneceu intacta e todos os marcadores `{}` foram substituídos pelas informações do teste.</p>
+
+</body>
+</html>

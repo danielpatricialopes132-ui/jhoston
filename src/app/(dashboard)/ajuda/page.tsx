@@ -151,6 +151,7 @@ export default function AjudaPage() {
         <button className={`help-tab-btn ${activeTab === "FINANCEIRO" ? "active" : ""}`} onClick={() => setActiveTab("FINANCEIRO")}>Financeiro & Fornecedores</button>
         <button className={`help-tab-btn ${activeTab === "BOLETOS_WATCH" ? "active" : ""}`} onClick={() => setActiveTab("BOLETOS_WATCH")}>Boletos & Smartwatches (v1.1)</button>
         <button className={`help-tab-btn ${activeTab === "CALC_CHAT" ? "active" : ""}`} onClick={() => setActiveTab("CALC_CHAT")}>Calculadora & Chat (v1.2)</button>
+        <button className={`help-tab-btn ${activeTab === "MODELO_CANVA" ? "active" : ""}`} onClick={() => setActiveTab("MODELO_CANVA")}>Modelos Canva (v1.3)</button>
       </div>
 
       {/* Conteúdo do Manual */}
@@ -400,6 +401,57 @@ export default function AjudaPage() {
               <li><strong>Poller em Tempo Real:</strong> A tela verifica novas mensagens de forma automática a cada 3 segundos, mantendo a conversa atualizada.</li>
               <li><strong>Aviso Sonoro:</strong> O sistema toca um alerta sonoro discreto (beep) quando uma nova mensagem é recebida no canal ou chat direto ativo, desde que a mensagem não tenha sido enviada por você.</li>
             </ul>
+          </div>
+        )}
+
+        {/* SEÇÃO 8: MODELOS CANVA (VERSÃO 1.3) */}
+        {(activeTab === "MODELO_CANVA" || typeof window === "undefined" || window.matchMedia("print").matches) && (
+          <div className="help-section">
+            <h4>8. Uso de Modelos do Canva para Propostas Comerciais (v1.3)</h4>
+            <p>
+              Você pode diagramar livremente a sua proposta comercial em plataformas como o <strong>Canva</strong> e utilizá-la como template oficial no sistema.
+            </p>
+            
+            <h5>A. Inserção de Marcadores de Texto (Placeholders)</h5>
+            <p>
+              Ao construir seu design no Canva, insira caixas de texto com os seguintes marcadores exatos. Quando o sistema gera o download da proposta, ele substitui esses marcadores pelo valor real correspondente:
+            </p>
+            <ul>
+              <li><code>{`{propostaNumero}`}</code>: Número de identificação formatado da proposta (ex: <code>0024/2026</code>).</li>
+              <li><code>{`{clienteNome}`}</code>: Nome completo ou Razão Social do cliente cadastrado.</li>
+              <li><code>{`{clienteEndereco}`}</code>: Endereço completo informado na oportunidade do CRM.</li>
+              <li><code>{`{areaPiscina}`}</code>: Área da piscina em metros quadrados (ex: <code>35,00</code>).</li>
+              <li><code>{`{precoUnitario}`}</code>: Valor do metro quadrado do revestimento (ex: <code>270,00</code>).</li>
+              <li><code>{`{precoAditivo}`}</code>: Valor do metro quadrado do aditivo de salinidade (ex: <code>25,00</code>).</li>
+              <li><code>{`{valorProduto}`}</code>: Subtotal referente à área e preço do produto.</li>
+              <li><code>{`{valorAditivo}`}</code>: Subtotal referente à área e preço do aditivo.</li>
+              <li><code>{`{valorTotal}`}</code>: Valor total final calculado da Proposta Comercial.</li>
+              <li><code>{`{valorEntrada}`}</code>: Entrada calculada (50% do preço unitário).</li>
+              <li><code>{`{valorIntermediaria}`}</code>: Parcela intermediária (30% do preço unitário).</li>
+              <li><code>{`{valorFinal}`}</code>: Parcela final na entrega (20% do preço unitário).</li>
+              <li><code>{`{dataProposta}`}</code>: Data de geração da proposta por extenso (ex: <code>16 de Julho de 2026</code>).</li>
+            </ul>
+
+            <h5>B. Fluxo de Exportação e Conversão</h5>
+            <ol>
+              <li>Após finalizar o design no Canva contendo os marcadores acima, clique em <strong>Compartilhar &gt; Baixar</strong>.</li>
+              <li>Selecione o formato <strong>PDF Padrão</strong> ou <strong>PDF para Impressão</strong> e faça o download.</li>
+              <li>Acesse um serviço online gratuito de conversão de PDF para Word (como <em>Adobe Acrobat PDF to Word</em>, <em>Ilovepdf</em> ou <em>Smallpdf</em>).</li>
+              <li>Faça o upload do PDF e baixe o arquivo convertido no formato <strong>Word (.docx)</strong>.</li>
+            </ol>
+
+            <h5>C. Integração no Sistema</h5>
+            <p>
+              Renomeie o arquivo <code>.docx</code> convertido conforme o tipo da proposta e substitua o arquivo correspondente na pasta de modelos do sistema (<code>src/templates/</code>):
+            </p>
+            <ul>
+              <li>Para a linha Premium: renomear para <code>Proposta_Premium_Template.docx</code></li>
+              <li>Para a linha Super Premium: renomear para <code>Proposta_Super_Premium_Template.docx</code></li>
+              <li>Para a linha Cascata: renomear para <code>Proposta_Cascata_Template.docx</code></li>
+            </ul>
+            <p>
+              Feito isso, ao clicar em <strong>Proposta</strong> no CRM, o sistema lerá o novo layout e preencherá as variáveis automaticamente, mantendo a diagramação exata do seu Canva.
+            </p>
           </div>
         )}
 

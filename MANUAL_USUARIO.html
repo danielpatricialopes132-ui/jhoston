@@ -258,6 +258,29 @@
 <h2>13. Comunicação Interna (Chat - Disponível para Todos)</h2>
 <p>Permite a troca de informações rápidas e diretas entre a equipe técnica externa e administrativa:</p>
 <ol><li>Acesse o menu lateral <strong>Chat Interno</strong> ou utilize o atalho rápido no topo da Home.</li><li><strong>Canais de Obras (📢)</strong>: Canais compartilhados de grupo de cada uma das Obras Ativas. Toda a equipe que opera no projeto e o escritório podem ler e enviar mensagens.</li><li><strong>Conversas Diretas (👤)</strong>: Mensagens um-a-um privadas. Escolha qualquer usuário listado para enviar uma mensagem exclusiva.</li><li><strong>Alerta Sonoro</strong>: Ao receber novas mensagens na janela de chat ativa que não tenham sido enviadas por você, o sistema emitirá um som discreto (beep).</li><li><strong>Atualização</strong>: O chat é atualizado automaticamente a cada 3 segundos, dispensando a necessidade de atualizar a página manualmente.</li></ol>
+<hr />
+<h2>14. Uso de Modelos do Canva como Proposta Comercial</h2>
+<p>Para criar propostas comerciais personalizadas no Canva e integrá-las ao sistema:</p>
+<ol><li><strong>Criação do Design</strong>: Crie e diagrame a Proposta Comercial no Canva com a identidade visual da empresa.</li><li><strong>Inclusão de Marcadores de Texto (Placeholders)</strong>: Nos locais onde os dados dinâmicos do cliente e valores calculados devem ser inseridos, adicione tags simples entre chaves `{}`:</li></ol>
+<p>   <em>   `{propostaNumero}`: Número sequencial formatado da proposta (ex: `0042/2026`).</p>
+<p>   </em>   `{clienteNome}`: Nome completo ou Razão Social do cliente.</p>
+<p>   <em>   `{clienteEndereco}`: Endereço completo informado no cadastro.</p>
+<p>   </em>   `{areaPiscina}`: Área total em metros quadrados (m²).</p>
+<p>   <em>   `{precoUnitario}`: Preço do m² do produto contratado (ex: `270,00`).</p>
+<p>   </em>   `{precoAditivo}`: Preço do m² do aditivo de salinidade (ex: `25,00`).</p>
+<p>   <em>   `{valorProduto}`: Subtotal correspondente ao produto (Área x Preço Unitário).</p>
+<p>   </em>   `{valorAditivo}`: Subtotal correspondente ao aditivo (Área x Preço Aditivo).</p>
+<p>   <em>   `{valorTotal}`: Soma total dos valores da proposta comercial.</p>
+<p>   </em>   `{valorEntrada}`: Valor de entrada (50% do valor unitário do produto).</p>
+<p>   <em>   `{valorIntermediaria}`: Valor da parcela intermediária (30% do valor unitário do produto).</p>
+<p>   </em>   `{valorFinal}`: Valor da parcela final (20% do valor unitário do produto).</p>
+<p>   <em>   `{dataProposta}`: Data atual por extenso (ex: `16 de Julho de 2026`).</p>
+<ol><li><strong>Exportação</strong>: Concluído o design com os marcadores exatos, clique em <strong>Compartilhar</strong> no Canva, selecione <strong>Baixar</strong> e escolha o formato <strong>PDF padrão</strong> ou <strong>PDF para impressão</strong>.</li><li><strong>Conversão para Word (.docx)</strong>: Utilize um conversor online de alta fidelidade (como </em>Adobe Acrobat Online<em>, </em>Smallpdf<em> ou </em>Ilovepdf<em>) para transformar o arquivo PDF baixado em um documento do Microsoft Word (`.docx`).</li><li><strong>Instalação do Modelo no Servidor</strong>: Renomeie o arquivo gerado de acordo com a linha de produto e coloque-o na pasta de templates do sistema (`src/templates`):</li></ol>
+<p>   </em>   `Proposta_Premium_Template.docx` para a linha <strong>Premium</strong>.</p>
+<p>   <em>   `Proposta_Super_Premium_Template.docx` para a linha <strong>Super Premium</strong>.</p>
+<p>   </em>   `Proposta_Cascata_Template.docx` para a linha <strong>Cascata</strong>.</p>
+<ol><li><strong>Homologação</strong>: Faça um lançamento de teste na tela de CRM e clique em <strong>Proposta</strong> para certificar-se de que a diagramação foi convertida perfeitamente e os dados dinâmicos foram aplicados nos campos marcados.</li></ol>
+
 
 </body>
 </html>

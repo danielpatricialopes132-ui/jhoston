@@ -260,3 +260,5 @@ function compileFile(inputFileName, title) {
 
 compileFile("MANUAL_USUARIO.md", "Manual do Usuário - JHOSTON TEC");
 compileFile("PLANO_TREINAMENTO.md", "Plano de Treinamento - JHOSTON TEC");
+compileFile("MANUAL_CANVA.md", "Manual de Integração do Canva - JHOSTON TEC");
+

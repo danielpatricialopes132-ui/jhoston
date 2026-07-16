@@ -20,6 +20,9 @@ export async function getOportunidadesList() {
     orderBy: {
       createdAt: "desc",
     },
+    include: {
+      contaBancaria: true,
+    }
   });
 
   // Mapear datas para ISO limpa
@@ -30,6 +33,18 @@ export async function getOportunidadesList() {
   }));
 }
 
+export async function getActiveContasBancarias() {
+  await requireAdmin();
+  return await prisma.contaBancaria.findMany({
+    where: {
+      ativa: true,
+    },
+    orderBy: {
+      banco: "asc",
+    },
+  });
+}
+
 export async function salvarOportunidade(data: {
   id?: number;
   clienteNome: string;
@@ -37,13 +52,20 @@ export async function salvarOportunidade(data: {
   email?: string;
   endereco?: string;
   descricaoPiscina?: string;
-  produto: string; // "PREMIUM" ou "SUPER_PREMIUM"
+  produto: string; // "PREMIUM", "SUPER_PREMIUM", "CASCATA", "REVESTIMENTO"
   areaPiscina: number;
   status: string;
   observacoes?: string;
   precoUnitario?: number;
   precoAditivo?: number;
   empresa?: string;
+  descricaoServico?: string;
+  valorInsumos?: number;
+  valorEstadia?: number;
+  imposto?: number;
+  desconto?: number;
+  prazoAplicacao?: number;
+  contaBancariaId?: number | null;
 }) {
   await requireAdmin();
 
@@ -51,7 +73,12 @@ export async function salvarOportunidade(data: {
     return { success: false, error: "O nome do cliente é obrigatório." };
   }
 
-  if (data.produto !== "PREMIUM" && data.produto !== "SUPER_PREMIUM" && data.produto !== "CASCATA") {
+  if (
+    data.produto !== "PREMIUM" &&
+    data.produto !== "SUPER_PREMIUM" &&
+    data.produto !== "CASCATA" &&
+    data.produto !== "REVESTIMENTO"
+  ) {
     return { success: false, error: "O tipo do produto selecionado é inválido." };
   }
 
@@ -62,16 +89,20 @@ export async function salvarOportunidade(data: {
   // Preços unitários padrão se não informados customizados
   const unitPrice = data.precoUnitario !== undefined && data.precoUnitario !== null 
     ? data.precoUnitario 
-    : (data.produto === "CASCATA" ? 18000.0 : (data.produto === "SUPER_PREMIUM" ? 350.0 : 270.0));
+    : (data.produto === "CASCATA" ? 18000.0 : (data.produto === "SUPER_PREMIUM" ? 350.0 : (data.produto === "REVESTIMENTO" ? 120.0 : 270.0)));
   
   const aditivoPrice = data.precoAditivo !== undefined && data.precoAditivo !== null
     ? data.precoAditivo
-    : (data.produto === "CASCATA" ? 5000.0 : 25.0);
+    : (data.produto === "CASCATA" ? 5000.0 : (data.produto === "REVESTIMENTO" ? 0.0 : 25.0));
 
   // Cálculo automático do valor final da proposta comercial:
-  const valorProposta = data.areaPiscina * (unitPrice + aditivoPrice);
+  const valorProposta = data.produto === "REVESTIMENTO"
+    ? (data.areaPiscina * unitPrice) + (data.valorInsumos || 0) + (data.valorEstadia || 0) + (data.imposto || 0) - (data.desconto || 0)
+    : data.areaPiscina * (unitPrice + aditivoPrice);
 
-  const empresa = data.produto === "CASCATA" ? "ECO_STONE" : (data.empresa || "JHOSTON");
+  const empresa = data.produto === "CASCATA" 
+    ? "ECO_STONE" 
+    : (data.produto === "REVESTIMENTO" ? "JHOSTON_REVEST" : (data.empresa || "JHOSTON"));
 
   const payload = {
     clienteNome: data.clienteNome.trim(),
@@ -87,6 +118,13 @@ export async function salvarOportunidade(data: {
     precoUnitario: unitPrice,
     precoAditivo: aditivoPrice,
     empresa: empresa,
+    descricaoServico: data.descricaoServico?.trim() || "Aplicação de revestimento resinado Verano Pools",
+    valorInsumos: data.valorInsumos || 0,
+    valorEstadia: data.valorEstadia || 0,
+    imposto: data.imposto || 0,
+    desconto: data.desconto || 0,
+    prazoAplicacao: data.prazoAplicacao || 15,
+    contaBancariaId: data.contaBancariaId || null,
   };
 
   try {
@@ -195,5 +233,8 @@ export async function getOportunidade(id: number) {
   await requireAdmin();
   return await prisma.oportunidade.findUnique({
     where: { id },
+    include: {
+      contaBancaria: true,
+    },
   });
 }

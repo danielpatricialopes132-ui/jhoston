@@ -11,7 +11,7 @@ interface Oportunidade {
   email: string | null;
   endereco: string | null;
   descricaoPiscina: string | null;
-  produto: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA";
+  produto: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA" | "REVESTIMENTO";
   areaPiscina: number;
   valorProposta: number;
   status: string;
@@ -19,6 +19,14 @@ interface Oportunidade {
   precoUnitario: number | null;
   precoAditivo: number | null;
   createdAt: Date;
+  descricaoServico?: string | null;
+  valorInsumos?: number | null;
+  valorEstadia?: number | null;
+  imposto?: number | null;
+  desconto?: number | null;
+  prazoAplicacao?: number | null;
+  contaBancariaId?: number | null;
+  contaBancaria?: any | null;
 }
 
 export default function PropostaPreviewPage({
@@ -66,19 +74,29 @@ export default function PropostaPreviewPage({
   // Preço unitário e aditivos
   const unitPrice = oportunidade.precoUnitario !== null && oportunidade.precoUnitario !== undefined
     ? oportunidade.precoUnitario
-    : (oportunidade.produto === "CASCATA" ? 18000.0 : (oportunidade.produto === "SUPER_PREMIUM" ? 350.0 : 270.0));
+    : (oportunidade.produto === "CASCATA" ? 18000.0 : (oportunidade.produto === "SUPER_PREMIUM" ? 350.0 : (oportunidade.produto === "REVESTIMENTO" ? 120.0 : 270.0)));
   
   const aditivoPrice = oportunidade.precoAditivo !== null && oportunidade.precoAditivo !== undefined
     ? oportunidade.precoAditivo
-    : (oportunidade.produto === "CASCATA" ? 5000.0 : 25.0);
+    : (oportunidade.produto === "CASCATA" ? 5000.0 : (oportunidade.produto === "REVESTIMENTO" ? 0.0 : 25.0));
 
   const valorProduto = oportunidade.areaPiscina * unitPrice;
   const valorAditivo = oportunidade.areaPiscina * aditivoPrice;
-  const valorTotal = valorProduto + valorAditivo;
 
-  const valorEntrada = unitPrice * 0.5;
-  const valorIntermediaria = unitPrice * 0.3;
-  const valorFinal = unitPrice * 0.2;
+  // Variáveis para Jhoston Revest
+  const valInsumos = oportunidade.valorInsumos ?? 0;
+  const valEstadia = oportunidade.valorEstadia ?? 0;
+  const valImposto = oportunidade.imposto ?? 0;
+  const valDesconto = oportunidade.desconto ?? 0;
+  const subTotal = valorProduto + valInsumos + valEstadia;
+
+  const valorTotal = oportunidade.produto === "REVESTIMENTO"
+    ? subTotal + valImposto - valDesconto
+    : valorProduto + valorAditivo;
+
+  const valorEntrada = oportunidade.produto === "REVESTIMENTO" ? valorTotal * 0.5 : unitPrice * 0.5;
+  const valorIntermediaria = oportunidade.produto === "REVESTIMENTO" ? 0 : unitPrice * 0.3;
+  const valorFinal = oportunidade.produto === "REVESTIMENTO" ? valorTotal * 0.5 : unitPrice * 0.2;
 
   const formatNumberBR = (num: number) => {
     return num.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -224,16 +242,29 @@ export default function PropostaPreviewPage({
               PROPOSTA COMERCIAL
             </h1>
             <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "13px", fontWeight: 500 }}>
-              {oportunidade.produto === "CASCATA" ? "Ref: Execução de Cascata Decorativa" : "Ref: Construção de Revestimento de Piscina"}
+              {oportunidade.produto === "CASCATA" 
+                ? "Ref: Execução de Cascata Decorativa" 
+                : oportunidade.produto === "REVESTIMENTO" 
+                  ? `Ref: ${oportunidade.descricaoServico || "Aplicação de revestimento resinado"}` 
+                  : "Ref: Construção de Revestimento de Piscina"}
             </p>
           </div>
           <div style={{ textAlign: "right" }}>
             <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#0284c7", margin: 0 }}>
-              {oportunidade.produto === "CASCATA" ? "ECO STONE BRASIL" : "JHOSTON POOLS"}
+              {oportunidade.produto === "CASCATA" 
+                ? "ECO STONE BRASIL" 
+                : oportunidade.produto === "REVESTIMENTO" 
+                  ? "JHOSTON REVEST" 
+                  : "JHOSTON POOLS"}
             </h3>
-            {oportunidade.produto !== "CASCATA" && (
+            {oportunidade.produto !== "CASCATA" && oportunidade.produto !== "REVESTIMENTO" && (
               <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#64748b" }}>
                 CNPJ: 63.013.022/0001-06
+              </p>
+            )}
+            {oportunidade.produto === "REVESTIMENTO" && (
+              <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#64748b" }}>
+                Visite nosso instagram: @jhoston.revest
               </p>
             )}
           </div>
@@ -287,6 +318,17 @@ export default function PropostaPreviewPage({
                 <li style={{ marginBottom: "4px" }}><strong>Fase 4: Modelagem e Acabamento (Padrão ECO STONE):</strong> Escultura e modelagem da rocha artificial utilizando concreto armado composto por areia, cimento e ferro, com acabamento de textura e pintura artística.</li>
                 <li style={{ marginBottom: "4px" }}><strong>Fase 5: Testes, Limpeza e Entrega Técnica:</strong> Limpeza pós-obra da área de lazer, teste de vazão e regulagem final da lâmina d'água.</li>
               </ul>
+            </div>
+          ) : oportunidade.produto === "REVESTIMENTO" ? (
+            <div>
+              <h4 style={{ fontSize: "14px", fontWeight: 700, color: "#0284c7", margin: "0 0 6px 0" }}>
+                Aplicação de Revestimento Resinado Artístico
+              </h4>
+              <p style={{ margin: 0, textAlign: "justify" }}>
+                Esta proposta contempla a prestação de serviços especializados de revestimento resinado de alta aderência,
+                utilizando as especificações técnicas da linha de produtos selecionada, garantindo impermeabilidade completa,
+                facilidade de manutenção física e um acabamento artístico de alta sofisticação visual para sua área de lazer.
+              </p>
             </div>
           ) : oportunidade.produto === "SUPER_PREMIUM" ? (
             <div>
@@ -372,6 +414,70 @@ export default function PropostaPreviewPage({
                 </tr>
               </tbody>
             </table>
+          ) : oportunidade.produto === "REVESTIMENTO" ? (
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+              <thead>
+                <tr style={{ backgroundColor: "#f1f5f9", borderBottom: "2px solid #cbd5e1" }}>
+                  <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 700, color: "#1e293b" }}>Item / Descrição</th>
+                  <th style={{ textAlign: "center", padding: "10px 12px", fontWeight: 700, color: "#1e293b", width: "80px" }}>Qtd</th>
+                  <th style={{ textAlign: "center", padding: "10px 12px", fontWeight: 700, color: "#1e293b", width: "60px" }}>Und</th>
+                  <th style={{ textAlign: "right", padding: "10px 12px", fontWeight: 700, color: "#1e293b", width: "110px" }}>V. Un.</th>
+                  <th style={{ textAlign: "right", padding: "10px 12px", fontWeight: 700, color: "#1e293b", width: "120px" }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                  <td style={{ padding: "12px", fontWeight: 600, color: "#0f172a" }}>
+                    {oportunidade.descricaoServico || "Aplicação de revestimento resinado Verano Pools"}
+                  </td>
+                  <td style={{ padding: "12px", textAlign: "center" }}>{oportunidade.areaPiscina.toFixed(2)}</td>
+                  <td style={{ padding: "12px", textAlign: "center" }}>m2</td>
+                  <td style={{ padding: "12px", textAlign: "right" }}>{formatCurrency(unitPrice)}</td>
+                  <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(valorProduto)}</td>
+                </tr>
+                {valInsumos > 0 && (
+                  <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                    <td style={{ padding: "12px", color: "#475569" }}>Insumos</td>
+                    <td style={{ padding: "12px", textAlign: "center" }}>1,00</td>
+                    <td style={{ padding: "12px", textAlign: "center" }}>Vb</td>
+                    <td style={{ padding: "12px", textAlign: "right" }}>{formatCurrency(valInsumos)}</td>
+                    <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(valInsumos)}</td>
+                  </tr>
+                )}
+                {valEstadia > 0 && (
+                  <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                    <td style={{ padding: "12px", color: "#475569" }}>Estadia e deslocamento</td>
+                    <td style={{ padding: "12px", textAlign: "center" }}>1,00</td>
+                    <td style={{ padding: "12px", textAlign: "center" }}>Vb</td>
+                    <td style={{ padding: "12px", textAlign: "right" }}>{formatCurrency(valEstadia)}</td>
+                    <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(valEstadia)}</td>
+                  </tr>
+                )}
+                <tr style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: "#f8fafc" }}>
+                  <td colSpan={3} style={{ padding: "8px 12px", textAlign: "right", fontWeight: 600, color: "#64748b" }}>Sub-Total:</td>
+                  <td colSpan={2} style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: "#1e293b" }}>{formatCurrency(subTotal)}</td>
+                </tr>
+                {valImposto > 0 && (
+                  <tr style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: "#f8fafc" }}>
+                    <td colSpan={3} style={{ padding: "8px 12px", textAlign: "right", fontWeight: 600, color: "#64748b" }}>(+) Imposto - NF:</td>
+                    <td colSpan={2} style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: "var(--warning)" }}>{formatCurrency(valImposto)}</td>
+                  </tr>
+                )}
+                {valDesconto > 0 && (
+                  <tr style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: "#f8fafc" }}>
+                    <td colSpan={3} style={{ padding: "8px 12px", textAlign: "right", fontWeight: 600, color: "#64748b" }}>(-) Desconto:</td>
+                    <td colSpan={2} style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: "var(--error)" }}>-{formatCurrency(valDesconto)}</td>
+                  </tr>
+                )}
+                <tr style={{ backgroundColor: "#f1f5f9" }}>
+                  <td colSpan={3} style={{ padding: "12px" }}></td>
+                  <td style={{ padding: "12px", textAlign: "right", fontWeight: 700, color: "#0f172a", fontSize: "14px" }}>Total Geral:</td>
+                  <td style={{ padding: "12px", textAlign: "right", fontWeight: 800, color: "#0284c7", fontSize: "15px" }}>
+                    {formatCurrency(valorTotal)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
               <thead>
@@ -429,6 +535,29 @@ export default function PropostaPreviewPage({
                     <strong>3ª Parcela (20% - {formatCurrency(valorFinal)}):</strong> Pago na finalização dos testes técnicos e assinatura do Termo de Entrega da obra.
                   </li>
                 </ul>
+              ) : oportunidade.produto === "REVESTIMENTO" ? (
+                <>
+                  <ul style={{ paddingLeft: "16px", margin: 0 }}>
+                    <li style={{ marginBottom: "4px" }}>
+                      <strong>Condição:</strong> 50% de sinal e 50% no término da aplicação.
+                    </li>
+                  </ul>
+                  <div style={{ marginTop: "10px", padding: "8px", backgroundColor: "#f1f5f9", borderRadius: "4px", fontSize: "11px" }}>
+                    <strong>Dados Bancários Jhoston Revest:</strong><br />
+                    {oportunidade.contaBancaria ? (
+                      <>
+                        Nome: {oportunidade.contaBancaria.titular}<br />
+                        Banco: {oportunidade.contaBancaria.banco} | PIX: {oportunidade.contaBancaria.chavePix || "-"}<br />
+                        AG: {oportunidade.contaBancaria.agencia} | CC: {oportunidade.contaBancaria.conta}
+                      </>
+                    ) : (
+                      <>
+                        Nome: Jhoston Revest | CNPJ: 44.038.228/0001-46<br />
+                        Banco: Nú Bank | AG: 0001 | CC: 26970695-2 | PIX: 44.038.228/0001-46
+                      </>
+                    )}
+                  </div>
+                </>
               ) : (
                 <>
                   <ul style={{ paddingLeft: "16px", margin: 0 }}>
@@ -461,6 +590,18 @@ export default function PropostaPreviewPage({
                     <strong>Materiais:</strong> Aquisição e descarregamento de materiais básicos são de responsabilidade do contratante conforme quantitativo prévio.
                   </li>
                 </ul>
+              ) : oportunidade.produto === "REVESTIMENTO" ? (
+                <ul style={{ paddingLeft: "16px", margin: 0 }}>
+                  <li style={{ marginBottom: "4px" }}>
+                    <strong>Prazo de Aplicação:</strong> {oportunidade.prazoAplicacao ?? 15} dias a partir da regularização e preparação do substrato.
+                  </li>
+                  <li style={{ marginBottom: "4px" }}>
+                    <strong>Medição:</strong> O quantitativo é conferido no local antes da aplicação pela equipe técnica.
+                  </li>
+                  <li style={{ marginBottom: "4px" }}>
+                    <strong>Preparo de Substrato:</strong> O substrato deve estar limpo, seco e regularizado conforme especificações técnicas do fabricante.
+                  </li>
+                </ul>
               ) : (
                 <ul style={{ paddingLeft: "16px", margin: 0 }}>
                   <li style={{ marginBottom: "4px" }}>
@@ -478,8 +619,40 @@ export default function PropostaPreviewPage({
           </div>
         </div>
 
+        {/* Termos e Condições Gerais - Jhoston Revest */}
+        {oportunidade.produto === "REVESTIMENTO" && (
+          <div style={{ marginBottom: "40px", padding: "16px", border: "1px solid #fed7aa", backgroundColor: "#fff7ed", borderRadius: "6px" }}>
+            <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#c2410c", margin: "0 0 8px 0" }}>
+              Termos e Condições Gerais (Jhoston Revest)
+            </h3>
+            <ul style={{ paddingLeft: "16px", margin: 0, fontSize: "11px", color: "#431407", lineHeight: "1.5" }}>
+              <li style={{ marginBottom: "4px" }}>
+                Os valores informados no orçamento por m² são referentes a metragem, substratos e as áreas informadas cujo são de responsabilidade do cliente.
+              </li>
+              <li style={{ marginBottom: "4px" }}>
+                Confirmar metragem, condições de substrato, acesso ao local livre, validade dos materiais adquiridos, pontos de água e luz e as requisições do fabricante se estão de acordo.
+              </li>
+              <li style={{ marginBottom: "4px" }}>
+                Caso as informações (m², substrato, áreas) sejam alteradas, será necessário atualizar o orçamento podendo haver alteração de valor do m².
+              </li>
+              <li style={{ marginBottom: "4px" }}>
+                O revestimento deve ser aplicado sobre substratos regularizados, firmes, coesos, limpos, secos, livres de gordura, graxa, mofo, sem emendas ou trincas.
+              </li>
+              <li style={{ marginBottom: "4px" }}>
+                Acabamentos não aceitam retoques, portanto, as áreas devem estar totalmente liberadas para início e término da aplicação de uma só vez.
+              </li>
+              <li style={{ marginBottom: "4px" }}>
+                Produto aplicado de forma artesanal, ocorrendo variações no acabamento.
+              </li>
+              <li style={{ marginBottom: "4px" }}>
+                Cancelamento total da proposta poderá ser feito em até 48 horas a partir da data de assinatura, após este prazo haverá multa de 30% do valor contratado.
+              </li>
+            </ul>
+          </div>
+        )}
+
         {/* Plano de Manutenção Ativo */}
-        {oportunidade.produto !== "CASCATA" && (
+        {oportunidade.produto !== "CASCATA" && oportunidade.produto !== "REVESTIMENTO" && (
           <div style={{ marginBottom: "40px", padding: "16px", border: "1px solid #bae6fd", backgroundColor: "#f0f9ff", borderRadius: "6px" }}>
             <h3 style={{ fontSize: "15px", fontWeight: 700, color: "#0369a1", margin: "0 0 8px 0" }}>
               Plano de Manutenção Ativo (Garantia de 3 Anos)
@@ -511,7 +684,11 @@ export default function PropostaPreviewPage({
             <div style={{ flex: 1, textAlign: "center" }}>
               <div style={{ borderBottom: "1px solid #94a3b8", height: "30px", marginBottom: "6px" }}></div>
               <strong style={{ fontSize: "13px", color: "#0f172a" }}>
-                {oportunidade.produto === "CASCATA" ? "ECO STONE BRASIL" : "JHOSTON POOLS"}
+                {oportunidade.produto === "CASCATA" 
+                  ? "ECO STONE BRASIL" 
+                  : oportunidade.produto === "REVESTIMENTO" 
+                    ? "JHOSTON REVEST" 
+                    : "JHOSTON POOLS"}
               </strong>
               <div style={{ fontSize: "12px", color: "#64748b" }}>Contratado</div>
             </div>

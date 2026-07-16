@@ -202,7 +202,7 @@ model Oportunidade {
   email            String?
   endereco         String?
   descricaoPiscina String?
-  produto          String   // "PREMIUM" ou "SUPER_PREMIUM"
+  produto          String   // "PREMIUM", "SUPER_PREMIUM", "CASCATA", "REVESTIMENTO"
   areaPiscina      Float    @default(0)
   valorProposta    Float    @default(0)
   status           String   @default("PENDENTE") // "PENDENTE", "PROPOSTA_GERADA", "PROPOSTA_ENVIADA", "ACEITO", "RECUSADO"
@@ -212,6 +212,16 @@ model Oportunidade {
   empresa          String   @default("JHOSTON")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  // Novos campos para a JHOSTON REVEST e propostas complexas
+  descricaoServico String?  @default("Aplicação de revestimento resinado Verano Pools")
+  valorInsumos     Float?   @default(0)
+  valorEstadia     Float?   @default(0)
+  imposto          Float?   @default(0)
+  desconto         Float?   @default(0)
+  prazoAplicacao   Int?     @default(15)
+  contaBancariaId  Int?
+  contaBancaria    ContaBancaria? @relation(fields: [contaBancariaId], references: [id], onDelete: SetNull)
 }
 
 model Boleto {
@@ -272,5 +282,34 @@ model AutorizacaoCompra {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 }
+
+model ProdutoServico {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  precoPadrao Float    @default(0)
+  tipo        String   @default("PRODUTO") // "PRODUTO" ou "SERVICO"
+  empresa     String   @default("JHOSTON") // "JHOSTON", "ECO_STONE", "AMBAS"
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContaBancaria {
+  id            Int            @id @default(autoincrement())
+  banco         String
+  agencia       String?
+  conta         String?
+  tipoPix       String?  // "CPF", "CNPJ", "CELULAR", "EMAIL", "ALEATORIA"
+  chavePix      String?
+  titular       String
+  documento     String?  // CPF ou CNPJ do titular
+  empresa       String   @default("JHOSTON") // "JHOSTON", "ECO_STONE", "AMBAS"
+  ativa         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  oportunidades Oportunidade[]
+}
+
 
 

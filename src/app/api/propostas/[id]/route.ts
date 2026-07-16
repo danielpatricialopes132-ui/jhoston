@@ -24,10 +24,11 @@ export async function GET(
       return new NextResponse("ID de proposta inválido.", { status: 400 });
     }
 
-    // 3. Buscar oportunidade no banco
-    const oportunidade = await prisma.oportunidade.findUnique({
+    // 3. Buscar oportunidade no banco com relação à conta bancária
+    const oportunidade = (await prisma.oportunidade.findUnique({
       where: { id: opId },
-    });
+      include: { contaBancaria: true },
+    })) as any;
 
     if (!oportunidade) {
       return new NextResponse("Oportunidade não encontrada no sistema.", { status: 404 });
@@ -39,6 +40,8 @@ export async function GET(
       templateName = "Proposta_Super_Premium_Template.docx";
     } else if (oportunidade.produto === "CASCATA") {
       templateName = "Proposta_Cascata_Template.docx";
+    } else if (oportunidade.produto === "REVESTIMENTO" || oportunidade.empresa === "JHOSTON_REVEST") {
+      templateName = "Proposta_Revest_Template.docx";
     }
 
     const templatePath = path.join(process.cwd(), "src", "templates", templateName);
@@ -58,19 +61,50 @@ export async function GET(
     // Cálculos de Proposta com valores customizados (com fallbacks para retrocompatibilidade)
     const precoUnitario = oportunidade.precoUnitario !== null && oportunidade.precoUnitario !== undefined
       ? oportunidade.precoUnitario
-      : (oportunidade.produto === "CASCATA" ? 18000.0 : (oportunidade.produto === "SUPER_PREMIUM" ? 350.0 : 270.0));
+      : (oportunidade.produto === "CASCATA" ? 18000.0 : (oportunidade.produto === "SUPER_PREMIUM" ? 350.0 : (oportunidade.produto === "REVESTIMENTO" ? 120.0 : 270.0)));
     
     const precoAditivo = oportunidade.precoAditivo !== null && oportunidade.precoAditivo !== undefined
       ? oportunidade.precoAditivo
-      : (oportunidade.produto === "CASCATA" ? 5000.0 : 25.0);
+      : (oportunidade.produto === "CASCATA" ? 5000.0 : (oportunidade.produto === "REVESTIMENTO" ? 0.0 : 25.0));
 
     const valorProduto = oportunidade.areaPiscina * precoUnitario;
     const valorAditivo = oportunidade.areaPiscina * precoAditivo;
-    const valorTotal = valorProduto + valorAditivo;
 
-    const valorEntrada = precoUnitario * 0.5;
-    const valorIntermediaria = precoUnitario * 0.3;
-    const valorFinal = precoUnitario * 0.2;
+    // Variáveis para Jhoston Revest
+    const valInsumos = oportunidade.valorInsumos ?? 0;
+    const valEstadia = oportunidade.valorEstadia ?? 0;
+    const valImposto = oportunidade.imposto ?? 0;
+    const valDesconto = oportunidade.desconto ?? 0;
+    const subTotal = valorProduto + valInsumos + valEstadia;
+
+    const valorTotal = oportunidade.produto === "REVESTIMENTO"
+      ? subTotal + valImposto - valDesconto
+      : valorProduto + valorAditivo;
+
+    const valorEntrada = oportunidade.produto === "REVESTIMENTO" ? valorTotal * 0.5 : valorTotal * 0.5;
+    const valorIntermediaria = oportunidade.produto === "REVESTIMENTO" ? 0 : valorTotal * 0.3;
+    const valorFinal = oportunidade.produto === "REVESTIMENTO" ? valorTotal * 0.5 : valorTotal * 0.2;
+
+    // Conta Bancária
+    let bancoNome = "Nú Bank";
+    let bancoAgencia = "0001";
+    let bancoConta = "26970695-2";
+    let bancoTitular = "Jhoston Revest";
+    let bancoPix = "44.038.228/0001-46";
+
+    if (oportunidade.contaBancaria) {
+      bancoNome = oportunidade.contaBancaria.banco || "";
+      bancoAgencia = oportunidade.contaBancaria.agencia || "";
+      bancoConta = oportunidade.contaBancaria.conta || "";
+      bancoTitular = oportunidade.contaBancaria.titular || "";
+      bancoPix = oportunidade.contaBancaria.chavePix || "";
+    } else if (oportunidade.empresa === "JHOSTON" || oportunidade.produto === "PREMIUM" || oportunidade.produto === "SUPER_PREMIUM") {
+      bancoNome = "C6 S.A. (336)";
+      bancoAgencia = "0001";
+      bancoConta = "39936999-6";
+      bancoTitular = "JHOSTON POOLS";
+      bancoPix = "63.013.022/0001-06";
+    }
 
     // Formatadores BR
     const formatNumberBR = (num: number) => {
@@ -106,6 +140,22 @@ export async function GET(
       valorIntermediaria: formatNumberBR(valorIntermediaria),
       valorFinal: formatNumberBR(valorFinal),
       dataProposta: formatDateBR(oportunidade.createdAt),
+
+      // Novos campos Jhoston Revest
+      descricaoServico: oportunidade.descricaoServico || "Aplicação de revestimento resinado Verano Pools",
+      valorInsumos: formatNumberBR(valInsumos),
+      valorEstadia: formatNumberBR(valEstadia),
+      imposto: formatNumberBR(valImposto),
+      desconto: formatNumberBR(valDesconto),
+      subTotal: formatNumberBR(subTotal),
+      prazoAplicacao: String(oportunidade.prazoAplicacao ?? 15),
+
+      // Conta Bancária
+      bancoNome,
+      bancoAgencia,
+      bancoConta,
+      bancoTitular,
+      bancoPix,
     });
 
     doc.render();

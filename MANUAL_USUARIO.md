@@ -159,3 +159,32 @@ Permite a troca de informações rápidas e diretas entre a equipe técnica exte
 3. **Conversas Diretas (👤)**: Mensagens um-a-um privadas. Escolha qualquer usuário listado para enviar uma mensagem exclusiva.
 4. **Alerta Sonoro**: Ao receber novas mensagens na janela de chat ativa que não tenham sido enviadas por você, o sistema emitirá um som discreto (beep).
 5. **Atualização**: O chat é atualizado automaticamente a cada 3 segundos, dispensando a necessidade de atualizar a página manualmente.
+
+---
+
+## 14. Uso de Modelos do Canva como Proposta Comercial
+Para criar propostas comerciais personalizadas no Canva e integrá-las ao sistema:
+
+1. **Criação do Design**: Crie e diagrame a Proposta Comercial no Canva com a identidade visual da empresa.
+2. **Inclusão de Marcadores de Texto (Placeholders)**: Nos locais onde os dados dinâmicos do cliente e valores calculados devem ser inseridos, adicione tags simples entre chaves `{}`:
+   *   `{propostaNumero}`: Número sequencial formatado da proposta (ex: `0042/2026`).
+   *   `{clienteNome}`: Nome completo ou Razão Social do cliente.
+   *   `{clienteEndereco}`: Endereço completo informado no cadastro.
+   *   `{areaPiscina}`: Área total em metros quadrados (m²).
+   *   `{precoUnitario}`: Preço do m² do produto contratado (ex: `270,00`).
+   *   `{precoAditivo}`: Preço do m² do aditivo de salinidade (ex: `25,00`).
+   *   `{valorProduto}`: Subtotal correspondente ao produto (Área x Preço Unitário).
+   *   `{valorAditivo}`: Subtotal correspondente ao aditivo (Área x Preço Aditivo).
+   *   `{valorTotal}`: Soma total dos valores da proposta comercial.
+   *   `{valorEntrada}`: Valor de entrada (50% do valor unitário do produto).
+   *   `{valorIntermediaria}`: Valor da parcela intermediária (30% do valor unitário do produto).
+   *   `{valorFinal}`: Valor da parcela final (20% do valor unitário do produto).
+   *   `{dataProposta}`: Data atual por extenso (ex: `16 de Julho de 2026`).
+3. **Exportação**: Concluído o design com os marcadores exatos, clique em **Compartilhar** no Canva, selecione **Baixar** e escolha o formato **PDF padrão** ou **PDF para impressão**.
+4. **Conversão para Word (.docx)**: Utilize um conversor online de alta fidelidade (como *Adobe Acrobat Online*, *Smallpdf* ou *Ilovepdf*) para transformar o arquivo PDF baixado em um documento do Microsoft Word (`.docx`).
+5. **Instalação do Modelo no Servidor**: Renomeie o arquivo gerado de acordo com a linha de produto e coloque-o na pasta de templates do sistema (`src/templates`):
+   *   `Proposta_Premium_Template.docx` para a linha **Premium**.
+   *   `Proposta_Super_Premium_Template.docx` para a linha **Super Premium**.
+   *   `Proposta_Cascata_Template.docx` para a linha **Cascata**.
+6. **Homologação**: Faça um lançamento de teste na tela de CRM e clique em **Proposta** para certificar-se de que a diagramação foi convertida perfeitamente e os dados dinâmicos foram aplicados nos campos marcados.
+
