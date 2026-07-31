@@ -83,21 +83,18 @@ function generateProposalDoc(oportunidade: any, templateName: string, config: {
   let bancoTitular = "Jhoston Revest";
   let bancoPix = "44.038.228/0001-46";
 
-  if (templateName === "Proposta_Revest_Template.docx") {
-    if (oportunidade.contaBancaria) {
-      bancoNome = oportunidade.contaBancaria.banco || "";
-      bancoAgencia = oportunidade.contaBancaria.agencia || "";
-      bancoConta = oportunidade.contaBancaria.conta || "";
-      bancoTitular = oportunidade.contaBancaria.titular || "";
-      bancoPix = oportunidade.contaBancaria.chavePix || "";
-    }
-  } else {
-    // Pools padrao
-    bancoNome = "C6 S.A. (336)";
+  if (oportunidade.contaBancaria) {
+    bancoNome = oportunidade.contaBancaria.banco || "";
+    bancoAgencia = oportunidade.contaBancaria.agencia || "";
+    bancoConta = oportunidade.contaBancaria.conta || "";
+    bancoTitular = oportunidade.contaBancaria.titular || "";
+    bancoPix = oportunidade.contaBancaria.chavePix || "";
+  } else if (templateName === "Proposta_Revest_Template.docx") {
+    bancoNome = "Nú Bank";
     bancoAgencia = "0001";
-    bancoConta = "39936999-6";
-    bancoTitular = "JHOSTON POOLS";
-    bancoPix = "63.013.022/0001-06";
+    bancoConta = "26970695-2";
+    bancoTitular = "Jhoston Revest";
+    bancoPix = "44.038.228/0001-46";
   }
 
   // Preparações para Cascata Eco Stone
@@ -111,11 +108,14 @@ function generateProposalDoc(oportunidade: any, templateName: string, config: {
     clienteNome: oportunidade.clienteNome,
     clienteEndereco: oportunidade.endereco || "Não Informado",
     areaPiscina: formatNumberBR(area),
+    areasResina: oportunidade.areasResina && oportunidade.areasResina.length > 0
+      ? oportunidade.areasResina.map((a: any) => ({ descricao: a.descricao, area: formatNumberBR(a.area) }))
+      : [{ descricao: "Área da Piscina", area: formatNumberBR(area) }],
     precoUnitario: formatNumberBR(pUnit),
-    precoAditivo: formatNumberBR(pAdit),
+    precoAditivo: pAdit > 0 ? formatNumberBR(pAdit) : "Já incluso",
     descontoAditivo: "-",
     valorProduto: formatNumberBR(valorProduto),
-    valorAditivo: formatNumberBR(valorAditivo),
+    valorAditivo: pAdit > 0 ? formatNumberBR(valorAditivo) : "Já incluso",
     valorTotal: formatNumberBR(valorTotal),
     valorTotalExtenso: numeroParaExtenso(valorTotal),
     valorEntrada: formatNumberBR(valorEntrada),

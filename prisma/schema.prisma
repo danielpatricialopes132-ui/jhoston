@@ -222,6 +222,7 @@ model Oportunidade {
   prazoAplicacao   Int?     @default(15)
   contaBancariaId  Int?
   contaBancaria    ContaBancaria? @relation(fields: [contaBancariaId], references: [id], onDelete: SetNull)
+  areasResina      Json?    // [{ descricao: "Deck Piscina", area: 50 }, ...]
 }
 
 model Boleto {

@@ -66,6 +66,7 @@ export async function salvarOportunidade(data: {
   desconto?: number;
   prazoAplicacao?: number;
   contaBancariaId?: number | null;
+  areasResina?: any;
 }) {
   await requireAdmin();
 
@@ -125,6 +126,7 @@ export async function salvarOportunidade(data: {
     desconto: data.desconto || 0,
     prazoAplicacao: data.prazoAplicacao || 15,
     contaBancariaId: data.contaBancariaId || null,
+    areasResina: data.areasResina || null,
   };
 
   try {

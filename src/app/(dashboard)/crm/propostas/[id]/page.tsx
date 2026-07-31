@@ -37,6 +37,7 @@ interface Oportunidade {
   prazoAplicacao?: number | null;
   contaBancariaId?: number | null;
   contaBancaria?: ContaBancaria | null;
+  areasResina?: any;
 }
 
 export default function PropostaPreviewPage({
@@ -633,19 +634,35 @@ export default function PropostaPreviewPage({
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
-                  <td style={{ padding: "12px", fontWeight: 600, color: "#0f172a" }}>
-                    {displayProduct === "SUPER_PREMIUM" ? "Linha Super Premium (Poliaspártica)" : "Linha Premium (Resina PU)"}
-                  </td>
-                  <td style={{ padding: "12px", textAlign: "center" }}>{oportunidade.areaPiscina.toFixed(2)}</td>
-                  <td style={{ padding: "12px", textAlign: "right" }}>{formatCurrency(displayUnitPrice)}</td>
-                  <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(displayValorProduto)}</td>
-                </tr>
+                {oportunidade.areasResina && oportunidade.areasResina.length > 0 ? (
+                  oportunidade.areasResina.map((item: any, idx: number) => (
+                    <tr key={idx} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                      <td style={{ padding: "12px", fontWeight: idx === 0 ? 600 : 400, color: "#0f172a", paddingLeft: idx === 0 ? "12px" : "24px" }}>
+                        {idx === 0 ? (displayProduct === "SUPER_PREMIUM" ? "Linha Super Premium (Poliaspártica)" : "Linha Premium (Resina PU)") : ""} 
+                        {idx === 0 ? <br/> : null}
+                        <span style={{ fontSize: "12px", color: "#475569" }}>- {item.descricao}</span>
+                      </td>
+                      <td style={{ padding: "12px", textAlign: "center" }}>{Number(item.area).toFixed(2)}</td>
+                      <td style={{ padding: "12px", textAlign: "right" }}>{formatCurrency(displayUnitPrice)}</td>
+                      <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(Number(item.area) * displayUnitPrice)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+                    <td style={{ padding: "12px", fontWeight: 600, color: "#0f172a" }}>
+                      {displayProduct === "SUPER_PREMIUM" ? "Linha Super Premium (Poliaspártica)" : "Linha Premium (Resina PU)"}
+                    </td>
+                    <td style={{ padding: "12px", textAlign: "center" }}>{oportunidade.areaPiscina.toFixed(2)}</td>
+                    <td style={{ padding: "12px", textAlign: "right" }}>{formatCurrency(displayUnitPrice)}</td>
+                    <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(displayValorProduto)}</td>
+                  </tr>
+                )}
+                
                 <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
                   <td style={{ padding: "12px", color: "#475569" }}>Aditivo de Alta Performance (UVX HighPro Defense+)</td>
                   <td style={{ padding: "12px", textAlign: "center" }}>{oportunidade.areaPiscina.toFixed(2)}</td>
-                  <td style={{ padding: "12px", textAlign: "right" }}>{formatCurrency(displayAditivoPrice)}</td>
-                  <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(displayValorAditivo)}</td>
+                  <td style={{ padding: "12px", textAlign: "right" }}>{displayAditivoPrice > 0 ? formatCurrency(displayAditivoPrice) : "Já incluso"}</td>
+                  <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{displayAditivoPrice > 0 ? formatCurrency(displayValorAditivo) : "Já incluso"}</td>
                 </tr>
                 <tr style={{ backgroundColor: "#f8fafc" }}>
                   <td colSpan={2} style={{ padding: "12px" }}></td>

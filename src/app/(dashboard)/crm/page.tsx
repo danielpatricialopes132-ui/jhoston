@@ -37,6 +37,7 @@ interface Oportunidade {
   prazoAplicacao?: number | null;
   contaBancariaId?: number | null;
   contaBancaria?: ContaBancaria | null;
+  areasResina?: any;
 }
 
 
@@ -74,6 +75,7 @@ export default function CRMPage() {
   const [prazoAplicacao, setPrazoAplicacao] = useState<number>(15);
   const [contaBancariaId, setContaBancariaId] = useState<number | null>(null);
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
+  const [areasResina, setAreasResina] = useState<{ descricao: string; area: number }[]>([]);
 
   const handleProdutoChange = (newProd: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA" | "REVESTIMENTO") => {
     setProduto(newProd);
@@ -143,6 +145,7 @@ export default function CRMPage() {
     setDesconto(0);
     setPrazoAplicacao(15);
     setContaBancariaId(null);
+    setAreasResina([]);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -168,6 +171,7 @@ export default function CRMPage() {
     setDesconto(op.desconto ?? 0);
     setPrazoAplicacao(op.prazoAplicacao ?? 15);
     setContaBancariaId(op.contaBancariaId ?? null);
+    setAreasResina(op.areasResina || []);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -221,6 +225,7 @@ export default function CRMPage() {
       desconto,
       prazoAplicacao,
       contaBancariaId: contaBancariaId ? Number(contaBancariaId) : null,
+      areasResina: areasResina.length > 0 ? areasResina : null,
     };
 
     startTransition(async () => {
@@ -647,20 +652,106 @@ export default function CRMPage() {
                       <option value="REVESTIMENTO">Revestimento (Jhoston Revest)</option>
                     </select>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">
-                      {produto === "CASCATA" ? "Quantidade de Cascatas *" : produto === "REVESTIMENTO" ? "Área de Aplicação (m²) *" : "Área da Piscina (m²) *"}
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="form-control"
-                      placeholder="0.00"
-                      value={areaPiscina || ""}
-                      onChange={(e) => setAreaPiscina(parseFloat(e.target.value) || 0)}
-                      required
-                    />
-                  </div>
+                  {produto === "PREMIUM" || produto === "SUPER_PREMIUM" ? (
+                    <div className="form-group" style={{ gridColumn: "span 3" }}>
+                      <label className="form-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span>Áreas da Piscina / Obra (Ex: Deck, Prainha)</span>
+                        <button 
+                          type="button" 
+                          className="btn btn-sm btn-secondary"
+                          onClick={() => setAreasResina([...areasResina, { descricao: "", area: 0 }])}
+                          style={{ padding: "4px 8px", fontSize: "11px" }}
+                        >
+                          + Adicionar Área
+                        </button>
+                      </label>
+                      {areasResina.length === 0 ? (
+                        <div className="flex-gap-12" style={{ alignItems: "center", backgroundColor: "rgba(255,255,255,0.02)", padding: "8px", borderRadius: "4px" }}>
+                          <span style={{ fontSize: "12px", color: "var(--text-muted)", flex: 1 }}>
+                            Nenhuma área específica adicionada. A área total manual é usada.
+                          </span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            className="form-control"
+                            placeholder="Área Total (m²)"
+                            value={areaPiscina || ""}
+                            onChange={(e) => setAreaPiscina(parseFloat(e.target.value) || 0)}
+                            style={{ width: "120px" }}
+                            required
+                          />
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                          {areasResina.map((item, index) => (
+                            <div key={index} className="flex-gap-12" style={{ alignItems: "center" }}>
+                              <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Descrição (ex: Deck Piscina)"
+                                value={item.descricao}
+                                onChange={(e) => {
+                                  const newAreas = [...areasResina];
+                                  newAreas[index].descricao = e.target.value;
+                                  setAreasResina(newAreas);
+                                }}
+                                style={{ flex: 2 }}
+                                required
+                              />
+                              <input
+                                type="number"
+                                step="0.01"
+                                className="form-control"
+                                placeholder="Área (m²)"
+                                value={item.area || ""}
+                                onChange={(e) => {
+                                  const newAreas = [...areasResina];
+                                  newAreas[index].area = parseFloat(e.target.value) || 0;
+                                  setAreasResina(newAreas);
+                                  // Update total
+                                  const total = newAreas.reduce((acc, curr) => acc + curr.area, 0);
+                                  setAreaPiscina(total);
+                                }}
+                                style={{ flex: 1 }}
+                                required
+                              />
+                              <button 
+                                type="button" 
+                                className="btn btn-sm btn-danger"
+                                onClick={() => {
+                                  const newAreas = areasResina.filter((_, i) => i !== index);
+                                  setAreasResina(newAreas);
+                                  const total = newAreas.reduce((acc, curr) => acc + curr.area, 0);
+                                  setAreaPiscina(total);
+                                }}
+                                title="Remover"
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          ))}
+                          <div style={{ textAlign: "right", fontSize: "12px", fontWeight: "bold", color: "var(--text-heading)", marginTop: "4px" }}>
+                            Área Total Calculada: {areaPiscina} m²
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="form-group">
+                      <label className="form-label">
+                        {produto === "CASCATA" ? "Quantidade de Cascatas *" : "Área de Aplicação (m²) *"}
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="form-control"
+                        placeholder="0.00"
+                        value={areaPiscina || ""}
+                        onChange={(e) => setAreaPiscina(parseFloat(e.target.value) || 0)}
+                        required
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid-cols-2" style={{ gap: "12px", marginBottom: "12px" }}>
@@ -797,29 +888,31 @@ export default function CRMPage() {
                       </div>
                     </div>
 
-                    <div className="form-group">
-                      <label className="form-label" style={{ color: "var(--text-heading)" }}>Conta Bancária para a Proposta *</label>
-                      <select
-                        className="form-control"
-                        value={contaBancariaId || ""}
-                        onChange={(e) => setContaBancariaId(e.target.value ? Number(e.target.value) : null)}
-                        required
-                      >
-                        <option value="">-- Selecione uma conta --</option>
-                        {contasBancarias.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.banco} - {c.titular} ({c.empresa === "JHOSTON" ? "Jhoston" : c.empresa === "ECO_STONE" ? "Eco Stone" : c.empresa === "JHOSTON_REVEST" ? "Jhoston Revest" : "Ambas"})
-                          </option>
-                        ))}
-                      </select>
-                      {contasBancarias.length === 0 && (
-                        <p style={{ fontSize: "11px", color: "var(--warning)", marginTop: "4px" }}>
-                          Atenção: Nenhuma conta bancária cadastrada. Cadastre uma conta ativa primeiro!
-                        </p>
-                      )}
-                    </div>
                   </div>
                 )}
+
+                {/* CONTA BANCÁRIA GLOBAL */}
+                <div className="form-group" style={{ marginBottom: "12px", backgroundColor: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255,255,255,0.08)", padding: "12px", borderRadius: "6px" }}>
+                  <label className="form-label" style={{ color: "var(--text-heading)" }}>Conta Bancária para a Proposta *</label>
+                  <select
+                    className="form-control"
+                    value={contaBancariaId || ""}
+                    onChange={(e) => setContaBancariaId(e.target.value ? Number(e.target.value) : null)}
+                    required
+                  >
+                    <option value="">-- Selecione uma conta --</option>
+                    {contasBancarias.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.banco} - {c.titular} ({c.empresa === "JHOSTON" ? "Jhoston Pools" : c.empresa === "ECO_STONE" ? "Eco Stone" : c.empresa === "JHOSTON_REVEST" ? "Jhoston Revest" : "Ambas"})
+                      </option>
+                    ))}
+                  </select>
+                  {contasBancarias.length === 0 && (
+                    <p style={{ fontSize: "11px", color: "var(--warning)", marginTop: "4px" }}>
+                      Atenção: Nenhuma conta bancária cadastrada. Cadastre uma conta ativa primeiro!
+                    </p>
+                  )}
+                </div>
 
                 {/* Previsualização Financeira */}
                 <div
