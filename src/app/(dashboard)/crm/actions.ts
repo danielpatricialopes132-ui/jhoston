@@ -45,6 +45,18 @@ export async function getActiveContasBancarias() {
   });
 }
 
+export async function getProdutosAtivos() {
+  await requireAdmin();
+  return await prisma.produtoServico.findMany({
+    where: {
+      ativo: true,
+    },
+    orderBy: {
+      nome: "asc",
+    },
+  });
+}
+
 export async function salvarOportunidade(data: {
   id?: number;
   clienteNome: string;
@@ -67,6 +79,7 @@ export async function salvarOportunidade(data: {
   prazoAplicacao?: number;
   contaBancariaId?: number | null;
   areasResina?: any;
+  itensAdicionais?: any;
 }) {
   await requireAdmin();
 
@@ -127,6 +140,7 @@ export async function salvarOportunidade(data: {
     prazoAplicacao: data.prazoAplicacao || 15,
     contaBancariaId: data.contaBancariaId || null,
     areasResina: data.areasResina || null,
+    itensAdicionais: data.itensAdicionais || null,
   };
 
   try {

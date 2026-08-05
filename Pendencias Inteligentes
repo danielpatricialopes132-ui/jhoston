@@ -1,0 +1,36 @@
+# Implementação Concluída: Triagem de Feedback e Relatórios
+
+A Fase 2 foi implementada com sucesso, fechando o fluxo desde o envio do cliente até a geração das evidências e cobranças em PDF. Abaixo um resumo das alterações.
+
+## O Que Foi Feito
+
+### 1. Tela de Triagem de Clientes
+Adicionamos uma nova aba chamada **"TRIAGEM CLIENTE"** no módulo de **Inspeção & Pendências (Punch List)**.
+- Esta aba lê todos os feedbacks que a inteligência artificial (Gemini) processou e formatou.
+- Para cada item (pendência extraída), o engenheiro vê botões rápidos para **Rejeitar (✖)** ou **Aceitar (✔)**.
+
+### 2. Fluxo de Rejeição e Aceite
+- **Rejeitar**: Abre um pop-up pedindo o **Motivo da Rejeição**. Isso será salvo e exibido no relatório final para o cliente.
+- **Aceitar**: Abre um pop-up para selecionar o **Responsável**. As opções são `Intermack`, `Terceirizado Intermack` e `Fornecedor do Cliente`.
+  - Se `Fornecedor do Cliente` for selecionado, o sistema **obriga** o engenheiro a escolher qual é o fornecedor específico daquela obra através de um *dropdown box* conectado ao banco de dados (`obra_fornecedores_cliente`).
+  - Ao confirmar, essa pendência vira um item oficial do Kanban (`punch_list`).
+
+### 3. Gerador de Relatório de Retorno ao Cliente (PDF)
+Criamos o botão **"Gerar Relatório Retorno ao Cliente"** diretamente na aba de Triagem (dentro de cada bloco de feedback).
+Ele gera um PDF contendo:
+- O relato original escrito pelo cliente.
+- Os itens **ACEITOS**, destacando a ação corretiva que a engenharia programou e o responsável.
+- Os itens **REJEITADOS**, destacando a justificativa/observação técnica da engenharia.
+- O PDF é baixado manualmente para você anexar e enviar via WhatsApp como desejar.
+
+### 4. Gerador de Relatório de Cobrança do Fornecedor do Cliente (PDF)
+Fomos até a tela de gerenciamento de **Fornecedores do Cliente** (`fornecedores_cliente_aba.dart`) e inserimos o botão **"Exportar PDF de Pendências"** ao lado dos botões de logística.
+- Esse botão puxa *apenas* as pendências ativas daquele fornecedor específico (marcenaria, vidraçaria, etc.) que caíram no Punch List.
+- Monta um PDF enxuto e formal, no formato de tabela, listando os serviços problemáticos e a data em que foram detectados, para que o seu cliente possa encaminhar diretamente como cobrança de reparo.
+
+## Próximos Passos
+O fluxo de Feedback via QR Code está completo ponta-a-ponta!
+Para testar:
+1. Abra o sistema e vá em "Inspeção & Pendências".
+2. Verifique a nova aba **"TRIAGEM CLIENTE"**.
+3. Acesse a tela de **Fornecedores do Cliente** e clique em "Exportar PDF de Pendências".

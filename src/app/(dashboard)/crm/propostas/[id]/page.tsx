@@ -38,6 +38,7 @@ interface Oportunidade {
   contaBancariaId?: number | null;
   contaBancaria?: ContaBancaria | null;
   areasResina?: any;
+  itensAdicionais?: any;
 }
 
 export default function PropostaPreviewPage({
@@ -142,13 +143,16 @@ export default function PropostaPreviewPage({
   }
 
   // Cálculos base do display
+  const itensAdicionais = oportunidade.itensAdicionais || [];
+  const valorItensAdicionais = itensAdicionais.reduce((acc: number, curr: any) => acc + (curr.valorTotal || 0), 0);
+
   const displayValorProduto = oportunidade.areaPiscina * displayUnitPrice;
   const displayValorAditivo = oportunidade.areaPiscina * displayAditivoPrice;
-  const displaySubTotal = displayValorProduto + displayValInsumos + displayValEstadia;
+  const displaySubTotal = displayValorProduto + displayValInsumos + displayValEstadia + valorItensAdicionais;
 
   const displayValorTotal = displayProduct === "REVESTIMENTO"
     ? displaySubTotal + displayImposto - displayDesconto
-    : displayValorProduto + displayValorAditivo;
+    : displayValorProduto + displayValorAditivo + valorItensAdicionais;
 
   // Entrada e parcelas
   const displayValorEntrada = displayValorTotal * 0.5;
@@ -546,6 +550,13 @@ export default function PropostaPreviewPage({
                   <td style={{ padding: "12px", textAlign: "center" }}>1,00</td>
                   <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(displayValorAditivo)}</td>
                 </tr>
+                {itensAdicionais.map((item: any, idx: number) => (
+                  <tr key={`casc-add-${idx}`} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                    <td style={{ padding: "12px", color: "#475569" }}>{item.nome}</td>
+                    <td style={{ padding: "12px", textAlign: "center" }}>{item.quantidade}</td>
+                    <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(item.valorTotal)}</td>
+                  </tr>
+                ))}
                 <tr style={{ backgroundColor: "#f8fafc" }}>
                   <td colSpan={1} style={{ padding: "12px" }}>
                     <span style={{ fontSize: "11px", color: "#64748b", fontStyle: "italic" }}>
@@ -598,6 +609,15 @@ export default function PropostaPreviewPage({
                     <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(displayValEstadia)}</td>
                   </tr>
                 )}
+                {itensAdicionais.map((item: any, idx: number) => (
+                  <tr key={`revest-add-${idx}`} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                    <td style={{ padding: "12px", color: "#475569" }}>{item.nome}</td>
+                    <td style={{ padding: "12px", textAlign: "center" }}>{item.quantidade}</td>
+                    <td style={{ padding: "12px", textAlign: "center" }}>Und</td>
+                    <td style={{ padding: "12px", textAlign: "right" }}>{formatCurrency(item.valorUnitario)}</td>
+                    <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(item.valorTotal)}</td>
+                  </tr>
+                ))}
                 <tr style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: "#f8fafc" }}>
                   <td colSpan={3} style={{ padding: "8px 12px", textAlign: "right", fontWeight: 600, color: "#64748b" }}>Sub-Total:</td>
                   <td colSpan={2} style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: "#1e293b" }}>{formatCurrency(displaySubTotal)}</td>
@@ -664,6 +684,14 @@ export default function PropostaPreviewPage({
                   <td style={{ padding: "12px", textAlign: "right" }}>{displayAditivoPrice > 0 ? formatCurrency(displayAditivoPrice) : "Já incluso"}</td>
                   <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{displayAditivoPrice > 0 ? formatCurrency(displayValorAditivo) : "Já incluso"}</td>
                 </tr>
+                {itensAdicionais.map((item: any, idx: number) => (
+                  <tr key={`prem-add-${idx}`} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                    <td style={{ padding: "12px", color: "#475569" }}>{item.nome}</td>
+                    <td style={{ padding: "12px", textAlign: "center" }}>{item.quantidade}</td>
+                    <td style={{ padding: "12px", textAlign: "right" }}>{formatCurrency(item.valorUnitario)}</td>
+                    <td style={{ padding: "12px", textAlign: "right", fontWeight: 500 }}>{formatCurrency(item.valorTotal)}</td>
+                  </tr>
+                ))}
                 <tr style={{ backgroundColor: "#f8fafc" }}>
                   <td colSpan={2} style={{ padding: "12px" }}></td>
                   <td style={{ padding: "12px", textAlign: "right", fontWeight: 700, color: "#0f172a", fontSize: "14px" }}>Total Geral:</td>

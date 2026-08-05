@@ -139,11 +139,10 @@ function generateProposalDoc(oportunidade: any, templateName: string, config: {
     valorMateriais: formatNumberBR(valorAditivo),
 
     // Dados Bancários
-    bancoNome,
-    bancoAgencia,
     bancoConta,
     bancoTitular,
     bancoPix,
+    itensAdicionais: oportunidade.itensAdicionais || [],
   });
 
   doc.render();

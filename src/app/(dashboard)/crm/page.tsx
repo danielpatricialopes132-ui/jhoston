@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
-import { getOportunidadesList, salvarOportunidade, deleteOportunidade, converterParaObra, getActiveContasBancarias } from "./actions";
+import { getOportunidadesList, salvarOportunidade, deleteOportunidade, converterParaObra, getActiveContasBancarias, getProdutosAtivos } from "./actions";
 import Link from "next/link";
 
 interface ContaBancaria {
@@ -38,6 +38,7 @@ interface Oportunidade {
   contaBancariaId?: number | null;
   contaBancaria?: ContaBancaria | null;
   areasResina?: any;
+  itensAdicionais?: any;
 }
 
 
@@ -76,6 +77,16 @@ export default function CRMPage() {
   const [contaBancariaId, setContaBancariaId] = useState<number | null>(null);
   const [contasBancarias, setContasBancarias] = useState<ContaBancaria[]>([]);
   const [areasResina, setAreasResina] = useState<{ descricao: string; area: number }[]>([]);
+
+  const [produtosDisponiveis, setProdutosDisponiveis] = useState<any[]>([]);
+  const [itensAdicionais, setItensAdicionais] = useState<any[]>([]);
+  
+  // Modal states para Itens Adicionais
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [itemSelecionado, setItemSelecionado] = useState<any>(null);
+  const [itemQuantidade, setItemQuantidade] = useState<number>(1);
+  const [itemValorUnitario, setItemValorUnitario] = useState<number>(0);
+
 
   const handleProdutoChange = (newProd: "PREMIUM" | "SUPER_PREMIUM" | "CASCATA" | "REVESTIMENTO") => {
     setProduto(newProd);
@@ -118,6 +129,9 @@ export default function CRMPage() {
     getActiveContasBancarias().then((data) => {
       setContasBancarias(data as any);
     });
+    getProdutosAtivos().then((data) => {
+      setProdutosDisponiveis(data as any);
+    });
   };
 
   useEffect(() => {
@@ -146,6 +160,7 @@ export default function CRMPage() {
     setPrazoAplicacao(15);
     setContaBancariaId(null);
     setAreasResina([]);
+    setItensAdicionais([]);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -172,6 +187,7 @@ export default function CRMPage() {
     setPrazoAplicacao(op.prazoAplicacao ?? 15);
     setContaBancariaId(op.contaBancariaId ?? null);
     setAreasResina(op.areasResina || []);
+    setItensAdicionais(op.itensAdicionais || []);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -226,6 +242,7 @@ export default function CRMPage() {
       prazoAplicacao,
       contaBancariaId: contaBancariaId ? Number(contaBancariaId) : null,
       areasResina: areasResina.length > 0 ? areasResina : null,
+      itensAdicionais: itensAdicionais.length > 0 ? itensAdicionais : null,
     };
 
     startTransition(async () => {
@@ -562,6 +579,61 @@ export default function CRMPage() {
           </table>
         )}
       </div>
+
+
+      {/* MODAL DE ITEM ADICIONAL */}
+      {isItemModalOpen && (
+        <div className="modal-backdrop" style={{ zIndex: 9999 }}>
+          <div className="modal-content" style={{ maxWidth: "500px", width: "95%" }}>
+            <div className="modal-header">
+              <h4 style={{ fontSize: "16px", color: "var(--text-heading)" }}>Adicionar Item Adicional</h4>
+              <button className="close-btn" onClick={() => setIsItemModalOpen(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group" style={{ marginBottom: "12px" }}>
+                <label className="form-label">Selecione o Produto/Serviço</label>
+                <select className="form-control" value={itemSelecionado?.id || ""} onChange={(e) => {
+                  const p = produtosDisponiveis.find(p => p.id === parseInt(e.target.value));
+                  setItemSelecionado(p);
+                }}>
+                  <option value="">-- Selecione --</option>
+                  {produtosDisponiveis.map(p => (
+                    <option key={p.id} value={p.id}>{p.nome}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid-cols-2" style={{ gap: "12px", marginBottom: "12px" }}>
+                <div className="form-group">
+                  <label className="form-label">Quantidade</label>
+                  <input type="number" step="0.01" className="form-control" value={itemQuantidade} onChange={(e) => setItemQuantidade(parseFloat(e.target.value) || 0)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Valor Unitário (R$)</label>
+                  <input type="number" step="0.01" className="form-control" value={itemValorUnitario} onChange={(e) => setItemValorUnitario(parseFloat(e.target.value) || 0)} />
+                </div>
+              </div>
+              <div style={{ textAlign: "right", fontWeight: 700, marginTop: "16px", marginBottom: "8px" }}>
+                Total: {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(itemQuantidade * itemValorUnitario)}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setIsItemModalOpen(false)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={() => {
+                if(itemSelecionado && itemQuantidade > 0) {
+                  setItensAdicionais([...itensAdicionais, {
+                    produtoId: itemSelecionado.id,
+                    nome: itemSelecionado.nome,
+                    quantidade: itemQuantidade,
+                    valorUnitario: itemValorUnitario,
+                    valorTotal: itemQuantidade * itemValorUnitario
+                  }]);
+                  setIsItemModalOpen(false);
+                }
+              }}>Adicionar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL DE CADASTRO/EDIÇÃO */}
       {isModalOpen && (
