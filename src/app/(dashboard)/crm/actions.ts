@@ -80,6 +80,7 @@ export async function salvarOportunidade(data: {
   contaBancariaId?: number | null;
   areasResina?: any;
   itensAdicionais?: any;
+  tipoFrete?: string;
 }) {
   await requireAdmin();
 
@@ -141,6 +142,7 @@ export async function salvarOportunidade(data: {
     contaBancariaId: data.contaBancariaId || null,
     areasResina: data.areasResina || null,
     itensAdicionais: data.itensAdicionais || null,
+    tipoFrete: data.tipoFrete || "FOB",
   };
 
   try {

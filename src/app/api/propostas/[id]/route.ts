@@ -101,6 +101,16 @@ function generateProposalDoc(oportunidade: any, templateName: string, config: {
   const valorCascata = pUnit * 0.75;
   const valorPedras = pUnit * 0.25;
 
+  // Lógica de Frete (FOB / CIF)
+  const isFOB = !oportunidade.tipoFrete || oportunidade.tipoFrete === "FOB";
+  let empresaNome = "Jhoston Pools";
+  if (templateName === "Proposta_Revest_Template.docx") empresaNome = "Jhoston Revest";
+  else if (templateName === "Proposta_Cascata_Template.docx") empresaNome = "Eco Stone";
+
+  const textoLogistica = isFOB
+    ? "Logística (Frete FOB): O transporte dos materiais é realizado exclusivamente na modalidade FOB (Free On Board). Sendo assim, a contratação da transportadora, os custos operacionais de envio, bem como a responsabilidade pela integridade da carga e descarga no canteiro de obras, ficam inteiramente a cargo do cliente."
+    : `Logística (Frete CIF): O transporte e frete dos materiais até o canteiro de obras em ${oportunidade.endereco || "local não informado"} serão realizados por conta e responsabilidade da ${empresaNome} (Frete CIF bonificado nesta proposta).`;
+
   doc.setData({
     id: oportunidade.id,
     propostaId: oportunidade.id,
@@ -143,6 +153,7 @@ function generateProposalDoc(oportunidade: any, templateName: string, config: {
     bancoTitular,
     bancoPix,
     itensAdicionais: oportunidade.itensAdicionais || [],
+    textoLogistica,
   });
 
   doc.render();

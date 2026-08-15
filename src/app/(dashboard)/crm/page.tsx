@@ -66,6 +66,7 @@ export default function CRMPage() {
   const [precoAditivo, setPrecoAditivo] = useState<number>(25);
   const [empresa, setEmpresa] = useState("JHOSTON");
   const [empresaFilter, setEmpresaFilter] = useState("TODOS");
+  const [tipoFrete, setTipoFrete] = useState("FOB");
 
   // Novos campos Jhoston Revest
   const [descricaoServico, setDescricaoServico] = useState("Aplicação de revestimento resinado Verano Pools");
@@ -161,6 +162,7 @@ export default function CRMPage() {
     setContaBancariaId(null);
     setAreasResina([]);
     setItensAdicionais([]);
+    setTipoFrete("FOB");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -188,6 +190,7 @@ export default function CRMPage() {
     setContaBancariaId(op.contaBancariaId ?? null);
     setAreasResina(op.areasResina || []);
     setItensAdicionais(op.itensAdicionais || []);
+    setTipoFrete((op as any).tipoFrete || "FOB");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -243,6 +246,7 @@ export default function CRMPage() {
       contaBancariaId: contaBancariaId ? Number(contaBancariaId) : null,
       areasResina: areasResina.length > 0 ? areasResina : null,
       itensAdicionais: itensAdicionais.length > 0 ? itensAdicionais : null,
+      tipoFrete,
     };
 
     startTransition(async () => {
@@ -688,15 +692,28 @@ export default function CRMPage() {
                   </div>
                 </div>
 
-                <div className="form-group" style={{ marginBottom: "12px" }}>
-                  <label className="form-label">Endereço da Piscina / Obra</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Rua, Número, Bairro, Cidade..."
-                    value={endereco}
-                    onChange={(e) => setEndereco(e.target.value)}
-                  />
+                <div className="grid-cols-2" style={{ gap: "12px", marginBottom: "12px" }}>
+                  <div className="form-group">
+                    <label className="form-label">Endereço da Piscina / Obra</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Rua, Número, Bairro, Cidade..."
+                      value={endereco}
+                      onChange={(e) => setEndereco(e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Modalidade de Frete</label>
+                    <select
+                      className="form-control"
+                      value={tipoFrete}
+                      onChange={(e) => setTipoFrete(e.target.value)}
+                    >
+                      <option value="FOB">FOB (Por conta do cliente)</option>
+                      <option value="CIF">CIF (Por conta da empresa - Bonificado)</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="form-group" style={{ marginBottom: "12px" }}>
