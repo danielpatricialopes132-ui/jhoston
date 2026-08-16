@@ -45,6 +45,7 @@ model Obra {
   transacoesFinanceiras TransacaoFinanceira[]
   diarios               DiarioObra[]
   mensagensChat         MensagemChat[]
+  tours360              Tour360[]
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
 }
@@ -314,5 +315,33 @@ model ContaBancaria {
   oportunidades Oportunidade[]
 }
 
+model Tour360 {
+  id        Int      @id @default(autoincrement())
+  obraId    Int
+  obra      Obra     @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  titulo    String
+  iframeUrl String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
+model Feedback {
+  id               Int      @id @default(autoincrement())
+  clienteNome      String
+  relato           String
+  legendaGerada    String?
+  pendenciasJson   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
 
+model BioLink {
+  id        Int      @id @default(autoincrement())
+  titulo    String
+  url       String
+  icone     String?
+  ordem     Int      @default(0)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

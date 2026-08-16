@@ -387,32 +387,32 @@ export default function CRMPage() {
       </div>
 
       {/* Cards de KPIs */}
-      <div className="grid-cols-4" style={{ marginBottom: "20px", marginTop: "20px" }}>
-        <div className="card" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>Total de Oportunidades</span>
-          <span style={{ fontSize: "24px", fontWeight: 700, color: "var(--text-heading)" }}>{totalOps}</span>
+      <div className="grid-cols-4" style={{ marginBottom: "24px", marginTop: "24px" }}>
+        <div className="card glass-card" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <span style={{ fontSize: "13px", color: "var(--text-muted)", fontWeight: 600 }}>Total de Oportunidades</span>
+          <span style={{ fontSize: "28px", fontWeight: 800, color: "var(--text-heading)" }}>{totalOps}</span>
         </div>
-        <div className="card" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>Em Negociação (Valor)</span>
-          <span style={{ fontSize: "24px", fontWeight: 700, color: "var(--warning)" }}>{formatCurrency(valNegotiation)}</span>
-          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{inNegotiation.length} propostas ativas</span>
+        <div className="card glass-card" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <span style={{ fontSize: "13px", color: "var(--text-muted)", fontWeight: 600 }}>Em Negociação (Valor)</span>
+          <span style={{ fontSize: "28px", fontWeight: 800, color: "var(--warning)" }}>{formatCurrency(valNegotiation)}</span>
+          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>{inNegotiation.length} propostas ativas</span>
         </div>
-        <div className="card" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>Fechado / Ganho (Valor)</span>
-          <span style={{ fontSize: "24px", fontWeight: 700, color: "var(--success)" }}>{formatCurrency(valAccepted)}</span>
-          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{totalAccepted} obras criadas</span>
+        <div className="card glass-card" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <span style={{ fontSize: "13px", color: "var(--text-muted)", fontWeight: 600 }}>Fechado / Ganho (Valor)</span>
+          <span style={{ fontSize: "28px", fontWeight: 800, color: "var(--success)" }}>{formatCurrency(valAccepted)}</span>
+          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>{totalAccepted} obras criadas</span>
         </div>
-        <div className="card" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>Taxa de Conversão</span>
-          <span style={{ fontSize: "24px", fontWeight: 700, color: "var(--primary)" }}>{conversionRate}%</span>
-          <div style={{ height: "4px", width: "100%", background: "rgba(255,255,255,0.05)", borderRadius: "2px", overflow: "hidden", marginTop: "4px" }}>
-            <div style={{ width: `${conversionRate}%`, height: "100%", background: "var(--primary-color)" }}></div>
+        <div className="card glass-card" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <span style={{ fontSize: "13px", color: "var(--text-muted)", fontWeight: 600 }}>Taxa de Conversão</span>
+          <span style={{ fontSize: "28px", fontWeight: 800, color: "var(--primary)" }}>{conversionRate}%</span>
+          <div style={{ height: "6px", width: "100%", background: "rgba(15, 118, 110, 0.1)", borderRadius: "3px", overflow: "hidden", marginTop: "8px" }}>
+            <div style={{ width: `${conversionRate}%`, height: "100%", background: "linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%)", borderRadius: "3px" }}></div>
           </div>
         </div>
       </div>
 
       {/* Controles de Filtros e Abas */}
-      <div className="card" style={{ padding: "16px", marginBottom: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div className="card glass-card" style={{ padding: "20px", marginBottom: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
         <div style={{ display: "flex", gap: "10px" }}>
           <input
             type="text"
@@ -456,7 +456,7 @@ export default function CRMPage() {
       </div>
 
       {/* Listagem de Oportunidades */}
-      <div className="table-container">
+      <div className="table-container glass-card" style={{ border: "none", borderRadius: "var(--radius-xl)", overflow: "hidden" }}>
         {filteredOportunidades.length === 0 ? (
           <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
             Nenhuma oportunidade cadastrada ou encontrada para os filtros aplicados.
