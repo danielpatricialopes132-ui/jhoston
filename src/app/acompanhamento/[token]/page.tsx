@@ -18,7 +18,7 @@ export default function AcompanhamentoClientePage() {
     const data = await getObraByToken(token);
     if (data) {
       setObra(data);
-      setIsFinanceiro(data.tokenMedicaoFinanceira === token);
+      setIsFinanceiro((data as any).tokenMedicaoFinanceira === token);
     }
     setLoading(false);
   };

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient() as any;
 
 const TELEGRAM_BOT_TOKEN = "8838832049:AAHjicBzNx3VEDwgdo-1zfQwQnITgnibjPQ";
 const TELEGRAM_CHAT_ID = "6315130099";
