@@ -88,7 +88,28 @@ Permite registrar relatos operacionais diários, atualizar as etapas físicas e 
 
 ---
 
-## 7. Módulo Financeiro e Fornecedores (Apenas Escritório)
+## 7. Medição de Obra e Relatórios de Progresso (Comunicação com o Cliente)
+O sistema possui módulos dedicados para envio de relatórios e painéis interativos para os clientes.
+
+### A. Relatório de Progresso Mensal
+Gera relatórios em PDF com a evolução da obra.
+1. Acesse o menu **Obras** e clique no botão azul **📊 Medição** na tabela (ou acesse o link de relatórios diretamente).
+2. O sistema possibilita adicionar um *Parecer Técnico do Engenheiro* e agrupar fotos do Diário (ou do seu celular) em seções, incluindo comparativos visuais de **Antes e Depois**.
+3. Clique em Imprimir/PDF para enviar ao cliente.
+
+### B. Medição Dinâmica (Dashboard Interativo)
+Gera uma visão em tempo real do avanço da obra para o cliente acompanhar de forma gamificada e moderna.
+1. Acesse a área de Medição da Obra. Crie as **Etapas** (ex: Fundação, Alvenaria, Pintura) e adicione os respectivos **Itens**.
+2. Atualize o percentual de cada item utilizando a barra deslizável rápida.
+3. O sistema gera automaticamente dois links dinâmicos:
+   * **Link Físico:** Compartilhe com clientes para que vejam apenas o percentual de avanço físico.
+   * **Link Financeiro:** Compartilhe quando desejar que o cliente acompanhe os valores e o custo total da medição até o momento.
+4. **Comentários via Telegram:** No painel público, o cliente pode clicar em um botão de chat ao lado de cada item para fazer comentários. A notificação chega automaticamente para a equipe da Jhoston via Telegram!
+5. **Gerenciamento e Rotação de Links:** Caso seja necessário invalidar um link de acompanhamento enviado anteriormente, clique em **"Revogar e gerar novo"** no topo da tela de Medição. O link anterior parará de funcionar e um novo código exclusivo será gerado.
+
+---
+
+## 8. Módulo Financeiro e Fornecedores (Apenas Escritório)
 *   **Financeiro:** Controle de Contas a Pagar/Receber. Despesas da categoria "Fornecedores" exigem a seleção de um fornecedor cadastrado.
 *   **Cadastro de Fornecedores:** Salve os contatos, CNPJ e a chave PIX dos parceiros. Ao lançar uma despesa financeira, clique no botão `+` para cadastrar um novo fornecedor de forma rápida sem fechar o formulário atual.
 *   **Histórico de Compras:** Clique sobre qualquer linha de fornecedor na tabela para abrir o modal de detalhes com o extrato financeiro acumulado e todas as transações correspondentes.

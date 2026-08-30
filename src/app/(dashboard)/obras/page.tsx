@@ -695,6 +695,13 @@ export default function ObrasPage() {
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <div style={{ display: "inline-flex", gap: "6px" }}>
+                      <a
+                        href={`/obras/${obra.id}/medicao`}
+                        className="btn btn-secondary btn-sm"
+                        style={{ backgroundColor: "rgba(37, 99, 235, 0.08)", color: "#2563eb", border: "1px solid rgba(37, 99, 235, 0.2)" }}
+                      >
+                        📊 Medição
+                      </a>
                       <button
                         className="btn btn-secondary btn-sm"
                         onClick={() => openAuthModal(obra)}

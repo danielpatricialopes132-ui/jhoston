@@ -46,6 +46,10 @@ model Obra {
   diarios               DiarioObra[]
   mensagensChat         MensagemChat[]
   tours360              Tour360[]
+  relatorios            RelatorioProgresso[]
+  etapasMedicao         EtapaMedicao[]
+  tokenMedicaoFisica    String?               @unique @default(uuid())
+  tokenMedicaoFinanceira String?              @unique @default(uuid())
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
 }
@@ -344,4 +348,69 @@ model BioLink {
   ativo     Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model RelatorioProgresso {
+  id               Int              @id @default(autoincrement())
+  obraId           Int
+  obra             Obra             @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  mesReferencia    String
+  relatoEngenheiro String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  secoes           SecaoRelatorio[]
+}
+
+model SecaoRelatorio {
+  id          Int                @id @default(autoincrement())
+  relatorioId Int
+  relatorio   RelatorioProgresso @relation(fields: [relatorioId], references: [id], onDelete: Cascade)
+  titulo      String
+  tipo        String             @default("FOTOS") // "FOTOS" ou "ANTES_DEPOIS"
+  ordem       Int                @default(0)
+  fotos       FotoRelatorio[]
+}
+
+model FotoRelatorio {
+  id           Int            @id @default(autoincrement())
+  secaoId      Int
+  secao        SecaoRelatorio @relation(fields: [secaoId], references: [id], onDelete: Cascade)
+  base64Data   String
+  dataFoto     String?
+  tipoEvolucao String?        // "ANTES" ou "DEPOIS"
+  createdAt    DateTime       @default(now())
+}
+
+model EtapaMedicao {
+  id        Int           @id @default(autoincrement())
+  obraId    Int
+  obra      Obra          @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  nome      String   
+  ordem     Int           @default(0)
+  itens     ItemMedicao[]
+}
+
+model ItemMedicao {
+  id                  Int                 @id @default(autoincrement())
+  etapaId             Int
+  etapa               EtapaMedicao        @relation(fields: [etapaId], references: [id], onDelete: Cascade)
+  descricao           String       
+  unidade             String?      
+  quantidadeTotal     Float               @default(1)
+  quantidadeRealizada Float               @default(0)
+  precoUnitario       Float               @default(0)
+  percentual          Float               @default(0)  
+  ordem               Int                 @default(0)
+  comentarios         ComentarioMedicao[]
+  updatedAt           DateTime            @updatedAt
+}
+
+model ComentarioMedicao {
+  id        Int          @id @default(autoincrement())
+  itemId    Int
+  item      ItemMedicao  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  autor     String       @default("Cliente")
+  texto     String
+  lido      Boolean      @default(false)
+  createdAt DateTime     @default(now())
 }
