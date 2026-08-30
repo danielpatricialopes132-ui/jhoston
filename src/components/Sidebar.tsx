@@ -138,7 +138,12 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+      <div 
+        className="sidebar-header" 
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", cursor: "pointer" }}
+        onDoubleClick={() => document.body.classList.toggle('matrix-mode')}
+        title="Double click me for a surprise"
+      >
         {logoExists ? (
           <img
             src="/logo.png"

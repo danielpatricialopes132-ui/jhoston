@@ -584,7 +584,7 @@ export default function ObrasPage() {
       </div>
 
       {/* Lista de Obras */}
-      <div className="table-container">
+      <div className={`table-container ${searchTerm.toLowerCase() === 'do a barrel roll' ? 'do-a-barrel-roll' : ''}`}>
         <table className="table">
           <thead>
             <tr>
@@ -806,7 +806,7 @@ export default function ObrasPage() {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Ex: Piscina Condomínio Alphaville"
+                    placeholder="Ex: Piscina do Thanos, Caverna do Batman..."
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
                     required
@@ -917,7 +917,7 @@ export default function ObrasPage() {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder="Ex: Av. das Palmeiras, 120"
+                    placeholder="Ex: Rua dos Bobos, nº 0 (ou só a cidade mesmo)"
                     value={endereco}
                     onChange={(e) => setEndereco(e.target.value)}
                   />

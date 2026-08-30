@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import PopUpCalculator from "@/components/PopUpCalculator";
+import EasterEggs from "@/components/EasterEggs";
 
 export default function DashboardLayout({
   children,
@@ -64,6 +65,7 @@ export default function DashboardLayout({
         <div className="main-body">{children}</div>
       </main>
       <PopUpCalculator />
+      <EasterEggs />
     </div>
   );
 }
