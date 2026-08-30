@@ -142,7 +142,7 @@ export default function AcompanhamentoClientePage() {
               <div className="h-2 w-full bg-gray-100">
                 <div 
                   className="h-full bg-blue-500 transition-all duration-1000 ease-out" 
-                  style={{ width: \`\${etapaProgresso}%\` }}
+                  style={{ width: `${etapaProgresso}%` }}
                 ></div>
               </div>
 
@@ -176,8 +176,8 @@ export default function AcompanhamentoClientePage() {
                       {/* Mini barra do item */}
                       <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
                         <div 
-                          className={\`h-full rounded-full transition-all duration-700 \${item.percentual === 100 ? 'bg-green-500' : 'bg-blue-400'}\`} 
-                          style={{ width: \`\${item.percentual}%\` }}
+                          className={`h-full rounded-full transition-all duration-700 ${item.percentual === 100 ? 'bg-green-500' : 'bg-blue-400'}`} 
+                          style={{ width: `${item.percentual}%` }}
                         ></div>
                       </div>
 
