@@ -74,6 +74,7 @@ Quando a proposta for aceita, clique no botão **Aceitar Obra**. O sistema atual
 
 ## 5. Controle de Vales & Bônus (Apenas Escritório)
 *   **Vales (Débito):** Adiantamentos fornecidos que serão deduzidos no cálculo de fechamento mensal.
+    *   *Integração Financeira:* Após lançar um Vale, você pode clicar no botão **"💸 Lançar no Caixa"** para registrar essa saída automaticamente no Módulo Financeiro, sob a conta contábil de Adiantamentos de Salário.
 *   **Bônus (Crédito):** Premiações por produtividade. **Para lançar bônus, é obrigatório preencher a descrição/motivo** (ex: *Bônus produtividade piscina Alphaville*).
 
 ---
@@ -109,10 +110,18 @@ Gera uma visão em tempo real do avanço da obra para o cliente acompanhar de fo
 
 ---
 
-## 8. Módulo Financeiro e Fornecedores (Apenas Escritório)
-*   **Financeiro:** Controle de Contas a Pagar/Receber. Despesas da categoria "Fornecedores" exigem a seleção de um fornecedor cadastrado.
-*   **Cadastro de Fornecedores:** Salve os contatos, CNPJ e a chave PIX dos parceiros. Ao lançar uma despesa financeira, clique no botão `+` para cadastrar um novo fornecedor de forma rápida sem fechar o formulário atual.
-*   **Histórico de Compras:** Clique sobre qualquer linha de fornecedor na tabela para abrir o modal de detalhes com o extrato financeiro acumulado e todas as transações correspondentes.
+## 8. Módulo Financeiro Contábil e Fornecedores (Apenas Escritório)
+O sistema financeiro opera como um módulo contábil gerencial completo, organizado por **Centros de Custos** e **Plano de Contas**.
+
+### A. Configuração Contábil
+*   **Plano de Contas:** No menu lateral **Financeiro > Configuração Contábil**, você pode cadastrar e gerenciar todas as rubricas de receitas e despesas da empresa (ex: 1.1 Receita de Serviços, 2.1 Compra de Materiais, 3.1 Despesas Administrativas).
+*   **Centros de Custo:** Utilize centros de custos para saber exatamente onde o dinheiro está sendo alocado. O sistema permite criar centros de custo administrativos ou sincronizá-los diretamente com as suas **Obras Ativas** em andamento com um único clique (botão *Sincronizar Obras Ativas*).
+
+### B. Lançamentos Financeiros (Fluxo de Caixa)
+*   **Contas a Pagar/Receber:** Ao lançar uma transação, é obrigatório indicar a **Conta Contábil** (classificação) e opcionalmente o **Centro de Custo** (obra ou departamento administrativo) referente.
+*   **Lançamentos Automáticos (Vales e Viagens):** A partir das telas de **Vales** e **Viagens**, ao clicar em **"Lançar no Caixa"**, o sistema cria as transações automaticamente no financeiro classificadas no centro de custo e plano de contas correspondentes.
+*   **Integração de Fornecedores:** Se a despesa for vinculada a um fornecedor, você pode selecioná-lo na lista ou clicar no botão `+` para cadastrar um novo rapidamente, sem fechar a tela.
+*   **Histórico de Compras:** Clique sobre qualquer linha de fornecedor na tabela de fornecedores para abrir o modal de detalhes, visualizando o extrato financeiro acumulado e as notas/compras correspondentes.
 
 ---
 

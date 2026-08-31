@@ -120,3 +120,57 @@ export async function alterarStatusPagamentoDiaria(diariaId: number, status: "PE
   revalidatePath("/");
   return { success: true, data: diaria };
 }
+
+export async function lancarDiariaNoFinanceiro(diariaId: number) {
+  const diaria = await prisma.diariaViagem.findUnique({
+    where: { id: diariaId },
+    include: { funcionario: true, viagem: { include: { obra: true } } },
+  });
+
+  if (!diaria) {
+    throw new Error("Diária não encontrada");
+  }
+
+  if (diaria.transacaoId) {
+    throw new Error("Esta diária já foi lançada no financeiro.");
+  }
+
+  // Busca a conta de Adiantamentos (ex: 2.3.1)
+  const conta = await prisma.planoConta.findFirst({
+    where: { descricao: { contains: "Adiantamento" } }
+  });
+
+  // Tenta encontrar o centro de custo da obra
+  const centroCusto = await prisma.centroCusto.findFirst({
+    where: { obraId: diaria.viagem.obraId }
+  });
+
+  const descricaoTransacao = `Diária de Viagem - ${diaria.funcionario.nome} (Obra: ${diaria.viagem.obra.nome})`;
+
+  const transacao = await prisma.$transaction(async (tx) => {
+    const t = await tx.transacaoFinanceira.create({
+      data: {
+        tipo: "DESPESA",
+        descricao: descricaoTransacao,
+        valor: diaria.valorCalculado,
+        dataVencimento: diaria.viagem.dataInicio,
+        dataPagamento: diaria.viagem.dataInicio, // Assumindo pago no início ou ato
+        status: "PAGO",
+        planoContaId: conta?.id || null,
+        centroCustoId: centroCusto?.id || null,
+        obraId: diaria.viagem.obraId,
+      }
+    });
+
+    await tx.diariaViagem.update({
+      where: { id: diaria.id },
+      data: { transacaoId: t.id }
+    });
+
+    return t;
+  });
+
+  revalidatePath("/viagens");
+  revalidatePath("/financeiro");
+  return { success: true, data: transacao };
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
-import { getValesData, salvarVale, deleteVale, alterarStatusDescontoVale } from "./actions";
+import { getValesData, salvarVale, deleteVale, alterarStatusDescontoVale, lancarValeNoFinanceiro } from "./actions";
 
 interface Funcionario {
   id: number;
@@ -18,6 +18,7 @@ interface Vale {
   descricao: string | null;
   statusDesconto: string;
   tipo: string;
+  transacaoId?: number | null;
 }
 
 export default function ValesPage() {
@@ -117,6 +118,19 @@ export default function ValesPage() {
         setErrorMsg("Erro ao salvar o registro.");
       }
     });
+  };
+
+  const handleLancarFinanceiro = async (id: number) => {
+    if (confirm("Deseja lançar este Vale no caixa da empresa agora? (Uma despesa será criada e vinculada)")) {
+      try {
+        const res = await lancarValeNoFinanceiro(id);
+        if (res.success) {
+          loadData();
+        }
+      } catch (err: any) {
+        setErrorMsg(err.message || "Erro ao lançar no financeiro.");
+      }
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -284,6 +298,20 @@ export default function ValesPage() {
                       >
                         Excluir
                       </button>
+                      {vale.tipo === "VALE" && !vale.transacaoId && (
+                        <button
+                          className="btn btn-primary btn-sm"
+                          style={{ backgroundColor: "var(--primary)", borderColor: "var(--primary)" }}
+                          onClick={() => handleLancarFinanceiro(vale.id)}
+                        >
+                          💸 Lançar no Financeiro
+                        </button>
+                      )}
+                      {vale.transacaoId && (
+                        <span className="badge badge-success" style={{ display: "flex", alignItems: "center" }}>
+                          No Caixa
+                        </span>
+                      )}
                     </div>
                   </td>
                 </tr>

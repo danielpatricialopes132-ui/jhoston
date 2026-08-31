@@ -702,6 +702,13 @@ export default function ObrasPage() {
                       >
                         📊 Medição
                       </a>
+                      <a
+                        href={`/obras/${obra.id}/avanco-fotografico`}
+                        className="btn btn-secondary btn-sm"
+                        style={{ backgroundColor: "rgba(245, 158, 11, 0.08)", color: "#d97706", border: "1px solid rgba(245, 158, 11, 0.2)" }}
+                      >
+                        📸 Av. Fotográfico
+                      </a>
                       <button
                         className="btn btn-secondary btn-sm"
                         onClick={() => openAuthModal(obra)}

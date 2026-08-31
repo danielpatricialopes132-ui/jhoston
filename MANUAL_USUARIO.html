@@ -201,18 +201,41 @@
 <hr />
 <h2>5. Controle de Vales &amp; Bônus (Apenas Escritório)</h2>
 <p><em>   <strong>Vales (Débito):</strong> Adiantamentos fornecidos que serão deduzidos no cálculo de fechamento mensal.</p>
-<p></em>   <strong>Bônus (Crédito):</strong> Premiações por produtividade. <strong>Para lançar bônus, é obrigatório preencher a descrição/motivo</strong> (ex: <em>Bônus produtividade piscina Alphaville</em>).</p>
+<p>    </em>   <em>Integração Financeira:</em> Após lançar um Vale, você pode clicar no botão <strong>"💸 Lançar no Caixa"</strong> para registrar essa saída automaticamente no Módulo Financeiro, sob a conta contábil de Adiantamentos de Salário.</p>
+<p><em>   <strong>Bônus (Crédito):</strong> Premiações por produtividade. <strong>Para lançar bônus, é obrigatório preencher a descrição/motivo</strong> (ex: </em>Bônus produtividade piscina Alphaville<em>).</p>
 <hr />
 <h2>6. Diário de Obra e Galeria de Fotos</h2>
 <p>Permite registrar relatos operacionais diários, atualizar as etapas físicas e arquivar fotos da obra.</p>
 <ol><li>Acesse o menu <strong>Diário de Obra</strong> e escolha o projeto ativo.</li><li>Atualize o progresso das 5 etapas através dos seletores de barra (0% a 100%):</li></ol>
-<p>   <em>   </em>1. Escavação<em> | </em>2. Estrutura<em> | </em>3. Hidráulica<em> | </em>4. Revestimento<em> | </em>5. Entrega<em></p>
+<p>   </em>   <em>1. Escavação</em> | <em>2. Estrutura</em> | <em>3. Hidráulica</em> | <em>4. Revestimento</em> | <em>5. Entrega</em></p>
 <ol><li>Escreva o relato diário e selecione fotos para anexar. O sistema comprime as imagens localmente no navegador antes de enviar para economizar o plano de dados móveis do celular no canteiro de obras.</li><li>Clique em qualquer foto no histórico para visualizá-la expandida (Lightbox).</li></ol>
 <hr />
-<h2>7. Módulo Financeiro e Fornecedores (Apenas Escritório)</h2>
-<p></em>   <strong>Financeiro:</strong> Controle de Contas a Pagar/Receber. Despesas da categoria "Fornecedores" exigem a seleção de um fornecedor cadastrado.</p>
-<p><em>   <strong>Cadastro de Fornecedores:</strong> Salve os contatos, CNPJ e a chave PIX dos parceiros. Ao lançar uma despesa financeira, clique no botão `+` para cadastrar um novo fornecedor de forma rápida sem fechar o formulário atual.</p>
-<p></em>   <strong>Histórico de Compras:</strong> Clique sobre qualquer linha de fornecedor na tabela para abrir o modal de detalhes com o extrato financeiro acumulado e todas as transações correspondentes.</p>
+<h2>7. Medição de Obra e Relatórios de Progresso (Comunicação com o Cliente)</h2>
+<p>O sistema possui módulos dedicados para envio de relatórios e painéis interativos para os clientes.</p>
+
+<h3>A. Relatório de Progresso Mensal</h3>
+<p>Gera relatórios em PDF com a evolução da obra.</p>
+<ol><li>Acesse o menu <strong>Obras</strong> e clique no botão azul <strong>📊 Medição</strong> na tabela (ou acesse o link de relatórios diretamente).</li><li>O sistema possibilita adicionar um <em>Parecer Técnico do Engenheiro</em> e agrupar fotos do Diário (ou do seu celular) em seções, incluindo comparativos visuais de <strong>Antes e Depois</strong>.</li><li>Clique em Imprimir/PDF para enviar ao cliente.</li></ol>
+
+<h3>B. Medição Dinâmica (Dashboard Interativo)</h3>
+<p>Gera uma visão em tempo real do avanço da obra para o cliente acompanhar de forma gamificada e moderna.</p>
+<ol><li>Acesse a área de Medição da Obra. Crie as <strong>Etapas</strong> (ex: Fundação, Alvenaria, Pintura) e adicione os respectivos <strong>Itens</strong>.</li><li>Atualize o percentual de cada item utilizando a barra deslizável rápida.</li><li>O sistema gera automaticamente dois links dinâmicos:</li></ol>
+<p>   <em> <strong>Link Físico:</strong> Compartilhe com clientes para que vejam apenas o percentual de avanço físico.</p>
+<p>   </em> <strong>Link Financeiro:</strong> Compartilhe quando desejar que o cliente acompanhe os valores e o custo total da medição até o momento.</p>
+<ol><li><strong>Comentários via Telegram:</strong> No painel público, o cliente pode clicar em um botão de chat ao lado de cada item para fazer comentários. A notificação chega automaticamente para a equipe da Jhoston via Telegram!</li><li><strong>Gerenciamento e Rotação de Links:</strong> Caso seja necessário invalidar um link de acompanhamento enviado anteriormente, clique em <strong>"Revogar e gerar novo"</strong> no topo da tela de Medição. O link anterior parará de funcionar e um novo código exclusivo será gerado.</li></ol>
+<hr />
+<h2>8. Módulo Financeiro Contábil e Fornecedores (Apenas Escritório)</h2>
+<p>O sistema financeiro opera como um módulo contábil gerencial completo, organizado por <strong>Centros de Custos</strong> e <strong>Plano de Contas</strong>.</p>
+
+<h3>A. Configuração Contábil</h3>
+<p><em>   <strong>Plano de Contas:</strong> No menu lateral <strong>Financeiro &gt; Configuração Contábil</strong>, você pode cadastrar e gerenciar todas as rubricas de receitas e despesas da empresa (ex: 1.1 Receita de Serviços, 2.1 Compra de Materiais, 3.1 Despesas Administrativas).</p>
+<p></em>   <strong>Centros de Custo:</strong> Utilize centros de custos para saber exatamente onde o dinheiro está sendo alocado. O sistema permite criar centros de custo administrativos ou sincronizá-los diretamente com as suas <strong>Obras Ativas</strong> em andamento com um único clique (botão <em>Sincronizar Obras Ativas</em>).</p>
+
+<h3>B. Lançamentos Financeiros (Fluxo de Caixa)</h3>
+<p><em>   <strong>Contas a Pagar/Receber:</strong> Ao lançar uma transação, é obrigatório indicar a <strong>Conta Contábil</strong> (classificação) e opcionalmente o <strong>Centro de Custo</strong> (obra ou departamento administrativo) referente.</p>
+<p></em>   <strong>Lançamentos Automáticos (Vales e Viagens):</strong> A partir das telas de <strong>Vales</strong> e <strong>Viagens</strong>, ao clicar em <strong>"Lançar no Caixa"</strong>, o sistema cria as transações automaticamente no financeiro classificadas no centro de custo e plano de contas correspondentes.</p>
+<p><em>   <strong>Integração de Fornecedores:</strong> Se a despesa for vinculada a um fornecedor, você pode selecioná-lo na lista ou clicar no botão `+` para cadastrar um novo rapidamente, sem fechar a tela.</p>
+<p></em>   <strong>Histórico de Compras:</strong> Clique sobre qualquer linha de fornecedor na tabela de fornecedores para abrir o modal de detalhes, visualizando o extrato financeiro acumulado e as notas/compras correspondentes.</p>
 <hr />
 <h2>8. Relatórios e Holerites (Apenas Escritório)</h2>
 <p>O sistema conta com fechamentos consolidados de:</p>

@@ -4,25 +4,31 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 export async function getFinanceiroData() {
-  const [obras, transacoes, fornecedores] = await Promise.all([
+  const [obras, transacoes, fornecedores, planoContas, centrosCusto] = await Promise.all([
     prisma.obra.findMany({ orderBy: { nome: "asc" } }),
     prisma.transacaoFinanceira.findMany({
       include: {
         obra: true,
         fornecedor: true,
+        planoConta: true,
+        centroCusto: true,
       },
       orderBy: { dataVencimento: "desc" },
     }),
     prisma.fornecedor.findMany({ orderBy: { nome: "asc" } }),
+    prisma.planoConta.findMany({ orderBy: { codigo: "asc" } }),
+    prisma.centroCusto.findMany({ orderBy: { nome: "asc" } }),
   ]);
 
-  return { obras, transacoes, fornecedores };
+  return { obras, transacoes, fornecedores, planoContas, centrosCusto };
 }
 
 export async function salvarTransacao(data: {
   id?: number;
   tipo: "RECEITA" | "DESPESA";
-  categoria: string;
+  categoria?: string; // Legado
+  planoContaId?: number | null;
+  centroCustoId?: number | null;
   obraId?: number | null;
   descricao: string;
   valor: number;
@@ -47,7 +53,9 @@ export async function salvarTransacao(data: {
 
   const payload = {
     tipo: data.tipo,
-    categoria: data.categoria,
+    categoria: data.categoria || null,
+    planoContaId: data.planoContaId || null,
+    centroCustoId: data.centroCustoId || null,
     obraId: data.obraId || null,
     descricao: data.descricao,
     valor: data.valor,

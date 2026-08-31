@@ -102,6 +102,7 @@ export default function Sidebar() {
     { name: "Marketing & Tour 360", path: "/marketing", icon: icons.marketing, adminOnly: true, masterOnly: false },
     { name: "Clientes (Proprietários)", path: "/clientes", icon: icons.clientes, adminOnly: true, masterOnly: false },
     { name: "Obras (Projetos)", path: "/obras", icon: icons.obras, adminOnly: true, masterOnly: false },
+    { name: "Avanço Fotográfico", path: "/avanco-fotografico", icon: icons.relatorios, adminOnly: true, masterOnly: false },
     { name: "Funcionários", path: "/funcionarios", icon: icons.funcionarios, adminOnly: true, masterOnly: false },
     { name: "Controle de Ponto", path: "/ponto", icon: icons.ponto, adminOnly: false, masterOnly: false },
     { name: "Diário de Obra", path: "/diario-obra", icon: icons.diario, adminOnly: false, masterOnly: false },

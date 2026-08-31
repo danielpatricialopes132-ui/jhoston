@@ -77,3 +77,54 @@ export async function alterarStatusDescontoVale(id: number, status: "PENDENTE" |
   revalidatePath("/");
   return { success: true, data: vale };
 }
+
+export async function lancarValeNoFinanceiro(valeId: number) {
+  const vale = await prisma.vale.findUnique({
+    where: { id: valeId },
+    include: { funcionario: true },
+  });
+
+  if (!vale) {
+    throw new Error("Vale não encontrado");
+  }
+
+  if (vale.transacaoId) {
+    throw new Error("Este vale já foi lançado no financeiro.");
+  }
+
+  if (vale.tipo !== "VALE") {
+    throw new Error("Apenas Vales (débitos) geram saída de caixa.");
+  }
+
+  // Busca a conta de Adiantamentos (ex: 2.3.1)
+  const conta = await prisma.planoConta.findFirst({
+    where: { descricao: { contains: "Adiantamento" } }
+  });
+
+  const descricaoTransacao = `Adiantamento / Vale - ${vale.funcionario.nome}${vale.descricao ? ` (${vale.descricao})` : ''}`;
+
+  const transacao = await prisma.$transaction(async (tx) => {
+    const t = await tx.transacaoFinanceira.create({
+      data: {
+        tipo: "DESPESA",
+        descricao: descricaoTransacao,
+        valor: vale.valor,
+        dataVencimento: vale.data,
+        dataPagamento: vale.data, // Considera pago na hora do vale
+        status: "PAGO",
+        planoContaId: conta?.id || null,
+      }
+    });
+
+    await tx.vale.update({
+      where: { id: vale.id },
+      data: { transacaoId: t.id }
+    });
+
+    return t;
+  });
+
+  revalidatePath("/vales");
+  revalidatePath("/financeiro");
+  return { success: true, data: transacao };
+}

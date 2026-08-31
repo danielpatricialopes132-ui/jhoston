@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
-import { getViagensData, salvarViagem, deleteViagem, alterarStatusPagamentoDiaria } from "./actions";
+import { getViagensData, salvarViagem, deleteViagem, alterarStatusPagamentoDiaria, lancarDiariaNoFinanceiro } from "./actions";
 
 interface Obra {
   id: number;
@@ -28,6 +28,7 @@ interface DiariaViagem {
   foiDirigindo: boolean;
   tipoDiaria: string;
   statusPagamento: string;
+  transacaoId?: number | null;
 }
 
 interface Viagem {
@@ -180,6 +181,19 @@ export default function ViagensPage() {
     }
   };
 
+  const handleLancarFinanceiro = async (diariaId: number) => {
+    if (confirm("Deseja lançar esta diária no caixa da empresa agora? (Uma despesa será criada e vinculada a obra)")) {
+      try {
+        const res = await lancarDiariaNoFinanceiro(diariaId);
+        if (res.success) {
+          loadData();
+        }
+      } catch (err: any) {
+        alert(err.message || "Erro ao lançar no financeiro.");
+      }
+    }
+  };
+
   const formatDateBR = (dateStr: string) => {
     const [year, month, day] = dateStr.split("-");
     return `${day}/${month}/${year}`;
@@ -289,12 +303,27 @@ export default function ViagensPage() {
                               </span>
                             </td>
                             <td style={{ textAlign: "right" }}>
-                              <button
-                                className={`btn btn-sm ${diaria.statusPagamento === "PAGO" ? "btn-secondary" : "btn-primary"}`}
-                                onClick={() => handleStatusChange(diaria.id, diaria.statusPagamento)}
-                              >
-                                {diaria.statusPagamento === "PAGO" ? "Marcar Pendente" : "Marcar Pago"}
-                              </button>
+                              <div style={{ display: "inline-flex", gap: "8px" }}>
+                                <button
+                                  className={`btn btn-sm ${diaria.statusPagamento === "PAGO" ? "btn-secondary" : "btn-primary"}`}
+                                  onClick={() => handleStatusChange(diaria.id, diaria.statusPagamento)}
+                                >
+                                  {diaria.statusPagamento === "PAGO" ? "Marcar Pendente" : "Marcar Pago"}
+                                </button>
+                                {!diaria.transacaoId ? (
+                                  <button
+                                    className="btn btn-sm btn-primary"
+                                    style={{ backgroundColor: "var(--primary)", borderColor: "var(--primary)" }}
+                                    onClick={() => handleLancarFinanceiro(diaria.id)}
+                                  >
+                                    💸 Lançar no Caixa
+                                  </button>
+                                ) : (
+                                  <span className="badge badge-success" style={{ display: "flex", alignItems: "center" }}>
+                                    No Caixa
+                                  </span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}

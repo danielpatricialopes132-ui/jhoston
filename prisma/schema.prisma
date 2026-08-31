@@ -47,6 +47,8 @@ model Obra {
   mensagensChat         MensagemChat[]
   tours360              Tour360[]
   relatorios            RelatorioProgresso[]
+  relatoriosFotograficos RelatorioFotografico[]
+  centrosCusto          CentroCusto[]
   etapasMedicao         EtapaMedicao[]
   tokenMedicaoFisica    String?               @unique @default(uuid())
   tokenMedicaoFinanceira String?              @unique @default(uuid())
@@ -113,6 +115,8 @@ model DiariaViagem {
   foiDirigindo    Boolean     @default(false)
   tipoDiaria      String      @default("INTEIRA") // "INTEIRA", "MEIA"
   statusPagamento String      @default("PENDENTE") // "PENDENTE", "PAGO"
+  transacaoId     Int?        @unique
+  transacao       TransacaoFinanceira? @relation(fields: [transacaoId], references: [id], onDelete: SetNull)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -126,6 +130,8 @@ model Vale {
   descricao      String?
   statusDesconto String      @default("PENDENTE") // "PENDENTE", "DESCONTADO"
   tipo           String      @default("VALE") // "VALE" (desconto) ou "BONUS" (acréscimo)
+  transacaoId    Int?        @unique
+  transacao      TransacaoFinanceira? @relation(fields: [transacaoId], references: [id], onDelete: SetNull)
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 }
@@ -133,9 +139,13 @@ model Vale {
 model TransacaoFinanceira {
   id                Int         @id @default(autoincrement())
   tipo              String      // "RECEITA", "DESPESA"
-  categoria         String      // "Fornecedores", "Cliente", "Folha", "Viagem", "Outros"
+  categoria         String?     // Legado: "Fornecedores", "Cliente", etc.
   obraId            Int?
-  obra              Obra?       @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  obra              Obra?       @relation(fields: [obraId], references: [id], onDelete: SetNull)
+  centroCustoId     Int?
+  centroCusto       CentroCusto? @relation(fields: [centroCustoId], references: [id], onDelete: SetNull)
+  planoContaId      Int?
+  planoConta        PlanoConta?  @relation(fields: [planoContaId], references: [id], onDelete: SetNull)
   descricao         String
   valor             Float
   dataVencimento    DateTime
@@ -145,6 +155,8 @@ model TransacaoFinanceira {
   fornecedorId      Int?
   fornecedor        Fornecedor? @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
   empresa           String      @default("JHOSTON")
+  vale              Vale?
+  diariaViagem      DiariaViagem?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 }
@@ -413,4 +425,52 @@ model ComentarioMedicao {
   texto     String
   lido      Boolean      @default(false)
   createdAt DateTime     @default(now())
+}
+
+model RelatorioFotografico {
+  id               Int                  @id @default(autoincrement())
+  obraId           Int
+  obra             Obra                 @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  titulo           String               @default("Relatório de Avanço Fotográfico")
+  relatoEmpresa    String               @default("")
+  status           String               @default("RASCUNHO") // "RASCUNHO", "FINALIZADO"
+  paresFotos       ParFotoRelatorio[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+}
+
+model ParFotoRelatorio {
+  id                     Int                  @id @default(autoincrement())
+  relatorioFotograficoId Int
+  relatorioFotografico   RelatorioFotografico @relation(fields: [relatorioFotograficoId], references: [id], onDelete: Cascade)
+  descricao              String?
+  fotoAntesBase64        String?
+  fotoDepoisBase64       String?
+  ordem                  Int                  @default(0)
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+}
+
+model CentroCusto {
+  id          Int                   @id @default(autoincrement())
+  nome        String
+  codigo      String?               @unique
+  obraId      Int?                  // Se for vinculado a uma obra específica
+  obra        Obra?                 @relation(fields: [obraId], references: [id], onDelete: SetNull)
+  transacoes  TransacaoFinanceira[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+}
+
+model PlanoConta {
+  id             Int                   @id @default(autoincrement())
+  codigo         String                @unique // ex: "1.0", "1.1.1"
+  descricao      String
+  tipo           String                // "RECEITA", "DESPESA"
+  contaPaiId     Int?
+  contaPai       PlanoConta?           @relation("ContaHierarquia", fields: [contaPaiId], references: [id], onDelete: SetNull)
+  subContas      PlanoConta[]          @relation("ContaHierarquia")
+  transacoes     TransacaoFinanceira[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 }

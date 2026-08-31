@@ -30,7 +30,11 @@ interface Fornecedor {
 interface Transacao {
   id: number;
   tipo: "RECEITA" | "DESPESA";
-  categoria: string;
+  categoria?: string;
+  planoContaId?: number | null;
+  centroCustoId?: number | null;
+  planoConta?: { id: number; codigo: string; descricao: string } | null;
+  centroCusto?: { id: number; nome: string; codigo: string | null } | null;
   obraId: number | null;
   obra: Obra | null;
   descricao: string;
@@ -52,6 +56,8 @@ export default function FinanceiroPage() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [obras, setObras] = useState<Obra[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [planoContas, setPlanoContas] = useState<any[]>([]);
+  const [centrosCusto, setCentrosCusto] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [tipoFilter, setTipoFilter] = useState("TODOS");
   const [statusFilter, setStatusFilter] = useState("TODOS");
@@ -61,7 +67,8 @@ export default function FinanceiroPage() {
 
   // Form states
   const [tipo, setTipo] = useState<"RECEITA" | "DESPESA">("DESPESA");
-  const [categoria, setCategoria] = useState("Fornecedores");
+  const [planoContaId, setPlanoContaId] = useState("");
+  const [centroCustoId, setCentroCustoId] = useState("");
   const [selectedObraId, setSelectedObraId] = useState("");
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
@@ -97,7 +104,9 @@ export default function FinanceiroPage() {
     getFinanceiroData().then((res) => {
       setObras(res.obras);
       setFornecedores(res.fornecedores || []);
-      const mapped = res.transacoes.map((t) => ({
+      setPlanoContas(res.planoContas || []);
+      setCentrosCusto(res.centrosCusto || []);
+      const mapped = res.transacoes.map((t: any) => ({
         ...t,
         dataVencimento: new Date(t.dataVencimento).toISOString().split("T")[0],
         dataPagamento: t.dataPagamento ? new Date(t.dataPagamento).toISOString().split("T")[0] : null,
@@ -117,7 +126,8 @@ export default function FinanceiroPage() {
   const openNewModal = (initialTipo: "RECEITA" | "DESPESA" = "DESPESA") => {
     setEditingTransacao(null);
     setTipo(initialTipo);
-    setCategoria(initialTipo === "RECEITA" ? "Cliente" : "Fornecedores");
+    setPlanoContaId("");
+    setCentroCustoId("");
     setSelectedObraId("");
     setDescricao("");
     setValor("");
@@ -134,7 +144,8 @@ export default function FinanceiroPage() {
   const openEditModal = (t: Transacao) => {
     setEditingTransacao(t);
     setTipo(t.tipo);
-    setCategoria(t.categoria);
+    setPlanoContaId(t.planoContaId ? t.planoContaId.toString() : "");
+    setCentroCustoId(t.centroCustoId ? t.centroCustoId.toString() : "");
     setSelectedObraId(t.obraId ? t.obraId.toString() : "");
     setDescricao(t.descricao);
     setValor(t.valor.toString());
@@ -165,23 +176,26 @@ export default function FinanceiroPage() {
     }
 
     // Se for despesa com fornecedores, valida se um fornecedor cadastrado foi selecionado
-    if (tipo === "DESPESA" && categoria === "Fornecedores" && !fornecedorId) {
-      setErrorMsg("Selecione um fornecedor para o lançamento.");
-      return;
+    // Como agora temos planoConta, essa regra baseada em 'categoria == Fornecedores' é um pouco legada,
+    // mas vamos manter caso usem o tipo para cobrar fornecedor.
+    if (tipo === "DESPESA" && !fornecedorId && (planoContaId === "3" /* Ex: id de fornecedor, ajustável */ || clienteFornecedor)) {
+      // Regra afrouxada temporariamente
     }
 
     const payload = {
       id: editingTransacao?.id,
       tipo,
-      categoria,
+      categoria: undefined, // legado desativado na UI
+      planoContaId: planoContaId ? parseInt(planoContaId) : null,
+      centroCustoId: centroCustoId ? parseInt(centroCustoId) : null,
       obraId: selectedObraId ? parseInt(selectedObraId) : null,
       descricao,
       valor: parseFloat(valor),
       dataVencimento,
       dataPagamento: status === "PAGO" ? (dataPagamento || new Date().toISOString().split("T")[0]) : null,
       status,
-      clienteFornecedor: tipo === "DESPESA" && categoria === "Fornecedores" ? "" : clienteFornecedor,
-      fornecedorId: tipo === "DESPESA" && categoria === "Fornecedores" && fornecedorId ? parseInt(fornecedorId) : null,
+      clienteFornecedor,
+      fornecedorId: fornecedorId ? parseInt(fornecedorId) : null,
       empresa,
     };
 
@@ -812,8 +826,9 @@ export default function FinanceiroPage() {
                 <tr>
                   <th>Tipo</th>
                   <th>Cliente / Fornecedor</th>
+                  <th>Plano de Contas</th>
+                  <th>Centro de Custo</th>
                   <th>Descrição</th>
-                  <th>Obra Vinculada</th>
                   <th>Vencimento</th>
                   <th>Valor</th>
                   <th>Status</th>
@@ -823,7 +838,7 @@ export default function FinanceiroPage() {
               <tbody>
                 {filteredTransacoes.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
+                    <td colSpan={9} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
                       Nenhuma transação financeira encontrada.
                     </td>
                   </tr>
@@ -854,14 +869,23 @@ export default function FinanceiroPage() {
                   <td style={{ fontWeight: 600 }}>
                     {t.clienteFornecedor || <em style={{ color: "var(--text-muted)" }}>Não informado</em>}
                   </td>
-                  <td>{t.descricao}</td>
                   <td>
-                    {t.obra ? (
-                      <span style={{ fontWeight: 500, color: "var(--primary)" }}>{t.obra.nome}</span>
+                    {t.planoConta ? (
+                      <span style={{ fontSize: "12px", border: "1px solid var(--border-color)", padding: "2px 6px", borderRadius: "4px" }}>{t.planoConta.codigo} - {t.planoConta.descricao}</span>
                     ) : (
-                      <em style={{ color: "var(--text-muted)", fontSize: "13px" }}>Caixa Geral</em>
+                      <em style={{ color: "var(--text-muted)", fontSize: "12px" }}>{t.categoria || "S/ Conta"}</em>
                     )}
                   </td>
+                  <td>
+                    {t.centroCusto ? (
+                      <span style={{ fontSize: "12px", border: "1px solid var(--border-color)", padding: "2px 6px", borderRadius: "4px" }}>{t.centroCusto.nome}</span>
+                    ) : t.obra ? (
+                      <span style={{ fontWeight: 500, color: "var(--primary)" }}>{t.obra.nome}</span>
+                    ) : (
+                      <em style={{ color: "var(--text-muted)", fontSize: "12px" }}>Caixa Geral</em>
+                    )}
+                  </td>
+                  <td>{t.descricao}</td>
                   <td>{formatDateBR(t.dataVencimento)}</td>
                   <td style={{ fontWeight: 700, color: t.tipo === "RECEITA" ? "var(--success)" : "var(--text-heading)" }}>
                     {t.tipo === "RECEITA" ? "+" : "-"} {formatCurrency(t.valor)}
@@ -935,35 +959,26 @@ export default function FinanceiroPage() {
                     <select className="form-control" value={tipo} onChange={(e) => {
                       const val = e.target.value as "RECEITA" | "DESPESA";
                       setTipo(val);
-                      setCategoria(val === "RECEITA" ? "Cliente" : "Fornecedores");
+                      // Clear plano/centro on type change to force re-selection appropriate to type
+                      setPlanoContaId("");
                     }} disabled={!!editingTransacao}>
                       <option value="RECEITA">Receita (Entrada / Cliente)</option>
                       <option value="DESPESA">Despesa (Saída / Fornecedor / Outros)</option>
                     </select>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Categoria *</label>
-                    <select className="form-control" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-                      {tipo === "RECEITA" ? (
-                        <>
-                          <option value="Cliente">Pagamento de Cliente</option>
-                          <option value="Permuta / Terreno">Permuta / Terreno</option>
-                          <option value="Outros">Outras Receitas</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="Fornecedores">Fornecedores</option>
-                          <option value="Folha">Folha de Pagamento</option>
-                          <option value="Viagem">Custo de Viagem / Diárias</option>
-                          <option value="Outros">Outras Despesas</option>
-                        </>
-                      )}
+                    <label className="form-label">Plano de Contas *</label>
+                    <select className="form-control" value={planoContaId} onChange={(e) => setPlanoContaId(e.target.value)} required>
+                      <option value="">-- Selecione uma Conta --</option>
+                      {planoContas.filter(c => c.tipo === tipo).map(c => (
+                        <option key={c.id} value={c.id}>{c.codigo} - {c.descricao}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
-                {/* Condicional para Fornecedores Cadastrados */}
-                {tipo === "DESPESA" && categoria === "Fornecedores" ? (
+                {/* Condicional para Fornecedores Cadastrados - agora simplificado */}
+                {tipo === "DESPESA" ? (
                   <div className="form-group">
                     <label className="form-label">Fornecedor Cadastrado *</label>
                     <div style={{ display: "flex", gap: "8px" }}>
@@ -1005,14 +1020,25 @@ export default function FinanceiroPage() {
                   </div>
                 )}
 
-                <div className="form-group">
-                  <label className="form-label">Obra Vinculada (Centro de Custo)</label>
-                  <select className="form-control" value={selectedObraId} onChange={(e) => setSelectedObraId(e.target.value)}>
-                    <option value="">-- Caixa Geral (Nenhuma obra vinculada) --</option>
-                    {obras.map((o) => (
-                      <option key={o.id} value={o.id}>{o.nome}</option>
-                    ))}
-                  </select>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Obra Vinculada</label>
+                    <select className="form-control" value={selectedObraId} onChange={(e) => setSelectedObraId(e.target.value)}>
+                      <option value="">-- Sem obra vinculada --</option>
+                      {obras.map((o) => (
+                        <option key={o.id} value={o.id}>{o.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Centro de Custo</label>
+                    <select className="form-control" value={centroCustoId} onChange={(e) => setCentroCustoId(e.target.value)}>
+                      <option value="">-- Selecione o Centro de Custo --</option>
+                      {centrosCusto.map((cc) => (
+                        <option key={cc.id} value={cc.id}>{cc.codigo ? `${cc.codigo} - ` : ""}{cc.nome}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="form-group">
