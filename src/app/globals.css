@@ -36,8 +36,29 @@
   --radius-md: 16px;
   --radius-lg: 20px;
   --radius-xl: 32px;
-  
   --transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Modo Noturno (Dark Theme) */
+[data-theme='dark'] {
+  --bg-main: #0f172a;       /* Slate 900 */
+  --bg-sidebar: #020617;    /* Slate 950 */
+  --bg-card: rgba(30, 41, 59, 0.85); /* Slate 800 translúcido */
+  
+  --text-main: #cbd5e1;     /* Slate 300 */
+  --text-heading: #f8fafc;  /* Slate 50 */
+  --text-muted: #94a3b8;    /* Slate 400 */
+  
+  --border-color: rgba(51, 65, 85, 0.8); /* Slate 700 */
+  
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  
+  /* Ajuste de badges para modo escuro */
+  --success-bg: rgba(16, 185, 129, 0.2);
+  --warning-bg: rgba(245, 158, 11, 0.2);
+  --error-bg: rgba(239, 68, 68, 0.2);
+  --info-bg: rgba(59, 130, 246, 0.2);
 }
 
 /* Easter Egg Animations */
@@ -178,10 +199,10 @@ a:hover {
 
 .main-header {
   height: 70px;
-  background-color: rgba(255, 255, 255, 0.65);
+  background-color: var(--bg-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -243,8 +264,8 @@ a:hover {
 
 .card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-  border-color: rgba(15, 118, 110, 0.2);
+  transform: translateY(-4px); /* Pulo mais forte (Modern) */
+  border-color: rgba(15, 118, 110, 0.4);
 }
 
 .card-title {
@@ -296,18 +317,20 @@ a:hover {
 }
 .btn-primary:hover {
   box-shadow: 0 8px 25px rgba(15, 118, 110, 0.5);
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.02); /* Pulo */
   background: linear-gradient(135deg, var(--primary-hover) 0%, var(--secondary-hover) 100%);
 }
 
 .btn-secondary {
-  background-color: white;
+  background-color: var(--bg-card);
   border-color: var(--border-color);
   color: var(--text-main);
 }
 .btn-secondary:hover {
   background-color: var(--bg-main);
   border-color: var(--text-muted);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-danger {
@@ -317,6 +340,8 @@ a:hover {
 .btn-danger:hover {
   background-color: #dc2626;
   color: white;
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-sm {
@@ -375,12 +400,16 @@ a:hover {
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
 }
 
 .table th {
-  background-color: #f8fafc;
+  background-color: var(--bg-card);
   padding: 14px 18px;
   font-size: 13px;
   font-weight: 600;
@@ -396,16 +425,28 @@ a:hover {
   color: var(--text-main);
   font-size: 14px;
   vertical-align: middle;
+  background-color: var(--bg-card);
 }
 
 .table tr:last-child td {
   border-bottom: none;
 }
 
+/* Efeito Zebrado Moderno */
+.table tr:nth-child(even) td {
+  background-color: rgba(0,0,0, 0.02);
+}
+[data-theme='dark'] .table tr:nth-child(even) td {
+  background-color: rgba(255,255,255, 0.02);
+}
+
 .table tr:hover td {
-  background-color: #f1f5f9;
-  transform: scale(1.002);
+  background-color: var(--bg-main);
   transition: var(--transition);
+}
+.table tr:hover {
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: 0 4px 12px rgba(0,0,0, 0.05);
 }
 .table tr {
   transition: var(--transition);

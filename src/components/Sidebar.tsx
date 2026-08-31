@@ -16,14 +16,33 @@ export default function Sidebar() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [logoExists, setLogoExists] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
+    // Carrega tema salvo
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      setIsDarkMode(true);
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+
     getSession().then((sess) => {
       if (sess) {
         setSession(sess as any);
       }
     });
   }, [pathname]);
+
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode ? "dark" : "light";
+    setIsDarkMode(!isDarkMode);
+    localStorage.setItem("theme", newTheme);
+    if (newTheme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  };
 
   const handleLogout = () => {
     if (confirm("Deseja sair do sistema?")) {
@@ -195,13 +214,23 @@ export default function Sidebar() {
             <br />
             Nível: <span style={{ textTransform: "lowercase" }}>{session.userRole}</span>
           </div>
-          <button
-            onClick={handleLogout}
-            className="btn btn-danger btn-sm"
-            style={{ width: "100%", justifyContent: "center", height: "32px", fontSize: "12px" }}
-          >
-            Sair (Logout)
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={toggleTheme}
+              className="btn btn-secondary btn-sm"
+              style={{ flex: 1, justifyContent: "center", height: "32px", fontSize: "12px", padding: 0 }}
+              title="Alternar Modo Escuro"
+            >
+              {isDarkMode ? "☀️ Claro" : "🌙 Escuro"}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="btn btn-danger btn-sm"
+              style={{ flex: 1, justifyContent: "center", height: "32px", fontSize: "12px", padding: 0 }}
+            >
+              Sair
+            </button>
+          </div>
         </div>
       )}
     </aside>
