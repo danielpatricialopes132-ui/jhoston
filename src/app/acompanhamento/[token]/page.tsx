@@ -155,11 +155,29 @@ export default function AcompanhamentoClientePage() {
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <h3 className="font-semibold text-gray-700">{item.descricao}</h3>
-                          {isFinanceiro && item.precoUnitario > 0 && (
-                            <p className="text-xs text-gray-400">
-                              {item.quantidadeTotal} {item.unidade} x {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.precoUnitario)}
-                            </p>
-                          )}
+                          {isFinanceiro && item.precoUnitario > 0 && (() => {
+                            const valorTotal = item.quantidadeTotal * item.precoUnitario;
+                            const valorMedido = valorTotal * (item.percentual / 100);
+                            const saldoRestante = valorTotal - valorMedido;
+                            const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+                            return (
+                              <div className="mt-2 text-xs flex gap-4 sm:gap-6 text-gray-600 bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm">
+                                <div className="flex flex-col">
+                                  <span className="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Previsto</span>
+                                  <span className="font-semibold">{formatCurrency(valorTotal)}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Medido</span>
+                                  <span className="font-semibold text-blue-600">{formatCurrency(valorMedido)}</span>
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-gray-400 font-medium uppercase text-[10px] tracking-wider">Saldo</span>
+                                  <span className="font-semibold text-amber-500">{formatCurrency(saldoRestante)}</span>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div className="flex items-center gap-4">
                           <span className="font-bold text-gray-800">{item.percentual}%</span>
