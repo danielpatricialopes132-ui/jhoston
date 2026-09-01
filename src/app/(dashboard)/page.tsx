@@ -205,7 +205,7 @@ export default async function DashboardPage({
 
   const filterOptions = [
     { id: "TODOS", name: "Consolidado" },
-    ...empresasDb.map(e => ({ id: e.nome, name: e.nome }))
+    ...empresasDb.map((e: any) => ({ id: e.nome, name: e.nome }))
   ];
 
   const formatCurrency = (val: number) => {
@@ -370,28 +370,28 @@ export default async function DashboardPage({
 
       {/* Cards de Métricas */}
       <div className="grid-cols-4" style={{ marginBottom: "24px" }}>
-        <div className="card">
+        <div className="glass-card metric-card">
           <div className="card-title">Saldo em Caixa</div>
           <div className="card-value" style={{ color: data.saldoCaixa >= 0 ? "var(--success)" : "var(--error)" }}>
             {formatCurrency(data.saldoCaixa)}
           </div>
           <div className="card-desc">Total Recebido - Pago</div>
         </div>
-        <div className="card">
+        <div className="glass-card metric-card">
           <div className="card-title">Obras Ativas</div>
           <div className="card-value" style={{ color: "var(--primary)" }}>
             {data.obrasAtivasCount}
           </div>
           <div className="card-desc">Projetos em andamento</div>
         </div>
-        <div className="card">
+        <div className="glass-card metric-card">
           <div className="card-title">Funcionários Ativos</div>
           <div className="card-value" style={{ color: "var(--secondary)" }}>
             {data.funcionariosCount}
           </div>
           <div className="card-desc">Equipe externa cadastrada</div>
         </div>
-        <div className="card">
+        <div className="glass-card metric-card">
           <div className="card-title">Fluxo Realizado</div>
           <div className="card-desc" style={{ fontSize: "13px", marginTop: "8px" }}>
             Receitas Pagas: <strong style={{ color: "var(--success)" }}>{formatCurrency(data.receitasPagas)}</strong><br />
@@ -401,7 +401,7 @@ export default async function DashboardPage({
       </div>
 
       {/* NOVO PAINEL: CONTAS A PAGAR CRÍTICAS */}
-      <div className="card" style={{ marginBottom: "24px", padding: "20px 24px" }}>
+      <div className="glass-card" style={{ marginBottom: "24px", padding: "20px 24px" }}>
         <h4 style={{ fontSize: "15px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "16px" }}>
           Controle de Vencimentos — Contas a Pagar Pendentes
         </h4>

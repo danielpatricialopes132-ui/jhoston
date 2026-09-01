@@ -6,8 +6,8 @@
   --secondary-hover: #0284c7;
   
   --bg-main: #f1f5f9;       /* Slate 100 - Fundo claro suave */
-  --bg-sidebar: #020617;    /* Slate 950 - Sidebar muito escura (quase preta) para contraste */
-  --bg-card: rgba(255, 255, 255, 0.85); /* Translúcido para Glassmorphism */
+  --bg-sidebar: linear-gradient(180deg, #020617 0%, #0f172a 100%); /* Slate 950 to 900 */
+  --bg-card: rgba(255, 255, 255, 0.7); /* Mais translúcido para o efeito Glass */
   
   --text-main: #334155;     
   --text-heading: #0f172a;  
@@ -41,9 +41,9 @@
 
 /* Modo Noturno (Dark Theme) */
 [data-theme='dark'] {
-  --bg-main: #0f172a;       /* Slate 900 */
-  --bg-sidebar: #020617;    /* Slate 950 */
-  --bg-card: rgba(30, 41, 59, 0.85); /* Slate 800 translúcido */
+  --bg-main: #060913;       /* Midnight Blue super profundo, parece noite na piscina */
+  --bg-sidebar: linear-gradient(180deg, #02040a 0%, #060913 100%); 
+  --bg-card: rgba(15, 23, 42, 0.65); /* Mais translúcido, escuro elegante */
   
   --text-main: #cbd5e1;     /* Slate 300 */
   --text-heading: #f8fafc;  /* Slate 50 */
@@ -248,6 +248,32 @@ a:hover {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+/* Premium Glassmorphism e Componentes */
+.glass-card {
+  background-color: var(--bg-card);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  padding: 24px;
+}
+[data-theme='dark'] .glass-card {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* Cards */
