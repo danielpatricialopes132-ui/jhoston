@@ -289,7 +289,7 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
 
         .cover-title {
           font-family: 'Playfair Display', serif;
-          font-size: 58px;
+          font-size: 52px;
           font-weight: 700;
           line-height: 1;
           margin: 0;
@@ -300,9 +300,9 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
         }
 
         .cover-subtitle {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 300;
-          letter-spacing: 12px;
+          letter-spacing: 10px;
           margin: 0 0 40px 0;
           color: #cbd5e1;
         }
@@ -426,7 +426,7 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
         .editorial-content {
           columns: 2;
           column-gap: 40px;
-          font-size: 14px;
+          font-size: 13px;
           line-height: 2;
           color: #334155;
           text-align: justify;
@@ -472,23 +472,25 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
 
         .index-item {
           display: flex;
-          align-items: baseline;
-          font-size: 16px;
+          align-items: flex-end;
+          font-size: 13px;
           color: #334155;
         }
 
         .index-item-number {
           font-weight: 800;
           color: #0ea5e9;
-          margin-right: 20px;
-          font-size: 20px;
+          margin-right: 15px;
+          font-size: 16px;
         }
 
         .index-item-desc {
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 1px;
-          white-space: nowrap;
+          white-space: normal;
+          max-width: 70%;
+          line-height: 1.4;
         }
 
         .index-item-dots {
@@ -594,7 +596,7 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
         .side-label {
           text-align: center;
           margin-top: 30px;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 800;
           letter-spacing: 4px;
           color: #475569;
