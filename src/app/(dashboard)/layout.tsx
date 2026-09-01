@@ -14,7 +14,7 @@ export default function DashboardLayout({
       <main className="main-content">
         <header className="main-header">
           <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--text-heading)" }}>
-            JHOSTON TEC Piscinas
+            JHOSTON
           </h2>
           <div className="flex-gap-12" style={{ alignItems: "center" }}>
             <Link

@@ -199,6 +199,15 @@ export default async function DashboardPage({
     };
   }
 
+  const empresasDb = await prisma.configuracaoEmpresa.findMany({
+    orderBy: { nome: "asc" }
+  });
+
+  const filterOptions = [
+    { id: "TODOS", name: "Consolidado" },
+    ...empresasDb.map(e => ({ id: e.nome, name: e.nome }))
+  ];
+
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
   };
@@ -219,7 +228,7 @@ export default async function DashboardPage({
             Painel Financeiro Geral
           </h3>
           <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
-            JHOSTON TEC — Resumo do fluxo de caixa e status das operações.
+            JHOSTON — Resumo do fluxo de caixa e status das operações.
           </p>
         </div>
         <div style={{ display: "inline-flex", gap: "10px" }}>
@@ -245,18 +254,14 @@ export default async function DashboardPage({
       <div style={{ display: "flex", gap: "10px", marginBottom: "24px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }}>
         <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Visualizar Empresa:</span>
         <div style={{ display: "inline-flex", gap: "8px" }}>
-          {[
-            { id: "TODOS", name: "Consolidado" },
-            { id: "JHOSTON", name: "Jhoston Pools" },
-            { id: "ECO_STONE", name: "Eco Stone" }
-          ].map((c) => (
+          {filterOptions.map((emp) => (
             <Link
-              key={c.id}
-              href={c.id === "TODOS" ? "/" : `/?empresa=${c.id}`}
-              className={`btn btn-sm ${empresaFilter === c.id ? "btn-primary" : "btn-secondary"}`}
+              key={emp.id}
+              href={emp.id === "TODOS" ? "/" : `/?empresa=${emp.id}`}
+              className={`btn btn-sm ${empresaFilter === emp.id ? "btn-primary" : "btn-secondary"}`}
               style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}
             >
-              {c.name}
+              {emp.name}
             </Link>
           ))}
         </div>

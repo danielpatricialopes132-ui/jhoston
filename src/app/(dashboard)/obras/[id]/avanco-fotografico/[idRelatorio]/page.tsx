@@ -30,7 +30,7 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
     });
   }
 
-  const logoSrc = configEmpresa?.logoUrl || "/logo.png";
+  const logoSrc = configEmpresa?.logoUrl || "/logo.jpeg";
   const nomeEmpresa = configEmpresa?.nome || "JHOSTON POOLS";
 
   return (
