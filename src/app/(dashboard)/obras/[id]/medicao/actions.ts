@@ -121,7 +121,7 @@ export async function adicionarComentario(itemId: number, texto: string, autor: 
 }
 
 export async function getObraByToken(token: string) {
-  return await prisma.obra.findFirst({
+  const obra = await prisma.obra.findFirst({
     where: {
       OR: [
         { tokenMedicaoFisica: token },
@@ -140,6 +140,15 @@ export async function getObraByToken(token: string) {
       },
     },
   });
+
+  if (obra && obra.empresa) {
+    const config = await prisma.configuracaoEmpresa.findUnique({
+      where: { nome: obra.empresa }
+    });
+    (obra as any).configuracaoEmpresa = config;
+  }
+
+  return obra;
 }
 
 export async function renovarTokenMedicao(obraId: number, tipo: 'fisico' | 'financeiro') {

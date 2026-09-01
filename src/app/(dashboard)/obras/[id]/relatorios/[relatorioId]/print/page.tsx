@@ -7,6 +7,17 @@ export default async function PrintRelatorioPage(props: { params: Promise<{ id: 
 
   if (!relatorio) return <div>Relatório não encontrado</div>;
 
+  let configEmpresa = null;
+  if (relatorio.obra.empresa) {
+    const { prisma } = await import("@/lib/db");
+    configEmpresa = await prisma.configuracaoEmpresa.findUnique({
+      where: { nome: relatorio.obra.empresa }
+    });
+  }
+
+  const logoSrc = configEmpresa?.logoUrl || null;
+  const corBase = configEmpresa?.corSecundaria || "rgb(37 99 235)"; // blue-600 default
+
   return (
     <div className="bg-white min-h-screen text-gray-900 print:bg-white pb-20">
       
@@ -35,8 +46,12 @@ export default async function PrintRelatorioPage(props: { params: Promise<{ id: 
       {/* CAPA */}
       <div className="h-screen w-full flex flex-col items-center justify-center bg-zinc-900 text-white page-break relative">
         <div className="text-center">
-          <div className="w-32 h-32 bg-zinc-800 rounded mx-auto mb-8 flex items-center justify-center font-bold text-xl">
-            {relatorio.obra.empresa}
+          <div className="w-32 h-32 rounded mx-auto mb-8 flex items-center justify-center font-bold text-xl overflow-hidden" style={{ backgroundColor: logoSrc ? 'transparent' : 'var(--bg-card)' }}>
+            {logoSrc ? (
+              <img src={logoSrc} alt={relatorio.obra.empresa} className="w-full h-full object-contain" />
+            ) : (
+              relatorio.obra.empresa
+            )}
           </div>
           <h1 className="text-6xl font-extrabold tracking-tight mb-6">RESUMO DO MÊS</h1>
           <div className="w-32 h-1 bg-yellow-500 mx-auto mb-6"></div>
@@ -56,15 +71,15 @@ export default async function PrintRelatorioPage(props: { params: Promise<{ id: 
               <h2 className="text-3xl font-bold text-zinc-900">RELATÓRIO DE PROGRESSO MENSAL</h2>
               <p className="text-gray-500">Parecer Técnico e Acompanhamento da Engenharia</p>
             </div>
-            <div className="bg-blue-600 text-white font-bold px-6 py-2 rounded-full uppercase">
+            <div className="text-white font-bold px-6 py-2 rounded-full uppercase" style={{ backgroundColor: corBase }}>
               {relatorio.mesReferencia}
             </div>
           </div>
 
           <div className="border border-gray-200 rounded-2xl p-8 shadow-sm">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
-              <h3 className="text-xl font-bold text-blue-800 uppercase tracking-wide">RELATO DO ENGENHEIRO RESPONSÁVEL</h3>
+              <div className="w-2 h-8 rounded-full" style={{ backgroundColor: corBase }}></div>
+              <h3 className="text-xl font-bold uppercase tracking-wide" style={{ color: corBase }}>RELATO DO ENGENHEIRO RESPONSÁVEL</h3>
               <div className="ml-auto text-sm text-gray-400 italic">Visão Geral Consolidada</div>
             </div>
             <div className="text-gray-700 leading-relaxed space-y-4 whitespace-pre-wrap text-lg">
@@ -83,7 +98,7 @@ export default async function PrintRelatorioPage(props: { params: Promise<{ id: 
             <div className="font-bold text-lg text-gray-300">{relatorio.obra.empresa}</div>
           </div>
 
-          <h2 className="text-2xl font-bold text-blue-800 uppercase tracking-wide mb-8">
+          <h2 className="text-2xl font-bold uppercase tracking-wide mb-8" style={{ color: corBase }}>
             {secao.tipo === 'ANTES_DEPOIS' ? `${secao.titulo} - EVOLUÇÃO (ANTES E DEPOIS)` : `FOTOS DO MÊS - ${secao.titulo}`}
           </h2>
 
@@ -93,7 +108,7 @@ export default async function PrintRelatorioPage(props: { params: Promise<{ id: 
                 <div key={index} className="no-break border rounded-2xl overflow-hidden bg-gray-50 p-2 shadow-sm">
                   <img src={foto.base64Data} alt="" className="w-full h-[400px] object-cover rounded-xl mb-4" />
                   <div className="flex justify-between items-center px-2 pb-2">
-                    <span className="bg-blue-600 text-white font-semibold px-4 py-1 rounded-full text-sm">
+                    <span className="text-white font-semibold px-4 py-1 rounded-full text-sm" style={{ backgroundColor: corBase }}>
                       {secao.titulo.toUpperCase()}
                     </span>
                     <span className="text-gray-500 text-sm">{foto.dataFoto}</span>

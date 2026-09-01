@@ -16,6 +16,7 @@ import {
 } from "./actions";
 import { getClientesList } from "../clientes/actions";
 import { getFornecedoresList } from "../fornecedores/actions";
+import { getEmpresas } from "../configuracoes/empresas/actions";
 
 interface Cliente {
   id: number;
@@ -71,6 +72,7 @@ export default function ObrasPage() {
   const [obras, setObras] = useState<Obra[]>([]);
   const [allClientes, setAllClientes] = useState<Cliente[]>([]);
   const [fornecedores, setFornecedores] = useState<FornecedorInfo[]>([]);
+  const [empresas, setEmpresas] = useState<{nome: string}[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("TODAS");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -143,6 +145,7 @@ export default function ObrasPage() {
     refreshObras();
     getClientesList().then((data) => setAllClientes(data as any));
     getFornecedoresList().then((data) => setFornecedores(data as any));
+    getEmpresas().then((data) => setEmpresas(data as any));
   }, []);
 
   const openNewModal = () => {
@@ -564,8 +567,11 @@ export default function ObrasPage() {
             onChange={(e) => setEmpresaFilter(e.target.value)}
           >
             <option value="TODAS">Todas as Empresas</option>
-            <option value="JHOSTON">Jhoston Pools</option>
-            <option value="ECO_STONE">Eco Stone</option>
+            {empresas.map((emp) => (
+              <option key={emp.nome} value={emp.nome}>
+                {emp.nome}
+              </option>
+            ))}
           </select>
         </div>
         <div className="form-group" style={{ flex: 1 }}>
@@ -614,13 +620,13 @@ export default function ObrasPage() {
                         style={{
                           fontSize: "11px",
                           padding: "2px 6px",
-                          backgroundColor: obra.empresa === "ECO_STONE" ? "rgba(34, 197, 94, 0.15)" : "rgba(59, 130, 246, 0.15)",
-                          color: obra.empresa === "ECO_STONE" ? "#4ade80" : "#60a5fa",
+                          backgroundColor: "rgba(59, 130, 246, 0.15)",
+                          color: "#60a5fa",
                           borderRadius: "4px",
                           fontWeight: 600,
                         }}
                       >
-                        {obra.empresa === "ECO_STONE" ? "Eco Stone" : "Jhoston"}
+                        {obra.empresa || "Sem Empresa"}
                       </span>
                       <span>{obra.nome}</span>
                       {obra.documentos && obra.documentos.length > 0 && (
@@ -960,8 +966,12 @@ export default function ObrasPage() {
                        onChange={(e) => setEmpresa(e.target.value)}
                        required
                      >
-                       <option value="JHOSTON">Jhoston Pools</option>
-                       <option value="ECO_STONE">Eco Stone</option>
+                       <option value="">Selecione uma empresa...</option>
+                       {empresas.map((emp) => (
+                         <option key={emp.nome} value={emp.nome}>
+                           {emp.nome}
+                         </option>
+                       ))}
                      </select>
                    </div>
                  </div>

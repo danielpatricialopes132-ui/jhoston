@@ -91,7 +91,20 @@ export default function AcompanhamentoClientePage() {
           </div>
 
           <div className="flex-1 text-center md:text-left">
-            <div className="text-blue-400 font-bold tracking-widest uppercase text-sm mb-2">{obra.empresa}</div>
+            {obra.configuracaoEmpresa?.logoUrl ? (
+              <img 
+                src={obra.configuracaoEmpresa.logoUrl} 
+                alt={obra.empresa} 
+                className="h-10 object-contain mb-3 mx-auto md:mx-0" 
+              />
+            ) : (
+              <div 
+                className="font-bold tracking-widest uppercase text-sm mb-2" 
+                style={{ color: obra.configuracaoEmpresa?.corSecundaria || "#60a5fa" }}
+              >
+                {obra.empresa}
+              </div>
+            )}
             <h1 className="text-4xl md:text-5xl font-extrabold mb-4">{obra.nome}</h1>
             {isFinanceiro && (
               <div className="bg-white/10 inline-block px-4 py-2 rounded-lg backdrop-blur-sm border border-white/20">

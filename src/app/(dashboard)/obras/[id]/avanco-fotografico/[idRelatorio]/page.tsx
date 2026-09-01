@@ -13,7 +13,7 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
   const relatorio = await prisma.relatorioFotografico.findUnique({
     where: { id: relatorioId },
     include: {
-      obra: { select: { nome: true } },
+      obra: { select: { nome: true, empresa: true } },
       paresFotos: { orderBy: { ordem: "asc" } },
     },
   });
@@ -22,6 +22,16 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
 
   const reportDate = new Date(relatorio.updatedAt);
   const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+  let configEmpresa = null;
+  if (relatorio.obra.empresa) {
+    configEmpresa = await prisma.configuracaoEmpresa.findUnique({
+      where: { nome: relatorio.obra.empresa }
+    });
+  }
+
+  const logoSrc = configEmpresa?.logoUrl || "/logo.png";
+  const nomeEmpresa = configEmpresa?.nome || "JHOSTON POOLS";
 
   return (
     <>
@@ -52,7 +62,7 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
             <div className="cover-bg-glow"></div>
             <div className="cover-content">
               <div className="cover-logo-wrapper">
-                <img src="/logo.png" alt="Jhoston Pools Logo" className="cover-logo" />
+                <img src={logoSrc} alt={`${nomeEmpresa} Logo`} className="cover-logo" />
               </div>
               
               <div className="cover-text-group">
@@ -67,8 +77,8 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
                 </div>
               </div>
               
-              <div className="cover-footer">
-                JHOSTON POOLS & ECO STONE • EXCELÊNCIA EM RESORTS PARTICULARES
+              <div className="cover-footer" style={{ color: configEmpresa?.corSecundaria || "inherit" }}>
+                {nomeEmpresa} • EXCELÊNCIA EM RESORTS PARTICULARES
               </div>
             </div>
           </div>
@@ -79,7 +89,7 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
           {relatorio.relatoEmpresa && (
             <div className="magazine-page editorial-page">
               <header className="page-header">
-                <img src="/logo.png" alt="Logo" className="mini-logo" />
+                <img src={logoSrc} alt="Logo" className="mini-logo" />
                 <span>CARTA AOS PROPRIETÁRIOS</span>
               </header>
               
@@ -95,8 +105,8 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
                 </div>
               </main>
 
-              <footer className="page-footer">
-                <span>02 &nbsp;&nbsp;&nbsp; JHOSTON POOLS MAGAZINE</span>
+              <footer className="page-header mt-auto" style={{ borderTop: "1px solid var(--border-color)", paddingTop: "12px", borderBottom: "none", fontSize: "10px", color: "var(--text-muted)" }}>
+                <span>02 &nbsp;&nbsp;&nbsp; {nomeEmpresa.toUpperCase()}</span>
                 <span>{relatorio.obra.nome}</span>
               </footer>
             </div>

@@ -134,6 +134,7 @@ export default function Sidebar() {
     { name: "Calculadoras", path: "/calculadora", icon: icons.calculadora, adminOnly: false, masterOnly: false },
     { name: "Chat Interno", path: "/chat", icon: icons.chat, adminOnly: false, masterOnly: false },
     { name: "Relatórios", path: "/relatorios", icon: icons.relatorios, adminOnly: true, masterOnly: false },
+    { name: "Config. Empresas", path: "/configuracoes/empresas", icon: icons.usuarios, adminOnly: true, masterOnly: true },
     { name: "Ajuda (Manual)", path: "/ajuda", icon: icons.ajuda, adminOnly: false, masterOnly: false },
     { name: "Gerenciar Usuários", path: "/usuarios", icon: icons.usuarios, adminOnly: false, masterOnly: true }
   ];
