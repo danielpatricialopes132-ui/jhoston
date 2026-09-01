@@ -11,6 +11,7 @@ export async function salvarRascunhoRelatorioFotografico(data: {
     fotoAntesBase64: string;
     fotoDepoisBase64: string;
     ordem: number;
+    isAvulsa: boolean;
   }[];
 }) {
   // Check if there is an existing draft
@@ -34,6 +35,7 @@ export async function salvarRascunhoRelatorioFotografico(data: {
             fotoAntesBase64: par.fotoAntesBase64,
             fotoDepoisBase64: par.fotoDepoisBase64,
             ordem: par.ordem,
+            isAvulsa: par.isAvulsa,
           })),
         },
       },
@@ -52,6 +54,7 @@ export async function salvarRascunhoRelatorioFotografico(data: {
             fotoAntesBase64: par.fotoAntesBase64,
             fotoDepoisBase64: par.fotoDepoisBase64,
             ordem: par.ordem,
+            isAvulsa: par.isAvulsa,
           })),
         },
       },

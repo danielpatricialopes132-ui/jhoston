@@ -447,6 +447,7 @@ model ParFotoRelatorio {
   fotoAntesBase64        String?
   fotoDepoisBase64       String?
   ordem                  Int                  @default(0)
+  isAvulsa               Boolean              @default(false)
   createdAt              DateTime             @default(now())
   updatedAt              DateTime             @updatedAt
 }

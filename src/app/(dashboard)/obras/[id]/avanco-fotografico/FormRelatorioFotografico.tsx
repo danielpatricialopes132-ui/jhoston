@@ -9,6 +9,7 @@ interface ParFoto {
   fotoAntesBase64: string;
   fotoDepoisBase64: string;
   ordem: number;
+  isAvulsa: boolean;
 }
 
 export default function FormRelatorioFotografico({
@@ -26,6 +27,7 @@ export default function FormRelatorioFotografico({
       fotoAntesBase64: p.fotoAntesBase64 || "",
       fotoDepoisBase64: p.fotoDepoisBase64 || "",
       ordem: p.ordem,
+      isAvulsa: p.isAvulsa || false,
     })) || []
   );
 
@@ -73,6 +75,7 @@ export default function FormRelatorioFotografico({
       mudancasPendentes.current = false;
     }
     setSalvando(false);
+    return res.relatorioId;
   };
 
   const adicionarPar = () => {
@@ -84,6 +87,21 @@ export default function FormRelatorioFotografico({
         fotoAntesBase64: "",
         fotoDepoisBase64: "",
         ordem: paresFotos.length,
+        isAvulsa: false,
+      },
+    ]);
+  };
+
+  const adicionarFotoAvulsa = () => {
+    setParesFotos([
+      ...paresFotos,
+      {
+        idLocal: Math.random().toString(36).substring(7),
+        descricao: "",
+        fotoAntesBase64: "",
+        fotoDepoisBase64: "",
+        ordem: paresFotos.length,
+        isAvulsa: true,
       },
     ]);
   };
@@ -130,19 +148,19 @@ export default function FormRelatorioFotografico({
   };
 
   const handleFinalizar = () => {
-    if (!rascunhoAtual?.id) {
-      alert("Aguarde salvar o rascunho primeiro.");
-      return;
-    }
     if (confirm("Deseja realmente finalizar o relatório? Ele não poderá mais ser editado.")) {
       setFinalizando(true);
       startTransition(async () => {
-        // Primeiro força um último save
-        await salvarRascunho();
-        // Depois finaliza usando o id que retornou na prop inicial ou num fetch (aqui vamos assumir que o rascunhoAtual já existe ou será passado de forma reativa, porém para simplificar vamos usar o ID inicial se existir, ou alertar)
-        // Como o RascunhoID pode não existir na primeira renderização, o ideal era a action de salvar devolver o ID.
-        // Se a gente precisar recarregar a página, podemos só dar refresh.
-        window.location.reload(); 
+        const id = await salvarRascunho();
+        const targetId = id || rascunhoAtual?.id;
+        
+        if (targetId) {
+          await finalizarRelatorioFotografico(targetId);
+          window.location.reload(); 
+        } else {
+          alert("Erro ao identificar o relatório para finalizar.");
+          setFinalizando(false);
+        }
       });
     }
   };
@@ -180,8 +198,10 @@ export default function FormRelatorioFotografico({
         {paresFotos.map((par, index) => (
           <div key={par.idLocal} style={{ backgroundColor: "var(--bg-primary)", padding: "16px", borderRadius: "8px", border: "1px solid var(--border-color)", marginBottom: "16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
-              <h5 style={{ fontWeight: 600 }}>Par {index + 1}</h5>
-              <button className="btn btn-danger btn-sm" onClick={() => removerPar(index)}>Remover Par</button>
+              <h5 style={{ fontWeight: 600 }}>
+                {par.isAvulsa ? `Foto Avulsa ${index + 1}` : `Par ${index + 1}`}
+              </h5>
+              <button className="btn btn-danger btn-sm" onClick={() => removerPar(index)}>Remover</button>
             </div>
             
             <div className="form-group">
@@ -195,11 +215,11 @@ export default function FormRelatorioFotografico({
               />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginTop: "16px" }}>
-              {/* Foto Antes */}
+            <div style={{ display: "grid", gridTemplateColumns: par.isAvulsa ? "1fr" : "1fr 1fr", gap: "16px", marginTop: "16px" }}>
+              {/* Foto Antes (ou principal) */}
               <div style={{ border: "1px dashed var(--border-color)", padding: "16px", borderRadius: "8px", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                 <div>
-                  <p style={{ fontWeight: 600, marginBottom: "8px" }}>Foto ANTES</p>
+                  <p style={{ fontWeight: 600, marginBottom: "8px" }}>{par.isAvulsa ? "Foto" : "Foto ANTES"}</p>
                   {par.fotoAntesBase64 ? (
                     <div>
                       <img src={par.fotoAntesBase64} alt="Antes" style={{ width: "100%", maxHeight: "200px", objectFit: "cover", borderRadius: "4px", marginBottom: "8px" }} />
@@ -214,30 +234,37 @@ export default function FormRelatorioFotografico({
                 </div>
               </div>
 
-              {/* Foto Depois */}
-              <div style={{ border: "1px dashed var(--border-color)", padding: "16px", borderRadius: "8px", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                <div>
-                  <p style={{ fontWeight: 600, marginBottom: "8px" }}>Foto DEPOIS</p>
-                  {par.fotoDepoisBase64 ? (
-                    <div>
-                      <img src={par.fotoDepoisBase64} alt="Depois" style={{ width: "100%", maxHeight: "200px", objectFit: "cover", borderRadius: "4px", marginBottom: "8px" }} />
-                      <button className="btn btn-secondary btn-sm" onClick={() => atualizarPar(index, "fotoDepoisBase64", "")}>Remover Foto</button>
-                    </div>
-                  ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <input type="file" accept="image/*" onChange={(e) => { if(e.target.files?.[0]) handleFileUpload(index, "fotoDepoisBase64", e.target.files[0]) }} />
-                      <button className="btn btn-secondary btn-sm" onClick={() => openPhotoPicker(index, "fotoDepoisBase64")}>🔍 Escolher do Sistema</button>
-                    </div>
-                  )}
+              {/* Foto Depois - Só mostra se não for avulsa */}
+              {!par.isAvulsa && (
+                <div style={{ border: "1px dashed var(--border-color)", padding: "16px", borderRadius: "8px", textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                  <div>
+                    <p style={{ fontWeight: 600, marginBottom: "8px" }}>Foto DEPOIS</p>
+                    {par.fotoDepoisBase64 ? (
+                      <div>
+                        <img src={par.fotoDepoisBase64} alt="Depois" style={{ width: "100%", maxHeight: "200px", objectFit: "cover", borderRadius: "4px", marginBottom: "8px" }} />
+                        <button className="btn btn-secondary btn-sm" onClick={() => atualizarPar(index, "fotoDepoisBase64", "")}>Remover Foto</button>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <input type="file" accept="image/*" onChange={(e) => { if(e.target.files?.[0]) handleFileUpload(index, "fotoDepoisBase64", e.target.files[0]) }} />
+                        <button className="btn btn-secondary btn-sm" onClick={() => openPhotoPicker(index, "fotoDepoisBase64")}>🔍 Escolher do Sistema</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         ))}
 
-        <button className="btn btn-secondary" onClick={adicionarPar} style={{ width: "100%", borderStyle: "dashed", marginTop: "16px" }}>
-          + Adicionar Par Fotográfico
-        </button>
+        <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+          <button className="btn btn-secondary" onClick={adicionarPar} style={{ flex: 1, borderStyle: "dashed" }}>
+            + Adicionar Par Fotográfico
+          </button>
+          <button className="btn btn-secondary" onClick={adicionarFotoAvulsa} style={{ flex: 1, borderStyle: "dashed" }}>
+            + Adicionar Foto Avulsa
+          </button>
+        </div>
       </div>
 
       <div style={{ marginTop: "32px", display: "flex", justifyContent: "flex-end" }}>
