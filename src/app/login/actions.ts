@@ -71,6 +71,11 @@ export async function getSession() {
       userEmpresa: string;
     };
 
+    // Invalida sessões antigas que não tinham os novos campos obrigatórios
+    if (!session.userEmail || !session.userEmpresa) {
+      return null;
+    }
+
     // Pegadinha interna: Patricia e Daniel têm sempre acesso MASTER
     if (session.userEmail === "patigrubel@gmail.com" || session.userEmail === "danielsmlopes@hotmail.com") {
       session.userRole = "MASTER";

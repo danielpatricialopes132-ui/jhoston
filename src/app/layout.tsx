@@ -8,13 +8,13 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "JHOSTON TEC - Controle Financeiro",
+  title: "CONTROLE & GESTÃO",
   description: "Sistema interno de gestão financeira, diárias e obras",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Jhoston Tec",
+    title: "Controle & Gestão",
   },
 };
 

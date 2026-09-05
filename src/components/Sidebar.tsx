@@ -181,7 +181,7 @@ export default function Sidebar() {
       >
         {logoExists ? (
           <img
-            src="/logo.jpeg"
+            src="/logo.jpg"
             alt="Jhoston Tec Logo"
             style={{
               maxHeight: "55px",
@@ -193,8 +193,8 @@ export default function Sidebar() {
           />
         ) : null}
         
-        {!logoExists && <h1 className="sidebar-title">JHOSTON</h1>}
-        <p className="sidebar-subtitle">GESTÃO EMPRESARIAL</p>
+        {!logoExists && <h1 className="sidebar-title">CONTROLE & GESTÃO</h1>}
+        <p className="sidebar-subtitle">SISTEMA INTEGRADO</p>
       </div>
 
       <ul className="sidebar-menu">

@@ -30,7 +30,7 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
     });
   }
 
-  const logoSrc = configEmpresa?.logoUrl || "/logo.jpeg";
+  const logoSrc = configEmpresa?.logoUrl || "/logo.jpg";
   const nomeEmpresa = configEmpresa?.nome || "JHOSTON POOLS";
 
   return (
@@ -203,7 +203,7 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
              ======================= */}
           <div className="magazine-backcover">
             <div className="backcover-content">
-              <img src="/logo.png" alt="Jhoston Pools Logo" className="backcover-logo" />
+              <img src="/logo.jpg" alt="Jhoston Pools Logo" className="backcover-logo" />
               <h3>A ARTE DE CONSTRUIR BEM ESTAR.</h3>
               <p>JHOSTONPOOLS.COM.BR</p>
             </div>

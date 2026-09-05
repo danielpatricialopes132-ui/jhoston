@@ -16,13 +16,13 @@ async function getDashboardData(empresaFilter: string) {
     prisma.obra.count({ 
       where: { 
         status: "ATIVA",
-        ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+        ...(empresaFilter !== "AMBAS" ? { empresa: empresaFilter } : {})
       } 
     }),
     prisma.funcionario.count({ where: { ativo: true } }),
     prisma.transacaoFinanceira.findMany({
       where: {
-        ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+        ...(empresaFilter !== "AMBAS" ? { empresa: empresaFilter } : {})
       },
       include: { obra: true },
       orderBy: { dataVencimento: "desc" },
@@ -31,7 +31,7 @@ async function getDashboardData(empresaFilter: string) {
     prisma.viagem.findMany({
       where: {
         obra: {
-          ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+          ...(empresaFilter !== "AMBAS" ? { empresa: empresaFilter } : {})
         }
       },
       include: { obra: true },
@@ -47,7 +47,7 @@ async function getDashboardData(empresaFilter: string) {
     prisma.obra.findMany({
       where: { 
         status: "ATIVA",
-        ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+        ...(empresaFilter !== "AMBAS" ? { empresa: empresaFilter } : {})
       },
       orderBy: { nome: "asc" },
     }),
@@ -58,14 +58,14 @@ async function getDashboardData(empresaFilter: string) {
     prisma.transacaoFinanceira.findMany({
       where: { 
         status: "PAGO",
-        ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+        ...(empresaFilter !== "AMBAS" ? { empresa: empresaFilter } : {})
       },
     }),
     prisma.transacaoFinanceira.findMany({
       where: { 
         tipo: "DESPESA", 
         status: "PENDENTE",
-        ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {})
+        ...(empresaFilter !== "AMBAS" ? { empresa: empresaFilter } : {})
       },
     }),
   ]);
@@ -155,16 +155,18 @@ async function getDashboardData(empresaFilter: string) {
   };
 }
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ empresa?: string }> | { empresa?: string } | undefined;
-}) {
-  const resolvedParams = searchParams ? (searchParams instanceof Promise ? await searchParams : searchParams) : {};
-  const empresaFilter = resolvedParams.empresa || "TODOS";
-  const data = await getDashboardData(empresaFilter);
+import { redirect } from "next/navigation";
+
+export default async function DashboardPage() {
   const session = await getSession();
-  const isMaster = session?.userRole === "MASTER";
+  
+  if (!session) {
+    redirect("/login");
+  }
+
+  const empresaFilter = session.userEmpresa;
+  const isMaster = session.userRole === "MASTER";
+  const data = await getDashboardData(empresaFilter);
 
   let masterTasks = {
     usuariosNovosCount: 0,
@@ -198,15 +200,6 @@ export default async function DashboardPage({
       pontosPendentesCount: pontosPendentes,
     };
   }
-
-  const empresasDb = await prisma.configuracaoEmpresa.findMany({
-    orderBy: { nome: "asc" }
-  });
-
-  const filterOptions = [
-    { id: "TODOS", name: "Consolidado" },
-    ...empresasDb.map((e: any) => ({ id: e.nome, name: e.nome }))
-  ];
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
@@ -250,22 +243,7 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      {/* Seletor de Empresa */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "24px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }}>
-        <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Visualizar Empresa:</span>
-        <div style={{ display: "inline-flex", gap: "8px" }}>
-          {filterOptions.map((emp) => (
-            <Link
-              key={emp.id}
-              href={emp.id === "TODOS" ? "/" : `/?empresa=${emp.id}`}
-              className={`btn btn-sm ${empresaFilter === emp.id ? "btn-primary" : "btn-secondary"}`}
-              style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}
-            >
-              {emp.name}
-            </Link>
-          ))}
-        </div>
-      </div>
+
 
       {/* Widget de Saldo de Empréstimos Intercompany */}
       <div

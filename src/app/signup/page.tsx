@@ -55,8 +55,9 @@ export default function SignupPage() {
     >
       <div className="card" style={{ width: "100%", maxWidth: "420px", padding: "40px 32px" }}>
         <div style={{ textAlign: "center", marginBottom: "30px" }}>
+          <img src="/logo.jpg" alt="Logo" style={{ maxHeight: "80px", marginBottom: "16px", objectFit: "contain" }} />
           <h2 style={{ fontSize: "24px", fontWeight: 800, color: "var(--primary)" }}>
-            JHOSTON TEC
+            CONTROLE & GESTÃO
           </h2>
           <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>
             Criar Nova Conta de Usuário

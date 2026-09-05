@@ -12,6 +12,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !senhaStr.trim()) {
@@ -50,8 +52,9 @@ export default function LoginPage() {
     >
       <div className="card" style={{ width: "100%", maxWidth: "420px", padding: "40px 32px" }}>
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
+          <img src="/logo.jpg" alt="Logo" style={{ maxHeight: "80px", marginBottom: "16px", objectFit: "contain" }} />
           <h2 style={{ fontSize: "24px", fontWeight: 800, color: "var(--primary)" }}>
-            JHOSTON TEC
+            CONTROLE & GESTÃO
           </h2>
           <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>
             Painel Financeiro & Operações
@@ -92,20 +95,48 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="form-group" style={{ marginBottom: "24px" }}>
+          <div className="form-group" style={{ marginBottom: "24px", position: "relative" }}>
             <label className="form-label" htmlFor="password">
               Senha
             </label>
-            <input
-              type="password"
-              id="password"
-              className="form-control"
-              placeholder="••••••••"
-              value={senhaStr}
-              onChange={(e) => setSenhaStr(e.target.value)}
-              disabled={isLoading}
-              required
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                className="form-control"
+                placeholder="••••••••"
+                value={senhaStr}
+                onChange={(e) => setSenhaStr(e.target.value)}
+                disabled={isLoading}
+                required
+                style={{ paddingRight: "40px" }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-muted)",
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                title={showPassword ? "Ocultar senha" : "Ver senha"}
+              >
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                )}
+              </button>
+            </div>
           </div>
 
           <button

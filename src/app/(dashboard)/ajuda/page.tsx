@@ -122,7 +122,7 @@ export default function AjudaPage() {
 
       {/* Título invisível na tela, mas visível na impressão */}
       <div className="print-only-title" style={{ display: "none" }}>
-        <h1 style={{ fontSize: "28px", fontWeight: 700, margin: "0 0 5px 0" }}>JHOSTON TEC PISCINAS</h1>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, margin: "0 0 5px 0" }}>CONTROLE & GESTÃO</h1>
         <p style={{ fontSize: "14px", color: "#666" }}>Manual Completo do Usuário — Versão 1.0</p>
         <hr style={{ border: "1px solid #ccc", margin: "20px 0" }} />
       </div>
