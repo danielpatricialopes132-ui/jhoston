@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       prisma.funcionario.count({ where: { ativo: true } }),
       prisma.registroPonto.count({ where: { statusAprovacao: "PENDENTE" } }),
       prisma.usuario.count({ where: { statusReset: "SOLICITADO" } }),
-      prisma.usuario.count({ where: { role: "CAMPO", usuario: { not: "@campo" } } }),
+      prisma.usuario.count({ where: { role: "CAMPO", email: { not: "@campo" } } }),
       prisma.transacaoFinanceira.findMany({ where: { status: "PAGO" } }),
       prisma.transacaoFinanceira.findMany({ where: { tipo: "DESPESA", status: "PENDENTE" } }),
     ]);

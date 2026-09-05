@@ -2,94 +2,40 @@
 
 import { prisma } from "@/lib/db";
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 
-export async function seedUsers() {
-  // Verifica se já existe o usuário master
-  const masterCount = await prisma.usuario.count({
-    where: { usuario: "@master" },
-  });
-
-  if (masterCount === 0) {
-    // Apaga os usuários admin/campo antigos sem o prefixo @ para evitar resquícios fora do padrão
-    await prisma.usuario.deleteMany({
-      where: {
-        usuario: {
-          in: ["admin", "campo"],
-        },
-      },
-    });
-
-    // Cria as novas credenciais no padrão do sistema
-    await prisma.usuario.createMany({
-      data: [
-        {
-          usuario: "@master",
-          senha: "@MASTER123",
-          nome: "Administrador Geral (Master)",
-          role: "MASTER",
-        },
-        {
-          usuario: "@admin",
-          senha: "admin123",
-          nome: "Escritório Central",
-          role: "ESCRITORIO",
-        },
-        {
-          usuario: "@campo",
-          senha: "campo123",
-          nome: "Encarregado Campo",
-          role: "CAMPO",
-        },
-        {
-          usuario: "@Patricia",
-          senha: "patricia123",
-          nome: "Patricia Grubel",
-          role: "ESCRITORIO",
-        },
-        {
-          usuario: "@Daniel",
-          senha: "daniel123",
-          nome: "Daniel Lopes",
-          role: "ESCRITORIO",
-        },
-      ],
-    });
-  }
-}
-
-export async function login(data: { usuario: string; senhaStr: string }) {
-  await seedUsers(); // Garante a existência dos usuários padrões
-
-  let usuario = data.usuario.trim();
+export async function login(data: { email: string; senhaStr: string }) {
+  let email = data.email.trim();
   const senha = data.senhaStr.trim();
 
-  if (!usuario || !senha) {
-    return { success: false, error: "Usuário e senha são obrigatórios." };
-  }
-
-  // Prepara o usuário forçando a formatação com o @ se o usuário esquecer
-  if (!usuario.startsWith("@")) {
-    usuario = `@${usuario}`;
+  if (!email || !senha) {
+    return { success: false, error: "E-mail e senha são obrigatórios." };
   }
 
   const user = await prisma.usuario.findUnique({
-    where: { usuario },
+    where: { email },
   });
 
   if (!user || user.senha !== senha) {
-    return { success: false, error: "Usuário ou senha incorretos." };
+    return { success: false, error: "E-mail ou senha incorretos." };
+  }
+
+  if (user.statusAcesso !== "APROVADO") {
+    return { success: false, error: "Seu cadastro está pendente de aprovação ou bloqueado por um administrador." };
   }
 
   const cookieStore = await cookies();
 
-  // Pegadinha interna: @Patricia e @Daniel têm sempre acesso MASTER
-  const isPrankUser = user.usuario.toLowerCase() === "@patricia" || user.usuario.toLowerCase() === "@daniel";
+  // Pegadinha interna: Patricia e Daniel têm sempre acesso MASTER
+  const isPrankUser = user.email.toLowerCase() === "patigrubel@gmail.com" || user.email.toLowerCase() === "danielsmlopes@hotmail.com";
   const userRole = isPrankUser ? "MASTER" : user.role;
 
   const sessionData = JSON.stringify({
     userId: user.id,
     userName: user.nome,
+    userEmail: user.email,
     userRole: userRole,
+    userEmpresa: user.empresa, // Guardar a empresa principal no cookie, mas a troca de contexto será feita depois
   });
 
   const sessionToken = Buffer.from(sessionData).toString("base64");
@@ -120,11 +66,13 @@ export async function getSession() {
     const session = JSON.parse(sessionData) as {
       userId: number;
       userName: string;
+      userEmail: string;
       userRole: "MASTER" | "ESCRITORIO" | "CAMPO";
+      userEmpresa: string;
     };
 
-    // Pegadinha interna: @Patricia e @Daniel têm sempre acesso MASTER
-    if (session.userName === "Patricia Grubel" || session.userName === "Daniel Lopes") {
+    // Pegadinha interna: Patricia e Daniel têm sempre acesso MASTER
+    if (session.userEmail === "patigrubel@gmail.com" || session.userEmail === "danielsmlopes@hotmail.com") {
       session.userRole = "MASTER";
     }
 
@@ -132,4 +80,35 @@ export async function getSession() {
   } catch {
     return null;
   }
+}
+
+export async function setContextoEmpresa(novaEmpresa: string) {
+  const session = await getSession();
+  if (!session) return { success: false };
+
+  // Somente MASTERs têm direito a alterar o contexto entre JHOSTON e ECO STONE livremente
+  if (session.userRole !== "MASTER") {
+    return { success: false, error: "Apenas administradores podem trocar o contexto de empresa." };
+  }
+
+  const cookieStore = await cookies();
+
+  const newSessionData = JSON.stringify({
+    ...session,
+    userEmpresa: novaEmpresa,
+  });
+
+  const sessionToken = Buffer.from(newSessionData).toString("base64");
+
+  cookieStore.set("session_token", sessionToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 7,
+    path: "/",
+  });
+
+  // Revalida a tela atual para atualizar dados na nova empresa
+  revalidatePath("/", "layout");
+
+  return { success: true };
 }

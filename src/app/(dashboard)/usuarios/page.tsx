@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
-import { getUsuariosList, updateUsuarioRole, deleteUsuario, autorizarResetUsuario } from "./actions";
+import { getUsuariosList, updateUsuarioRole, deleteUsuario, autorizarResetUsuario, aprovarUsuario, rejeitarUsuario } from "./actions";
 import { getSession } from "@/app/login/actions";
 import { useRouter } from "next/navigation";
 
 interface Usuario {
   id: number;
   nome: string;
-  usuario: string;
-  role: "ESCRITORIO" | "CAMPO";
+  email: string;
+  role: "MASTER" | "ESCRITORIO" | "CAMPO";
+  empresa: string;
+  statusAcesso: string;
   statusReset: string;
   createdAt: string;
 }
@@ -81,6 +83,30 @@ export default function UsuariosPage() {
     }
   };
 
+  const handleAprovar = (userId: number) => {
+    startTransition(async () => {
+      const res = await aprovarUsuario(userId);
+      if (res.success) {
+        loadUsuarios();
+      } else {
+        alert("Erro ao aprovar usuário.");
+      }
+    });
+  };
+
+  const handleRejeitar = (userId: number) => {
+    if (confirm("Deseja realmente rejeitar/bloquear este acesso?")) {
+      startTransition(async () => {
+        const res = await rejeitarUsuario(userId);
+        if (res.success) {
+          loadUsuarios();
+        } else {
+          alert("Erro ao rejeitar usuário.");
+        }
+      });
+    }
+  };
+
   const formatDateBR = (dateStr: string) => {
     const d = new Date(dateStr);
     const day = String(d.getUTCDate()).padStart(2, "0");
@@ -97,7 +123,7 @@ export default function UsuariosPage() {
             Controle de Permissões e Acesso
           </h3>
           <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
-            Área exclusiva do usuário MASTER para autorização de acessos e liberação de reset de senhas.
+            Área exclusiva do usuário MASTER para aprovação e autorização de acessos.
           </p>
         </div>
       </div>
@@ -117,55 +143,80 @@ export default function UsuariosPage() {
       >
         <strong>ℹ️ Informação sobre Novos Usuários:</strong>
         <br />
-        Qualquer colaborador pode se cadastrar na tela de registro. Por padrão de segurança, novos usuários são criados no nível <strong>CAMPO</strong> (acesso restrito apenas para registrar pontos e diário). Utilize a tabela abaixo para promover o nível de acesso para <strong>ESCRITÓRIO</strong> (acesso administrativo total) ou liberar resets de senhas solicitados pelos usuários.
+        Novos usuários que realizarem cadastro ficarão com o status <strong>PENDENTE</strong>. Eles não terão acesso a nenhuma tela do sistema até que um MASTER clique em <strong>Aprovar</strong>.
       </div>
 
       <div className="table-container">
         <table className="table">
           <thead>
             <tr>
+              <th>Status Acesso</th>
               <th>Nome Completo</th>
-              <th>Login único</th>
-              <th>Data do Cadastro</th>
-              <th>Nível de Acesso (Papel)</th>
-              <th>Reset de Senha</th>
-              <th style={{ width: "120px", textAlign: "right" }}>Ações</th>
+              <th>E-mail</th>
+              <th>Empresa</th>
+              <th>Nível de Acesso</th>
+              <th>Ações de Aprovação / Reset</th>
+              <th style={{ width: "120px", textAlign: "right" }}>Excluir</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
+                <td colSpan={7} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
                   Carregando lista de usuários...
                 </td>
               </tr>
             ) : usuarios.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
+                <td colSpan={7} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
                   Nenhum outro usuário cadastrado no sistema.
                 </td>
               </tr>
             ) : (
               usuarios.map((u) => (
-                <tr key={u.id}>
+                <tr key={u.id} style={{ opacity: u.statusAcesso === "BLOQUEADO" ? 0.6 : 1 }}>
+                  <td>
+                    {u.statusAcesso === "PENDENTE" && <span className="badge badge-warning">Pendente</span>}
+                    {u.statusAcesso === "APROVADO" && <span className="badge badge-success">Aprovado</span>}
+                    {u.statusAcesso === "BLOQUEADO" && <span className="badge badge-danger">Bloqueado</span>}
+                  </td>
                   <td style={{ fontWeight: 600, color: "var(--text-heading)" }}>{u.nome}</td>
                   <td>
-                    <code style={{ fontSize: "14px", color: "var(--primary)", fontWeight: "bold" }}>{u.usuario}</code>
+                    <code style={{ fontSize: "14px", color: "var(--primary)", fontWeight: "bold" }}>{u.email}</code>
                   </td>
-                  <td>{formatDateBR(u.createdAt)}</td>
+                  <td>
+                    {u.empresa === "ECO_STONE" ? "ECO STONE" : u.empresa === "JHOSTON" ? "JHOSTON TEC" : u.empresa}
+                  </td>
                   <td>
                     <select
                       className="form-control"
-                      style={{ width: "180px", display: "inline-block" }}
+                      style={{ width: "160px", display: "inline-block", fontSize: "13px" }}
                       value={u.role}
                       onChange={(e) => handleRoleChange(u.id, e.target.value as any)}
                     >
                       <option value="CAMPO">CAMPO (Restrito)</option>
-                      <option value="ESCRITORIO">ESCRITÓRIO (Administrador)</option>
+                      <option value="ESCRITORIO">ESCRITÓRIO</option>
                     </select>
                   </td>
                   <td>
-                    {u.statusReset === "SOLICITADO" ? (
+                    {u.statusAcesso === "PENDENTE" ? (
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          style={{ padding: "4px 8px", fontSize: "12px", height: "auto" }}
+                          onClick={() => handleAprovar(u.id)}
+                        >
+                          Aprovar
+                        </button>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          style={{ padding: "4px 8px", fontSize: "12px", height: "auto", backgroundColor: "#ef4444" }}
+                          onClick={() => handleRejeitar(u.id)}
+                        >
+                          Rejeitar
+                        </button>
+                      </div>
+                    ) : u.statusReset === "SOLICITADO" ? (
                       <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
                         <span className="badge badge-warning">Reset Solicitado</span>
                         <button

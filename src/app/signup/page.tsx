@@ -7,8 +7,10 @@ import Link from "next/link";
 
 export default function SignupPage() {
   const [nome, setNome] = useState("");
-  const [usuario, setUsuario] = useState("");
+  const [email, setEmail] = useState("");
   const [senhaStr, setSenhaStr] = useState("");
+  const [empresa, setEmpresa] = useState("JHOSTON");
+  const [role, setRole] = useState("CAMPO");
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -16,8 +18,8 @@ export default function SignupPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome.trim() || !usuario.trim() || !senhaStr.trim()) {
-      setErrorMsg("Por favor, preencha todos os campos.");
+    if (!nome.trim() || !email.trim() || !senhaStr.trim()) {
+      setErrorMsg("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
@@ -26,13 +28,13 @@ export default function SignupPage() {
     setSuccessMsg("");
 
     startTransition(async () => {
-      const res = await cadastrarUsuario({ nome, usuario, senhaStr });
+      const res = await cadastrarUsuario({ nome, email, senhaStr, empresa, role });
       if (res.success) {
-        setSuccessMsg("Cadastro realizado com sucesso! Por padrão seu acesso é de nível CAMPO. Redirecionando para o login...");
+        setSuccessMsg("Cadastro solicitado com sucesso! Seu acesso está pendente de aprovação por um administrador. Redirecionando para o login...");
         setIsLoading(false);
         setTimeout(() => {
           router.push("/login");
-        }, 3000);
+        }, 4000);
       } else {
         setErrorMsg(res.error || "Erro ao realizar o cadastro.");
         setIsLoading(false);
@@ -113,23 +115,53 @@ export default function SignupPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="username">
-              Usuário (Será adicionado @ no início)
+            <label className="form-label" htmlFor="email">
+              E-mail
             </label>
             <input
-              type="text"
-              id="username"
+              type="email"
+              id="email"
               className="form-control"
-              placeholder="Ex: @danielsmlopes"
-              value={usuario}
-              onChange={(e) => {
-                let val = e.target.value;
-                // Deixa digitar tudo, mas avisa
-                setUsuario(val);
-              }}
+              placeholder="Ex: seuemail@dominio.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading || successMsg !== ""}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="empresa">
+              Empresa Solicitada
+            </label>
+            <select
+              id="empresa"
+              className="form-control"
+              value={empresa}
+              onChange={(e) => setEmpresa(e.target.value)}
+              disabled={isLoading || successMsg !== ""}
+              required
+            >
+              <option value="JHOSTON">JHOSTON TEC</option>
+              <option value="ECO_STONE">ECO STONE</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="role">
+              Perfil Desejado
+            </label>
+            <select
+              id="role"
+              className="form-control"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              disabled={isLoading || successMsg !== ""}
+              required
+            >
+              <option value="CAMPO">Equipe de Campo</option>
+              <option value="ESCRITORIO">Escritório Central</option>
+            </select>
           </div>
 
           <div className="form-group" style={{ marginBottom: "24px" }}>

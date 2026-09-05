@@ -24,7 +24,7 @@ export async function getUsuariosList() {
       },
     },
     orderBy: {
-      usuario: "asc",
+      email: "asc",
     },
   });
 }
@@ -59,6 +59,30 @@ export async function autorizarResetUsuario(userId: number, autorizar: boolean) 
   await prisma.usuario.update({
     where: { id: userId },
     data: { statusReset },
+  });
+
+  revalidatePath("/usuarios");
+  return { success: true };
+}
+
+export async function aprovarUsuario(userId: number) {
+  await assegurarMaster();
+
+  await prisma.usuario.update({
+    where: { id: userId },
+    data: { statusAcesso: "APROVADO" },
+  });
+
+  revalidatePath("/usuarios");
+  return { success: true };
+}
+
+export async function rejeitarUsuario(userId: number) {
+  await assegurarMaster();
+
+  await prisma.usuario.update({
+    where: { id: userId },
+    data: { statusAcesso: "BLOQUEADO" },
   });
 
   revalidatePath("/usuarios");

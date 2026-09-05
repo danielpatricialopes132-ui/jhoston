@@ -178,11 +178,13 @@ model Fornecedor {
 
 model Usuario {
   id            Int             @id @default(autoincrement())
-  usuario       String          @unique
+  email         String          @unique
   senha         String
   nome          String
   role          String          @default("CAMPO") // "MASTER", "ESCRITORIO", "CAMPO"
   statusReset   String          @default("NENHUM") // "NENHUM", "SOLICITADO", "AUTORIZADO"
+  empresa       String          @default("JHOSTON") // "JHOSTON", "ECO_STONE", "AMBAS"
+  statusAcesso  String          @default("PENDENTE") // "PENDENTE", "APROVADO", "BLOQUEADO"
   pontosCriados RegistroPonto[]
   diariosCriados DiarioObra[]
   mensagensEnviadas  MensagemChat[]  @relation("Remetente")

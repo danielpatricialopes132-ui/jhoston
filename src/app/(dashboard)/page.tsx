@@ -177,7 +177,7 @@ export default async function DashboardPage({
       prisma.usuario.count({
         where: {
           role: "CAMPO",
-          usuario: { not: "@campo" },
+          email: { not: "@campo" },
         },
       }),
       prisma.usuario.count({

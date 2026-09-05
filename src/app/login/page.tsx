@@ -6,7 +6,7 @@ import { login } from "./actions";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const [usuario, setUsuario] = useState("");
+  const [email, setEmail] = useState("");
   const [senhaStr, setSenhaStr] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +14,7 @@ export default function LoginPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!usuario.trim() || !senhaStr.trim()) {
+    if (!email.trim() || !senhaStr.trim()) {
       setErrorMsg("Por favor, preencha todos os campos.");
       return;
     }
@@ -23,7 +23,7 @@ export default function LoginPage() {
     setErrorMsg("");
 
     startTransition(async () => {
-      const res = await login({ usuario, senhaStr });
+      const res = await login({ email, senhaStr });
       if (res.success) {
         if (res.role === "CAMPO") {
           router.push("/ponto");
@@ -77,16 +77,16 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label" htmlFor="username">
-              Usuário
+            <label className="form-label" htmlFor="email">
+              E-mail
             </label>
             <input
-              type="text"
-              id="username"
+              type="email"
+              id="email"
               className="form-control"
-              placeholder="Ex: admin"
-              value={usuario}
-              onChange={(e) => setUsuario(e.target.value)}
+              placeholder="Ex: seuemail@dominio.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
               required
             />

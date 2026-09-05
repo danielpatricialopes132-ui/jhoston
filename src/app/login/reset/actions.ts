@@ -3,29 +3,21 @@
 import { prisma } from "@/lib/db";
 
 export async function solicitarResetSenha(usuarioInput: string) {
-  let usuario = usuarioInput.trim();
-  if (!usuario) {
-    return { success: false, error: "Usuário é obrigatório." };
-  }
-
-  if (!usuario.startsWith("@")) {
-    usuario = `@${usuario}`;
-  }
-
-  if (usuario === "@master") {
-    return { success: false, error: "A conta @master não pode ser resetada por este canal." };
+  let email = usuarioInput.trim();
+  if (!email) {
+    return { success: false, error: "E-mail é obrigatório." };
   }
 
   const user = await prisma.usuario.findUnique({
-    where: { usuario },
+    where: { email },
   });
 
   if (!user) {
-    return { success: false, error: "Usuário não cadastrado no sistema." };
+    return { success: false, error: "E-mail não cadastrado no sistema." };
   }
 
   await prisma.usuario.update({
-    where: { usuario },
+    where: { email },
     data: {
       statusReset: "SOLICITADO",
     },
@@ -35,15 +27,11 @@ export async function solicitarResetSenha(usuarioInput: string) {
 }
 
 export async function verificarStatusReset(usuarioInput: string) {
-  let usuario = usuarioInput.trim();
-  if (!usuario) return { authorized: false };
-
-  if (!usuario.startsWith("@")) {
-    usuario = `@${usuario}`;
-  }
+  let email = usuarioInput.trim();
+  if (!email) return { authorized: false };
 
   const user = await prisma.usuario.findUnique({
-    where: { usuario },
+    where: { email },
   });
 
   return {
@@ -53,19 +41,15 @@ export async function verificarStatusReset(usuarioInput: string) {
 }
 
 export async function definirNovaSenha(usuarioInput: string, novaSenhaStr: string) {
-  let usuario = usuarioInput.trim();
+  let email = usuarioInput.trim();
   const novaSenha = novaSenhaStr.trim();
 
-  if (!usuario || !novaSenha) {
-    return { success: false, error: "Usuário e nova senha são obrigatórios." };
-  }
-
-  if (!usuario.startsWith("@")) {
-    usuario = `@${usuario}`;
+  if (!email || !novaSenha) {
+    return { success: false, error: "E-mail e nova senha são obrigatórios." };
   }
 
   const user = await prisma.usuario.findUnique({
-    where: { usuario },
+    where: { email },
   });
 
   if (!user) {
@@ -77,7 +61,7 @@ export async function definirNovaSenha(usuarioInput: string, novaSenhaStr: strin
   }
 
   await prisma.usuario.update({
-    where: { usuario },
+    where: { email },
     data: {
       senha: novaSenha,
       statusReset: "NENHUM",

@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, startTransition } from "react";
-import { getSession, logout } from "@/app/login/actions";
+import { getSession, logout, setContextoEmpresa } from "@/app/login/actions";
 
 interface Session {
   userId: number;
   userName: string;
   userRole: "MASTER" | "ESCRITORIO" | "CAMPO";
+  userEmpresa: string;
 }
 
 export default function Sidebar() {
@@ -17,6 +18,7 @@ export default function Sidebar() {
   const [session, setSession] = useState<Session | null>(null);
   const [logoExists, setLogoExists] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isChangingContext, setIsChangingContext] = useState(false);
 
   useEffect(() => {
     // Carrega tema salvo
@@ -51,6 +53,18 @@ export default function Sidebar() {
         router.push("/login");
       });
     }
+  };
+
+  const handleContextChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const novaEmpresa = e.target.value;
+    setIsChangingContext(true);
+    startTransition(async () => {
+      await setContextoEmpresa(novaEmpresa);
+      if (session) {
+        setSession({ ...session, userEmpresa: novaEmpresa });
+      }
+      setIsChangingContext(false);
+    });
   };
 
   // Ícones SVGs
@@ -210,6 +224,23 @@ export default function Sidebar() {
             gap: "8px",
           }}
         >
+          {session.userRole === "MASTER" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginBottom: "4px" }}>
+              <label style={{ fontSize: "11px", color: "#94a3b8", textTransform: "uppercase" }}>Contexto de Empresa</label>
+              <select
+                className="form-control"
+                style={{ height: "30px", fontSize: "12px", padding: "0 8px", backgroundColor: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
+                value={session.userEmpresa || "JHOSTON"}
+                onChange={handleContextChange}
+                disabled={isChangingContext}
+              >
+                <option value="JHOSTON" style={{ color: "#000" }}>JHOSTON TEC</option>
+                <option value="ECO_STONE" style={{ color: "#000" }}>ECO STONE</option>
+                <option value="AMBAS" style={{ color: "#000" }}>AMBAS (Apenas Master)</option>
+              </select>
+            </div>
+          )}
+
           <div style={{ fontSize: "12px", color: "#94a3b8" }}>
             Usuário: <strong>{session.userName}</strong>
             <br />

@@ -4,39 +4,39 @@ import { prisma } from "@/lib/db";
 
 export async function cadastrarUsuario(data: {
   nome: string;
-  usuario: string;
+  email: string;
   senhaStr: string;
+  empresa: string;
+  role: string;
 }) {
   const nome = data.nome.trim();
-  let usuario = data.usuario.trim();
+  const email = data.email.trim();
   const senha = data.senhaStr.trim();
+  const empresa = data.empresa;
+  const role = data.role;
 
-  if (!nome || !usuario || !senha) {
+  if (!nome || !email || !senha || !empresa || !role) {
     return { success: false, error: "Todos os campos são obrigatórios." };
   }
 
-  // Garante que o usuário comece com o padrão @
-  if (!usuario.startsWith("@")) {
-    usuario = `@${usuario}`;
-  }
-
-  // Verifica se o usuário já existe
+  // Verifica se o email já existe
   const usuarioExistente = await prisma.usuario.findUnique({
-    where: { usuario },
+    where: { email },
   });
 
   if (usuarioExistente) {
-    return { success: false, error: `O usuário ${usuario} já está cadastrado.` };
+    return { success: false, error: `O e-mail ${email} já está cadastrado.` };
   }
 
   try {
-    // Por padrão, novos cadastros entram como CAMPO
     await prisma.usuario.create({
       data: {
         nome,
-        usuario,
+        email,
         senha,
-        role: "CAMPO",
+        empresa,
+        role,
+        statusAcesso: "PENDENTE",
       },
     });
 
