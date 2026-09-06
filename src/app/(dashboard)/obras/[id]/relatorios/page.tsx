@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { getRelatoriosObra, criarRelatorio } from "./actions";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db";
 
 export default async function RelatoriosPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
