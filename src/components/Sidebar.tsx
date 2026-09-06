@@ -195,6 +195,23 @@ export default function Sidebar() {
         
         {!logoExists && <h1 className="sidebar-title">CONTROLE & GESTÃO</h1>}
         <p className="sidebar-subtitle">SISTEMA INTEGRADO</p>
+
+        {session && session.userRole === "MASTER" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px", width: "100%", textAlign: "left" }}>
+            <label style={{ fontSize: "11px", color: "#94a3b8", textTransform: "uppercase" }}>Contexto de Empresa</label>
+            <select
+              className="form-control"
+              style={{ height: "30px", fontSize: "12px", padding: "0 8px", backgroundColor: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
+              value={session.userEmpresa || "JHOSTON"}
+              onChange={handleContextChange}
+              disabled={isChangingContext}
+            >
+              <option value="JHOSTON" style={{ color: "#000" }}>JHOSTON TEC</option>
+              <option value="ECO_STONE" style={{ color: "#000" }}>ECO STONE</option>
+              <option value="AMBAS" style={{ color: "#000" }}>AMBAS (Apenas Master)</option>
+            </select>
+          </div>
+        )}
       </div>
 
       <ul className="sidebar-menu">
@@ -224,22 +241,7 @@ export default function Sidebar() {
             gap: "8px",
           }}
         >
-          {session.userRole === "MASTER" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginBottom: "4px" }}>
-              <label style={{ fontSize: "11px", color: "#94a3b8", textTransform: "uppercase" }}>Contexto de Empresa</label>
-              <select
-                className="form-control"
-                style={{ height: "30px", fontSize: "12px", padding: "0 8px", backgroundColor: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
-                value={session.userEmpresa || "JHOSTON"}
-                onChange={handleContextChange}
-                disabled={isChangingContext}
-              >
-                <option value="JHOSTON" style={{ color: "#000" }}>JHOSTON TEC</option>
-                <option value="ECO_STONE" style={{ color: "#000" }}>ECO STONE</option>
-                <option value="AMBAS" style={{ color: "#000" }}>AMBAS (Apenas Master)</option>
-              </select>
-            </div>
-          )}
+          {/* Seletor de empresa movido para o topo */}
 
           <div style={{ fontSize: "12px", color: "#94a3b8" }}>
             Usuário: <strong>{session.userName}</strong>
