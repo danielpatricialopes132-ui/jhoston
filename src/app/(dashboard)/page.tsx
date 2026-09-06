@@ -117,24 +117,6 @@ async function getDashboardData(empresaFilter: string) {
     }
   });
 
-  // Empréstimo Intercompany
-  const intercompanyTransacoes = await prisma.transacaoFinanceira.findMany({
-    where: {
-      categoria: "Empréstimo Intercompany",
-      status: "PAGO",
-    },
-  });
-
-  const jhostonOutflows = intercompanyTransacoes
-    .filter((t) => t.empresa === "JHOSTON" && t.tipo === "DESPESA")
-    .reduce((acc, t) => acc + t.valor, 0);
-
-  const jhostonInflows = intercompanyTransacoes
-    .filter((t) => t.empresa === "JHOSTON" && t.tipo === "RECEITA")
-    .reduce((acc, t) => acc + t.valor, 0);
-
-  const saldoEmprestimo = jhostonOutflows - jhostonInflows;
-
   return {
     obrasAtivasCount,
     funcionariosCount,
@@ -145,7 +127,6 @@ async function getDashboardData(empresaFilter: string) {
     despesasPagas,
     saldoCaixa,
     obrasAtivasLista,
-    saldoEmprestimo,
     vencimentoAlerts: {
       hoje: { count: contasHojeCount, valor: contasHojeValor },
       amanha: { count: contas1DiaCount, valor: contas1DiaValor },
@@ -245,51 +226,7 @@ export default async function DashboardPage() {
 
 
 
-      {/* Widget de Saldo de Empréstimos Intercompany */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "16px",
-          backgroundColor: "var(--bg-card)",
-          border: "1px solid var(--border-color)",
-          borderLeft: `5px solid ${data.saldoEmprestimo !== 0 ? "#f59e0b" : "var(--success)"}`,
-          borderRadius: "var(--radius-md)",
-          padding: "16px 20px",
-          marginBottom: "24px",
-          boxShadow: "var(--shadow-sm)",
-        }}
-      >
-        <div style={{ fontSize: "24px" }}>🤝</div>
-        <div>
-          <h4 style={{ fontSize: "14px", fontWeight: 700, margin: 0, color: "var(--text-heading)" }}>
-            Saldo de Empréstimos Intercompany
-          </h4>
-          <p style={{ fontSize: "13px", color: "var(--text-muted)", margin: "4px 0 0 0", lineHeight: 1.4 }}>
-            {data.saldoEmprestimo > 0 ? (
-              <>
-                A <strong>ECO STONE</strong> deve ao caixa da <strong>JHOSTON POOLS</strong> o valor líquido de{" "}
-                <strong style={{ color: "#d97706" }}>{formatCurrency(data.saldoEmprestimo)}</strong>.
-              </>
-            ) : data.saldoEmprestimo < 0 ? (
-              <>
-                A <strong>JHOSTON POOLS</strong> deve ao caixa da <strong>ECO STONE</strong> o valor líquido de{" "}
-                <strong style={{ color: "#d97706" }}>{formatCurrency(Math.abs(data.saldoEmprestimo))}</strong>.
-              </>
-            ) : (
-              <>
-                As contas de empréstimos mútuos entre <strong>JHOSTON POOLS</strong> e <strong>ECO STONE</strong> estão{" "}
-                <strong style={{ color: "var(--success)" }}>100% equilibradas</strong>.
-              </>
-            )}
-          </p>
-        </div>
-        <div style={{ marginLeft: "auto" }}>
-          <Link href="/financeiro" className="btn btn-secondary btn-sm" style={{ textDecoration: "none" }}>
-            Realizar Transferência
-          </Link>
-        </div>
-      </div>
+
 
       {/* Widget de Tarefas do MASTER */}
       {isMaster && (masterTasks.usuariosNovosCount > 0 || masterTasks.resetsPendentesCount > 0 || masterTasks.pontosPendentesCount > 0) && (

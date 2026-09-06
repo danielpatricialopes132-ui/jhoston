@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
-import { getFinanceiroData, salvarTransacao, deleteTransacao, alterarStatusTransacao, salvarTransferenciaIntercompany } from "./actions";
+import { getFinanceiroData, salvarTransacao, deleteTransacao, alterarStatusTransacao } from "./actions";
 import { salvarFornecedor } from "../fornecedores/actions";
 import { getSession } from "@/app/login/actions";
 import Link from "next/link";
@@ -81,19 +81,7 @@ export default function FinanceiroPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [empresaFilter, setEmpresaFilter] = useState("TODOS");
 
-  // Intercompany Transfer Modal states
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-  const [transferOrigem, setTransferOrigem] = useState<"JHOSTON" | "ECO_STONE">("JHOSTON");
-  const [transferDestino, setTransferDestino] = useState<"JHOSTON" | "ECO_STONE">("ECO_STONE");
-  const [transferValor, setTransferValor] = useState("");
-  const [transferData, setTransferData] = useState(new Date().toISOString().split("T")[0]);
-  const [transferDescricao, setTransferDescricao] = useState("");
-  const [transferError, setTransferError] = useState("");
-  const [transferSubmitting, setTransferSubmitting] = useState(false);
 
-  // Intercompany Acknowledgment states
-  const [isReciboModalOpen, setIsReciboModalOpen] = useState(false);
-  const [selectedTransferParaRecibo, setSelectedTransferParaRecibo] = useState<Transacao | null>(null);
 
   // Quick Fornecedor Modal states
   const [isQuickFornecedorOpen, setIsQuickFornecedorOpen] = useState(false);
@@ -210,44 +198,7 @@ export default function FinanceiroPage() {
     });
   };
 
-  const handleTransferSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (transferOrigem === transferDestino) {
-      setTransferError("As empresas de origem e destino devem ser diferentes.");
-      return;
-    }
-    const val = parseFloat(transferValor);
-    if (isNaN(val) || val <= 0) {
-      setTransferError("Insira um valor válido maior que zero.");
-      return;
-    }
-    if (!transferDescricao.trim()) {
-      setTransferError("A descrição do empréstimo é obrigatória.");
-      return;
-    }
 
-    setTransferSubmitting(true);
-    setTransferError("");
-
-    startTransition(async () => {
-      const res = await salvarTransferenciaIntercompany({
-        origem: transferOrigem,
-        destino: transferDestino,
-        valor: val,
-        dataVencimento: transferData,
-        descricao: transferDescricao,
-      });
-      setTransferSubmitting(false);
-      if (res.success) {
-        loadData();
-        setIsTransferModalOpen(false);
-        setTransferValor("");
-        setTransferDescricao("");
-      } else {
-        setTransferError(res.error || "Erro ao salvar transferência.");
-      }
-    });
-  };
 
   const handleQuickFornecedorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -563,11 +514,7 @@ export default function FinanceiroPage() {
             </button>
           ))}
         </div>
-        <div style={{ marginLeft: "auto" }}>
-          <button className="btn btn-secondary btn-sm" onClick={() => setIsTransferModalOpen(true)} style={{ gap: "6px", display: "inline-flex", alignItems: "center", borderColor: "#f59e0b", color: "#f59e0b" }}>
-            🤝 Transferência Intercompany
-          </button>
-        </div>
+
       </div>
 
       {/* Cards de Resumo */}
@@ -897,19 +844,7 @@ export default function FinanceiroPage() {
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <div style={{ display: "inline-flex", gap: "8px" }}>
-                      {t.categoria === "Empréstimo Intercompany" && (
-                        <button
-                          type="button"
-                          className="btn btn-sm"
-                          style={{ backgroundColor: "rgba(245, 158, 11, 0.1)", color: "#d97706", border: "1px solid rgba(245, 158, 11, 0.25)" }}
-                          onClick={() => {
-                            setSelectedTransferParaRecibo(t);
-                            setIsReciboModalOpen(true);
-                          }}
-                        >
-                          📄 Ciência
-                        </button>
-                      )}
+
                       <button
                         className={`btn btn-sm ${t.status === "PAGO" ? "btn-secondary" : "btn-primary"}`}
                         onClick={() => handleToggleStatus(t.id, t.status)}
@@ -1173,227 +1108,7 @@ export default function FinanceiroPage() {
           </div>
         </div>
       )}
-      {/* Modal de Transferência Intercompany */}
-      {isTransferModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: "450px" }}>
-            <div className="modal-header">
-              <h4 style={{ fontSize: "16px", fontWeight: 600 }}>🤝 Nova Transferência Intercompany</h4>
-              <button 
-                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px" }} 
-                onClick={() => setIsTransferModalOpen(false)}
-              >
-                &times;
-              </button>
-            </div>
-            <form onSubmit={handleTransferSubmit}>
-              <div className="modal-body">
-                {transferError && (
-                  <div style={{ backgroundColor: "var(--error-bg)", color: "var(--error)", padding: "12px", borderRadius: "var(--radius-md)", marginBottom: "16px", fontSize: "13px", fontWeight: 500 }}>
-                    {transferError}
-                  </div>
-                )}
-                <div className="form-group">
-                  <label className="form-label">Empresa de Origem (Debitará R$)</label>
-                  <select 
-                    className="form-control" 
-                    value={transferOrigem} 
-                    onChange={(e) => {
-                      const val = e.target.value as "JHOSTON" | "ECO_STONE";
-                      setTransferOrigem(val);
-                      setTransferDestino(val === "JHOSTON" ? "ECO_STONE" : "JHOSTON");
-                    }}
-                    required
-                  >
-                    <option value="JHOSTON">Jhoston Pools</option>
-                    <option value="ECO_STONE">Eco Stone</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Empresa de Destino (Receberá R$)</label>
-                  <select 
-                    className="form-control" 
-                    value={transferDestino} 
-                    onChange={(e) => {
-                      const val = e.target.value as "JHOSTON" | "ECO_STONE";
-                      setTransferDestino(val);
-                      setTransferOrigem(val === "JHOSTON" ? "ECO_STONE" : "JHOSTON");
-                    }}
-                    required
-                  >
-                    <option value="JHOSTON">Jhoston Pools</option>
-                    <option value="ECO_STONE">Eco Stone</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Valor do Empréstimo (R$)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    className="form-control"
-                    placeholder="Ex: 5000.00"
-                    value={transferValor}
-                    onChange={(e) => setTransferValor(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Data do Lançamento</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={transferData}
-                    onChange={(e) => setTransferData(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Descrição / Motivo</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Ex: Empréstimo para fluxo de caixa / folha Eco Stone"
-                    value={transferDescricao}
-                    onChange={(e) => setTransferDescricao(e.target.value)}
-                    required
-                  />
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
-                    Esta ação criará simultaneamente uma DESPESA na origem e uma RECEITA no destino sob a categoria &quot;Empréstimo Intercompany&quot;.
-                  </p>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
-                  onClick={() => setIsTransferModalOpen(false)}
-                  disabled={transferSubmitting}
-                >
-                  Cancelar
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={transferSubmitting}>
-                  {transferSubmitting ? "Processando..." : "Confirmar Transferência"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      {/* Modal do Recibo/Aviso de Ciência */}
-      {isReciboModalOpen && selectedTransferParaRecibo && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: "550px", padding: "28px" }}>
-            <div className="modal-header">
-              <h4 style={{ fontSize: "16px", fontWeight: 700 }}>📄 Aviso de Ciência de Empréstimo Mútuo</h4>
-              <button
-                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px" }}
-                onClick={() => {
-                  setIsReciboModalOpen(false);
-                  setSelectedTransferParaRecibo(null);
-                }}
-              >
-                &times;
-              </button>
-            </div>
-            <div className="modal-body" id="print-area-recibo" style={{ fontFamily: "sans-serif", color: "#334155", lineHeight: 1.6 }}>
-              <div style={{ textAlign: "center", marginBottom: "20px", borderBottom: "2px solid #f59e0b", paddingBottom: "12px" }}>
-                <h3 style={{ fontSize: "18px", fontWeight: 800, margin: 0, color: "#1e293b" }}>AVISO DE CIÊNCIA FINANCEIRA</h3>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 600 }}>TRANSFERÊNCIA DE FUNDOS INTERCOMPANY</span>
-              </div>
-              <p style={{ fontSize: "13.5px", textAlign: "justify", margin: "0 0 16px 0" }}>
-                Por meio deste instrumento, declaramos ciência de que o valor de{" "}
-                <strong>{formatCurrency(selectedTransferParaRecibo.valor)}</strong>, transferido em{" "}
-                <strong>{formatDateBR(selectedTransferParaRecibo.dataPagamento || selectedTransferParaRecibo.dataVencimento)}</strong>, da conta da empresa{" "}
-                <strong>
-                  {selectedTransferParaRecibo.tipo === "DESPESA"
-                    ? (selectedTransferParaRecibo.empresa === "JHOSTON" ? "JHOSTON POOLS" : "ECO STONE")
-                    : (selectedTransferParaRecibo.empresa === "JHOSTON" ? "ECO STONE" : "JHOSTON POOLS")}
-                </strong>{" "}
-                para a conta da empresa{" "}
-                <strong>
-                  {selectedTransferParaRecibo.tipo === "RECEITA"
-                    ? (selectedTransferParaRecibo.empresa === "JHOSTON" ? "JHOSTON POOLS" : "ECO STONE")
-                    : (selectedTransferParaRecibo.empresa === "JHOSTON" ? "ECO STONE" : "JHOSTON POOLS")}
-                </strong>, constitui empréstimo mútuo entre as partes (Categoria: Empréstimo Intercompany) e será devidamente registrado em seus respectivos fechamentos contábeis.
-              </p>
-              <table style={{ width: "100%", fontSize: "12.5px", margin: "16px 0", borderCollapse: "collapse" }}>
-                <tbody>
-                  <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
-                    <td style={{ padding: "6px 0", color: "var(--text-muted)" }}><strong>Motivo / Descrição:</strong></td>
-                    <td style={{ padding: "6px 0", textAlign: "right" }}>{selectedTransferParaRecibo.descricao}</td>
-                  </tr>
-                  <tr style={{ borderBottom: "1px solid var(--border-color)" }}>
-                    <td style={{ padding: "6px 0", color: "var(--text-muted)" }}><strong>Data do Lançamento:</strong></td>
-                    <td style={{ padding: "6px 0", textAlign: "right" }}>{formatDateBR(selectedTransferParaRecibo.dataVencimento)}</td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: "6px 0", color: "var(--text-muted)" }}><strong>Status:</strong></td>
-                    <td style={{ padding: "6px 0", textAlign: "right", color: "var(--success)", fontWeight: 700 }}>
-                      {selectedTransferParaRecibo.status === "PAGO" ? "LIQUIDADO" : "PENDENTE"}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <div style={{ display: "flex", gap: "20px", marginTop: "40px", textAlign: "center", fontSize: "11px" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ borderBottom: "1px solid var(--text-muted)", height: "24px", marginBottom: "4px" }}></div>
-                  <span>JHOSTON POOLS</span>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ borderBottom: "1px solid var(--text-muted)", height: "24px", marginBottom: "4px" }}></div>
-                  <span>ECO STONE</span>
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer" style={{ borderTop: "1px solid var(--border-color)", paddingTop: "12px", marginTop: "20px" }}>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => {
-                  setIsReciboModalOpen(false);
-                  setSelectedTransferParaRecibo(null);
-                }}
-              >
-                Fechar
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={() => {
-                  const printContents = document.getElementById("print-area-recibo")?.innerHTML;
-                  if (printContents) {
-                    const printWindow = window.open("", "_blank");
-                    if (printWindow) {
-                      printWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>Aviso de Ciencia - ${selectedTransferParaRecibo.id}</title>
-                            <style>
-                              body { font-family: system-ui, sans-serif; padding: 40px; color: #334155; }
-                              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                              td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
-                            </style>
-                          </head>
-                          <body>
-                            \${printContents}
-                            <script>
-                              window.onload = function() { window.print(); window.close(); }
-                            </script>
-                          </body>
-                        </html>
-                      `);
-                      printWindow.document.close();
-                    }
-                  }
-                }}
-              >
-                🖨️ Imprimir Aviso
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
