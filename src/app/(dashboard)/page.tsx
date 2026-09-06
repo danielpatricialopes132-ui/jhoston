@@ -194,6 +194,15 @@ export default async function DashboardPage() {
     return `${day}/${month}/${year}`;
   };
 
+  const empresaLabel =
+    empresaFilter === "AMBAS"
+      ? "CONSOLIDADO"
+      : empresaFilter === "ECO_STONE"
+      ? "ECO STONE"
+      : empresaFilter === "JHOSTON_REVEST"
+      ? "JHOSTON REVEST"
+      : "JHOSTON TEC";
+
   return (
     <div>
       <div className="flex-row-between" style={{ marginBottom: "32px" }}>
@@ -202,7 +211,7 @@ export default async function DashboardPage() {
             Painel Financeiro Geral
           </h3>
           <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
-            JHOSTON — Resumo do fluxo de caixa e status das operações.
+            {empresaLabel} — Resumo do fluxo de caixa e status das operações.
           </p>
         </div>
         <div style={{ display: "inline-flex", gap: "10px" }}>

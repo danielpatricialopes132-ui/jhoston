@@ -5,6 +5,11 @@ export default function proxy(request: NextRequest) {
   const token = request.cookies.get("session_token")?.value;
   const url = request.nextUrl.clone();
 
+  // Ignora imediatamente arquivos estáticos e imagens
+  if (/\.(png|jpg|jpeg|jfif|svg|gif|webp|ico|pdf|docx)$/i.test(url.pathname)) {
+    return NextResponse.next();
+  }
+
   // Rota de Login e Cadastro
   const publicPaths = ["/login", "/signup"];
   const isPublicPath = publicPaths.some((path) => url.pathname.startsWith(path));
@@ -71,9 +76,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - manifest.json (manifest file)
-     * - logo.png (logo file)
-     * - logo.svg (logo file)
+     * - static files with extensions (png, jpg, jpeg, jfif, svg, gif, webp, ico, pdf, docx)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|logo.png|logo.svg).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|.*\\.(?:png|jpg|jpeg|jfif|svg|gif|webp|ico|pdf|docx)).*)",
   ],
 };

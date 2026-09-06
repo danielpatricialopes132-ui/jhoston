@@ -54,8 +54,20 @@ export default function SignupPage() {
       }}
     >
       <div className="card" style={{ width: "100%", maxWidth: "420px", padding: "40px 32px" }}>
-        <div style={{ textAlign: "center", marginBottom: "30px" }}>
-          <img src="/logo.jpg" alt="Logo" style={{ maxHeight: "80px", marginBottom: "16px", objectFit: "contain" }} />
+        <div style={{ textAlign: "center", marginBottom: "28px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", backgroundColor: "#0b0f19", padding: "10px 20px", borderRadius: "14px", marginBottom: "16px", boxShadow: "0 4px 14px rgba(0,0,0,0.12)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <img
+              src="/logo.jpg"
+              alt="Logo"
+              style={{ maxHeight: "75px", maxWidth: "200px", objectFit: "contain" }}
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.endsWith("/logo.png")) {
+                  target.src = "/logo.png";
+                }
+              }}
+            />
+          </div>
           <h2 style={{ fontSize: "24px", fontWeight: 800, color: "var(--primary)" }}>
             CONTROLE & GESTÃO
           </h2>

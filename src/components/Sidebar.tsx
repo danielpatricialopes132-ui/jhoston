@@ -64,6 +64,8 @@ export default function Sidebar() {
         setSession({ ...session, userEmpresa: novaEmpresa });
       }
       setIsChangingContext(false);
+      window.dispatchEvent(new CustomEvent("empresaContextChanged", { detail: novaEmpresa }));
+      router.refresh();
     });
   };
 
