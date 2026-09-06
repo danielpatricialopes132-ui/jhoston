@@ -197,19 +197,83 @@ export default function Sidebar() {
         <p className="sidebar-subtitle">SISTEMA INTEGRADO</p>
 
         {session && session.userRole === "MASTER" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px", width: "100%", textAlign: "left" }}>
-            <label style={{ fontSize: "11px", color: "#94a3b8", textTransform: "uppercase" }}>Contexto de Empresa</label>
-            <select
-              className="form-control"
-              style={{ height: "30px", fontSize: "12px", padding: "0 8px", backgroundColor: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}
-              value={session.userEmpresa || "JHOSTON"}
-              onChange={handleContextChange}
-              disabled={isChangingContext}
-            >
-              <option value="JHOSTON" style={{ color: "#000" }}>JHOSTON TEC</option>
-              <option value="ECO_STONE" style={{ color: "#000" }}>ECO STONE</option>
-              <option value="AMBAS" style={{ color: "#000" }}>AMBAS (Apenas Master)</option>
-            </select>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              marginTop: "14px",
+              width: "100%",
+              textAlign: "left",
+              backgroundColor: "rgba(15, 118, 110, 0.08)",
+              border: "1px solid rgba(15, 118, 110, 0.25)",
+              borderRadius: "10px",
+              padding: "10px 12px",
+              boxShadow: "0 2px 5px rgba(0, 0, 0, 0.04)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <label
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#0f766e",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.6px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                }}
+              >
+                <span>🏢</span> Contexto de Empresa
+              </label>
+              {isChangingContext && (
+                <span style={{ fontSize: "10px", color: "#0f766e", fontWeight: 600 }}>Alterando...</span>
+              )}
+            </div>
+
+            <div style={{ position: "relative", width: "100%" }}>
+              <select
+                style={{
+                  width: "100%",
+                  height: "36px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  padding: "0 30px 0 10px",
+                  backgroundColor: "#ffffff",
+                  color: "#0f172a",
+                  border: "1.5px solid #0f766e",
+                  borderRadius: "8px",
+                  outline: "none",
+                  cursor: "pointer",
+                  appearance: "none",
+                  WebkitAppearance: "none",
+                  MozAppearance: "none",
+                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)",
+                }}
+                value={session.userEmpresa || "JHOSTON"}
+                onChange={handleContextChange}
+                disabled={isChangingContext}
+              >
+                <option value="JHOSTON" style={{ color: "#0f172a", fontWeight: 500 }}>🏢 JHOSTON TEC</option>
+                <option value="ECO_STONE" style={{ color: "#0f172a", fontWeight: 500 }}>🌿 ECO STONE</option>
+                <option value="AMBAS" style={{ color: "#0f172a", fontWeight: 600 }}>🌐 AMBAS (Apenas Master)</option>
+              </select>
+              <div
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  pointerEvents: "none",
+                  color: "#0f766e",
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                }}
+              >
+                ▼
+              </div>
+            </div>
           </div>
         )}
       </div>
