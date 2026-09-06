@@ -2,6 +2,7 @@
 
 import { useEffect, useState, startTransition } from "react";
 import { getRelatoriosMetadata, getFolhaPontoObra, getPagamentoFuncionarios, getLucratividadeObras, getAndamentoObraReport as getAndamentoObra } from "./actions";
+import { getCompanyBranding } from "@/lib/branding";
 
 interface Obra {
   id: number;
@@ -203,7 +204,8 @@ export default function RelatoriosPage() {
           {[
             { id: "TODOS", name: "Consolidado" },
             { id: "JHOSTON", name: "Jhoston Pools" },
-            { id: "ECO_STONE", name: "Eco Stone" }
+            { id: "ECO_STONE", name: "Eco Stone" },
+            { id: "JHOSTON_REVEST", name: "Jhoston Revest" }
           ].map((c) => (
             <button
               key={c.id}
@@ -302,20 +304,33 @@ export default function RelatoriosPage() {
             <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>Carregando dados...</p>
           ) : folhaPontoData ? (
             <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-              <div className="report-header">
-                <div className="report-title-area">
-                  <div>
-                    <span className="report-company">Jhoston Tec Piscinas</span>
-                    <h4 style={{ fontSize: "16px", marginTop: "4px" }}>Folha Mensal de Frequência de Ponto</h4>
-                    <p className="report-subtitle">
-                      Obra: <strong>{obras.find((o) => o.id === parseInt(selectedObraId))?.nome}</strong> | Período: <strong>{mesesOptions.find(m => m.value === selectedMes)?.label} / {selectedAno}</strong>
-                    </p>
+              {(() => {
+                const currentObra = obras.find((o) => o.id === parseInt(selectedObraId));
+                const branding = getCompanyBranding(currentObra?.empresa || empresaFilter);
+                return (
+                  <div className="report-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `3px solid ${branding.primaryColor}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <img
+                        src={branding.logo}
+                        alt={branding.name}
+                        style={{ height: "46px", maxWidth: "130px", objectFit: "contain" }}
+                      />
+                      <div>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: branding.primaryColor, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          {branding.name} — {branding.subtitle}
+                        </span>
+                        <h4 style={{ fontSize: "17px", fontWeight: 800, marginTop: "2px", color: "var(--text-heading)" }}>Folha Mensal de Frequência de Ponto</h4>
+                        <p className="report-subtitle" style={{ fontSize: "12px", marginTop: "2px", color: "var(--text-muted)" }}>
+                          Obra: <strong>{currentObra?.nome}</strong> | Período: <strong>{mesesOptions.find(m => m.value === selectedMes)?.label} / {selectedAno}</strong>
+                        </p>
+                      </div>
+                    </div>
+                    <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
+                      Gerar PDF (WhatsApp)
+                    </button>
                   </div>
-                  <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-                    Gerar PDF (WhatsApp)
-                  </button>
-                </div>
-              </div>
+                );
+              })()}
 
               <div className="table-container" style={{ margin: 0, border: "none", borderRadius: 0, overflowX: "auto" }}>
                 <table className="table" style={{ borderCollapse: "collapse", fontSize: "12px", width: "100%", minWidth: "900px" }}>
@@ -454,17 +469,32 @@ export default function RelatoriosPage() {
             </div>
           ) : (
             <div className="card" style={{ padding: 24 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px", borderBottom: "1px solid var(--border-color)", paddingBottom: "12px" }}>
-                <div>
-                  <h4 style={{ fontSize: "16px", fontWeight: 700 }}>Resumo de Pagamento por Período</h4>
-                  <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "2px" }}>
-                    Cálculo líquido de diárias de ponto, viagens, vales e bônus no período de {formatDateBR(dataInicio)} a {formatDateBR(dataFim)}.
-                  </p>
-                </div>
-                <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-                  Gerar PDF (WhatsApp)
-                </button>
-              </div>
+              {(() => {
+                const branding = getCompanyBranding(empresaFilter);
+                return (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: `3px solid ${branding.primaryColor}`, paddingBottom: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <img
+                        src={branding.logo}
+                        alt={branding.name}
+                        style={{ height: "46px", maxWidth: "130px", objectFit: "contain" }}
+                      />
+                      <div>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: branding.primaryColor, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          {empresaFilter === "TODOS" ? "CONSOLIDADO GERAL" : `${branding.name} — ${branding.subtitle}`}
+                        </span>
+                        <h4 style={{ fontSize: "17px", fontWeight: 800, marginTop: "2px", color: "var(--text-heading)" }}>Resumo de Pagamento por Período</h4>
+                        <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "2px" }}>
+                          Cálculo líquido de diárias de ponto, viagens, vales e bônus no período de {formatDateBR(dataInicio)} a {formatDateBR(dataFim)}.
+                        </p>
+                      </div>
+                    </div>
+                    <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
+                      Gerar PDF (WhatsApp)
+                    </button>
+                  </div>
+                );
+              })()}
 
               <div className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
                 <table className="table">
@@ -565,22 +595,37 @@ export default function RelatoriosPage() {
             </div>
           ) : (
             <div className="card" style={{ padding: 24 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px", borderBottom: "1px solid var(--border-color)", paddingBottom: "12px" }}>
-                <div>
-                  <h4 style={{ fontSize: "16px", fontWeight: 700 }}>Avaliação de Margem e Lucro por Projeto</h4>
-                  <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "2px" }}>
-                    Detalhamento de faturamento vs. custos diretos (fornecedores) e mão de obra (diárias e viagens).
-                  </p>
-                </div>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button className="btn btn-secondary btn-sm" onClick={gerarRelatorioLucratividade}>
-                    Atualizar Dados
-                  </button>
-                  <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-                    Gerar PDF (WhatsApp)
-                  </button>
-                </div>
-              </div>
+              {(() => {
+                const branding = getCompanyBranding(empresaFilter);
+                return (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: `3px solid ${branding.primaryColor}`, paddingBottom: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <img
+                        src={branding.logo}
+                        alt={branding.name}
+                        style={{ height: "46px", maxWidth: "130px", objectFit: "contain" }}
+                      />
+                      <div>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: branding.primaryColor, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          {empresaFilter === "TODOS" ? "CONSOLIDADO GERAL" : `${branding.name} — ${branding.subtitle}`}
+                        </span>
+                        <h4 style={{ fontSize: "17px", fontWeight: 800, marginTop: "2px", color: "var(--text-heading)" }}>Avaliação de Margem e Lucro por Projeto</h4>
+                        <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "2px" }}>
+                          Detalhamento de faturamento vs. custos diretos (fornecedores) e mão de obra (diárias e viagens).
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button className="btn btn-secondary btn-sm" onClick={gerarRelatorioLucratividade}>
+                        Atualizar Dados
+                      </button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
+                        Gerar PDF (WhatsApp)
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
                 <table className="table" style={{ fontSize: "13px" }}>
@@ -679,20 +724,35 @@ export default function RelatoriosPage() {
             <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>Carregando dados...</p>
           ) : andamentoReport ? (
             <div className="card printable-report-card" style={{ padding: 24 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px", borderBottom: "1px solid var(--border-color)", paddingBottom: "12px" }}>
-                <div>
-                  <h4 style={{ fontSize: "16px", fontWeight: 700 }}>Histórico de Diário e Andamento</h4>
-                  <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "2px" }}>
-                    Histórico cronológico de relatos do Diário de Obra para <strong>{andamentoReport.obra.nome}</strong>.
-                  </p>
-                  <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                    Cliente: <strong>{andamentoReport.obra.clienteNome}</strong> | Início da Obra: <strong>{andamentoReport.obra.createdAt ? formatDateBR(new Date(andamentoReport.obra.createdAt).toISOString().split("T")[0]) : "Não cadastrado"}</strong> | Período: {formatDateBR(dataInicioAndamento)} a {formatDateBR(dataFimAndamento)}
-                  </p>
-                </div>
-                <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-                  Gerar PDF (WhatsApp)
-                </button>
-              </div>
+              {(() => {
+                const branding = getCompanyBranding(andamentoReport.obra.empresa);
+                return (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", borderBottom: `3px solid ${branding.primaryColor}`, paddingBottom: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <img
+                        src={branding.logo}
+                        alt={branding.name}
+                        style={{ height: "46px", maxWidth: "130px", objectFit: "contain" }}
+                      />
+                      <div>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: branding.primaryColor, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          {branding.name} — {branding.subtitle}
+                        </span>
+                        <h4 style={{ fontSize: "17px", fontWeight: 800, marginTop: "2px", color: "var(--text-heading)" }}>Histórico de Diário e Andamento</h4>
+                        <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "2px" }}>
+                          Histórico cronológico de relatos do Diário de Obra para <strong>{andamentoReport.obra.nome}</strong>.
+                        </p>
+                        <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
+                          Cliente: <strong>{andamentoReport.obra.clienteNome}</strong> | Início: <strong>{andamentoReport.obra.createdAt ? formatDateBR(new Date(andamentoReport.obra.createdAt).toISOString().split("T")[0]) : "Não cadastrado"}</strong> | Período: {formatDateBR(dataInicioAndamento)} a {formatDateBR(dataFimAndamento)}
+                        </p>
+                      </div>
+                    </div>
+                    <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
+                      Gerar PDF (WhatsApp)
+                    </button>
+                  </div>
+                );
+              })()}
 
               {/* Barra de progresso das 5 etapas da piscina */}
               <div
@@ -799,11 +859,29 @@ export default function RelatoriosPage() {
             </div>
             
             <div className="modal-body printable-holerite">
-              <div style={{ border: "1px solid #ccc", padding: "20px", borderRadius: "8px", backgroundColor: "#fff" }}>
-                <div style={{ textAlign: "center", borderBottom: "2px solid var(--primary)", paddingBottom: "12px", marginBottom: "16px" }}>
-                  <h3 style={{ margin: 0, textTransform: "uppercase", color: "var(--primary)", fontSize: "18px", fontWeight: 800 }}>Jhoston Tec Piscinas</h3>
-                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>CNPJ: Fechamento de Diaristas Autorizado</span>
-                </div>
+              {(() => {
+                const branding = getCompanyBranding(empresaFilter);
+                return (
+                  <div style={{ border: "1px solid #ccc", padding: "20px", borderRadius: "8px", backgroundColor: "#fff" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `2px solid ${branding.primaryColor}`, paddingBottom: "12px", marginBottom: "16px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                        <img
+                          src={branding.logo}
+                          alt={branding.name}
+                          style={{ height: "46px", maxWidth: "120px", objectFit: "contain" }}
+                        />
+                        <div>
+                          <h3 style={{ margin: 0, textTransform: "uppercase", color: branding.primaryColor, fontSize: "18px", fontWeight: 800 }}>
+                            {branding.name}
+                          </h3>
+                          <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{branding.corporateName} — CNPJ: {branding.cnpj}</span>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: branding.primaryColor, display: "block", textTransform: "uppercase" }}>RECIBO DE DIÁRIAS</span>
+                        <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Fechamento Autorizado</span>
+                      </div>
+                    </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "13px", marginBottom: "16px", backgroundColor: "#f8fafc", padding: "10px", borderRadius: "4px" }}>
                   <div>
@@ -885,10 +963,12 @@ export default function RelatoriosPage() {
                   </div>
                   <div style={{ textAlign: "center", width: "45%" }}>
                     <div style={{ borderBottom: "1px solid #94a3b8", height: "30px" }}></div>
-                    <span style={{ marginTop: "4px", display: "block" }}>Pelo Escritório / Jhoston Tec</span>
+                    <span style={{ marginTop: "4px", display: "block" }}>Pelo Escritório / {getCompanyBranding(empresaFilter).name}</span>
                   </div>
                 </div>
               </div>
+            );
+          })()}
             </div>
 
             <div className="modal-footer">

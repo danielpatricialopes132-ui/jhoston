@@ -7,16 +7,24 @@ export default async function PrintRelatorioPage(props: { params: Promise<{ id: 
 
   if (!relatorio) return <div>Relatório não encontrado</div>;
 
+  const { getCompanyBranding } = await import("@/lib/branding");
+  const branding = getCompanyBranding(relatorio.obra.empresa);
+
   let configEmpresa = null;
   if (relatorio.obra.empresa) {
     const { prisma } = await import("@/lib/db");
-    configEmpresa = await prisma.configuracaoEmpresa.findUnique({
-      where: { nome: relatorio.obra.empresa }
+    configEmpresa = await prisma.configuracaoEmpresa.findFirst({
+      where: { 
+        OR: [
+          { nome: relatorio.obra.empresa },
+          { nome: branding.name }
+        ]
+      }
     });
   }
 
-  const logoSrc = configEmpresa?.logoUrl || null;
-  const corBase = configEmpresa?.corSecundaria || "rgb(37 99 235)"; // blue-600 default
+  const logoSrc = configEmpresa?.logoUrl || branding.logo;
+  const corBase = configEmpresa?.corSecundaria || branding.primaryColor;
 
   return (
     <div className="bg-white min-h-screen text-gray-900 print:bg-white pb-20">

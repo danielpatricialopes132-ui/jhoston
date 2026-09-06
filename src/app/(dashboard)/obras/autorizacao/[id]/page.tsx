@@ -198,14 +198,21 @@ export default function AutorizacaoPreviewPage({
         }}
       >
         {/* Cabeçalho do Documento */}
-        <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `2px solid ${primaryColor}`, paddingBottom: "20px", marginBottom: "30px" }}>
-          <div>
-            <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" }}>
-              AUTORIZAÇÃO DE COMPRA
-            </h1>
-            <p style={{ margin: "4px 0 0 0", color: primaryColor, fontSize: "13px", fontWeight: 700 }}>
-              {companyName}
-            </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `2px solid ${primaryColor}`, paddingBottom: "20px", marginBottom: "30px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <img
+              src={isEco ? "/eco_stone.jpeg" : "/logo_2.png"}
+              alt={companyName}
+              style={{ height: "50px", maxWidth: "130px", objectFit: "contain" }}
+            />
+            <div>
+              <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" }}>
+                AUTORIZAÇÃO DE COMPRA
+              </h1>
+              <p style={{ margin: "4px 0 0 0", color: primaryColor, fontSize: "13px", fontWeight: 700 }}>
+                {companyName}
+              </p>
+            </div>
           </div>
           <div style={{ textAlign: "right" }}>
             <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#475569", margin: 0 }}>

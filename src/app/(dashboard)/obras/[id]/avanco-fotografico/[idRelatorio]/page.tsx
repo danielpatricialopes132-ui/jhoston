@@ -23,15 +23,23 @@ export default async function DetalhesRelatorioFotograficoPage(props: {
   const reportDate = new Date(relatorio.updatedAt);
   const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
+  const { getCompanyBranding } = await import("@/lib/branding");
+  const branding = getCompanyBranding(relatorio.obra.empresa);
+
   let configEmpresa = null;
   if (relatorio.obra.empresa) {
-    configEmpresa = await prisma.configuracaoEmpresa.findUnique({
-      where: { nome: relatorio.obra.empresa }
+    configEmpresa = await prisma.configuracaoEmpresa.findFirst({
+      where: {
+        OR: [
+          { nome: relatorio.obra.empresa },
+          { nome: branding.name }
+        ]
+      }
     });
   }
 
-  const logoSrc = configEmpresa?.logoUrl || "/logo.jpg";
-  const nomeEmpresa = configEmpresa?.nome || "JHOSTON POOLS";
+  const logoSrc = configEmpresa?.logoUrl || branding.logo;
+  const nomeEmpresa = configEmpresa?.nome || branding.name;
 
   return (
     <>

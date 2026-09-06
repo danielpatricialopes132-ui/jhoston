@@ -381,18 +381,31 @@ export default function PropostaPreviewPage({
         }}
       >
         {/* Cabeçalho do Documento */}
-        <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "2px solid #0f172a", paddingBottom: "20px", marginBottom: "30px" }}>
-          <div>
-            <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" }}>
-              PROPOSTA COMERCIAL
-            </h1>
-            <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "13px", fontWeight: 500 }}>
-              {displayProduct === "CASCATA" 
-                ? "Ref: Execução de Cascata Decorativa" 
-                : displayProduct === "REVESTIMENTO" 
-                  ? `Ref: ${oportunidade.descricaoServico || "Aplicação de revestimento resinado"}` 
-                  : `Ref: Revestimento de Piscina - Linha ${displayProduct === "SUPER_PREMIUM" ? "Super Premium" : "Premium"}`}
-            </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #0f172a", paddingBottom: "20px", marginBottom: "30px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <img
+              src={
+                displayProduct === "CASCATA"
+                  ? "/eco_stone.jpeg"
+                  : displayProduct === "REVESTIMENTO"
+                  ? "/revest.png"
+                  : "/logo_2.png"
+              }
+              alt="Logo da Empresa"
+              style={{ height: "55px", maxWidth: "140px", objectFit: "contain" }}
+            />
+            <div>
+              <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" }}>
+                PROPOSTA COMERCIAL
+              </h1>
+              <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "13px", fontWeight: 500 }}>
+                {displayProduct === "CASCATA" 
+                  ? "Ref: Execução de Cascata Decorativa" 
+                  : displayProduct === "REVESTIMENTO" 
+                    ? `Ref: ${oportunidade.descricaoServico || "Aplicação de revestimento resinado"}` 
+                    : `Ref: Revestimento de Piscina - Linha ${displayProduct === "SUPER_PREMIUM" ? "Super Premium" : "Premium"}`}
+              </p>
+            </div>
           </div>
           <div style={{ textAlign: "right" }}>
             <h3 style={{ 
