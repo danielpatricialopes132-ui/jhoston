@@ -9,7 +9,7 @@ interface DashboardHeaderProps {
 }
 
 export function getCompanyDisplay(empresa?: string | null) {
-  if (!empresa) return { name: "JHOSTON TEC", icon: "🏢", color: "var(--text-heading)", tag: "JHOSTON" };
+  if (!empresa) return { name: "JHOSTON TEC", icon: "🏢", color: "#0f766e", tag: "JHOSTON" };
 
   const norm = empresa.toUpperCase().trim();
   if (norm === "ECO_STONE" || norm.includes("ECO")) {
@@ -18,10 +18,7 @@ export function getCompanyDisplay(empresa?: string | null) {
   if (norm === "JHOSTON_REVEST" || norm.includes("REVEST")) {
     return { name: "JHOSTON REVEST", icon: "✨", color: "#d97706", tag: "REVEST" };
   }
-  if (norm === "AMBAS") {
-    return { name: "TODAS AS EMPRESAS", icon: "🌐", color: "#0284c7", tag: "CONSOLIDADO" };
-  }
-  return { name: "JHOSTON TEC", icon: "🏢", color: "var(--text-heading)", tag: "JHOSTON" };
+  return { name: "JHOSTON TEC", icon: "🏢", color: "#0f766e", tag: "JHOSTON" };
 }
 
 export default function DashboardHeader({ initialEmpresa = "JHOSTON" }: DashboardHeaderProps) {

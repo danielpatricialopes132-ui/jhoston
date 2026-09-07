@@ -145,7 +145,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const empresaFilter = session.userEmpresa;
+  const empresaFilter = (!session.userEmpresa || session.userEmpresa === "AMBAS") ? "JHOSTON" : session.userEmpresa;
   const isMaster = session.userRole === "MASTER";
   const data = await getDashboardData(empresaFilter);
 

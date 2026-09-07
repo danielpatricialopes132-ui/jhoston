@@ -91,9 +91,14 @@ export async function setContextoEmpresa(novaEmpresa: string) {
   const session = await getSession();
   if (!session) return { success: false };
 
-  // Somente MASTERs têm direito a alterar o contexto entre JHOSTON e ECO STONE livremente
+  // Somente MASTERs têm direito a alterar o contexto de empresa
   if (session.userRole !== "MASTER") {
     return { success: false, error: "Apenas administradores podem trocar o contexto de empresa." };
+  }
+
+  // Não permitir contexto AMBAS: empresas são 100% independentes
+  if (novaEmpresa === "AMBAS") {
+    novaEmpresa = "JHOSTON";
   }
 
   const cookieStore = await cookies();
@@ -116,4 +121,41 @@ export async function setContextoEmpresa(novaEmpresa: string) {
   revalidatePath("/", "layout");
 
   return { success: true };
+}
+
+export async function getEmpresasDisponiveis() {
+  try {
+    const list = await prisma.configuracaoEmpresa.findMany({
+      select: {
+        nome: true,
+        logoUrl: true,
+        corPrimaria: true,
+      },
+      orderBy: { nome: "asc" },
+    });
+
+    if (!list || list.length === 0) {
+      return [
+        { nome: "JHOSTON", logoUrl: null, corPrimaria: "#0f766e" },
+        { nome: "ECO_STONE", logoUrl: null, corPrimaria: "#16a34a" },
+      ];
+    }
+
+    // Garante que JHOSTON e ECO_STONE estejam presentes se o banco estiver vazio ou parcial
+    const nomes = list.map((e) => e.nome.toUpperCase());
+    const result = [...list];
+    if (!nomes.some((n) => n.includes("JHOSTON"))) {
+      result.unshift({ nome: "JHOSTON", logoUrl: null, corPrimaria: "#0f766e" });
+    }
+    if (!nomes.some((n) => n.includes("ECO"))) {
+      result.push({ nome: "ECO_STONE", logoUrl: null, corPrimaria: "#16a34a" });
+    }
+
+    return result;
+  } catch {
+    return [
+      { nome: "JHOSTON", logoUrl: null, corPrimaria: "#0f766e" },
+      { nome: "ECO_STONE", logoUrl: null, corPrimaria: "#16a34a" },
+    ];
+  }
 }

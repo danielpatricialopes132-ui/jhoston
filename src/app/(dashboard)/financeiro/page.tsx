@@ -51,7 +51,7 @@ interface Transacao {
 export default function FinanceiroPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "transacoes">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "transacoes" | "balancete">("dashboard");
 
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [obras, setObras] = useState<Obra[]>([]);
@@ -64,6 +64,10 @@ export default function FinanceiroPage() {
   const [obraFilter, setObraFilter] = useState("TODOS");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransacao, setEditingTransacao] = useState<Transacao | null>(null);
+
+  // Estados específicos para o Mini Balancete
+  const [balanceteRegime, setBalanceteRegime] = useState<"CAIXA" | "COMPETENCIA">("CAIXA");
+  const [balanceteMes, setBalanceteMes] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
 
   // Form states
   const [tipo, setTipo] = useState<"RECEITA" | "DESPESA">("DESPESA");
@@ -107,7 +111,21 @@ export default function FinanceiroPage() {
     getSession().then((res) => {
       setSession(res as any);
       setIsSessionLoading(false);
+      if (res?.userEmpresa) {
+        const emp = res.userEmpresa === "AMBAS" ? "JHOSTON" : res.userEmpresa;
+        setEmpresaFilter(emp);
+        setEmpresa(emp);
+      }
     });
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "balancete" || tabParam === "transacoes" || tabParam === "dashboard") {
+        setActiveTab(tabParam as any);
+      }
+    }
+
     loadData();
   }, []);
 
@@ -496,25 +514,26 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
-      {/* Seletor de Empresa */}
+      {/* Seletor de Empresa (Isolamento Estrito) */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }}>
         <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Visualizar Empresa:</span>
         <div style={{ display: "inline-flex", gap: "8px" }}>
           {[
-            { id: "TODOS", name: "Consolidado" },
-            { id: "JHOSTON", name: "Jhoston Pools" },
-            { id: "ECO_STONE", name: "Eco Stone" }
+            { id: "JHOSTON", name: "🏢 Jhoston Pools" },
+            { id: "ECO_STONE", name: "🌿 Eco Stone" }
           ].map((c) => (
             <button
               key={c.id}
-              onClick={() => setEmpresaFilter(c.id)}
+              onClick={() => {
+                setEmpresaFilter(c.id);
+                setEmpresa(c.id);
+              }}
               className={`btn btn-sm ${empresaFilter === c.id ? "btn-primary" : "btn-secondary"}`}
             >
               {c.name}
             </button>
           ))}
         </div>
-
       </div>
 
       {/* Cards de Resumo */}
@@ -588,6 +607,25 @@ export default function FinanceiroPage() {
           }}
         >
           💸 Fluxo de Caixa ({filteredTransacoes.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("balancete")}
+          style={{
+            background: "none",
+            border: "none",
+            borderBottom: activeTab === "balancete" ? "2px solid var(--primary)" : "2px solid transparent",
+            color: activeTab === "balancete" ? "var(--primary)" : "var(--text-muted)",
+            padding: "8px 16px",
+            fontSize: "15px",
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            transition: "all 0.2s"
+          }}
+        >
+          📑 Mini Balancete Gerencial
         </button>
       </div>
 
@@ -867,6 +905,315 @@ export default function FinanceiroPage() {
       </div>
     </>
   )}
+
+      {/* Tab: Mini Balancete Gerencial */}
+      {activeTab === "balancete" && (() => {
+        // Filtra transações do balancete de acordo com a empresa e período
+        const transacoesBalancete = transacoes.filter((t) => {
+          // Filtro de empresa estrito
+          if ((t as any).empresa !== empresaFilter) return false;
+
+          // Filtro por regime (Caixa ou Competência)
+          if (balanceteRegime === "CAIXA") {
+            if (t.status !== "PAGO") return false;
+            const dataP = t.dataPagamento || t.dataVencimento;
+            return dataP ? dataP.startsWith(balanceteMes) : false;
+          } else {
+            // Competência (data de vencimento)
+            return t.dataVencimento.startsWith(balanceteMes);
+          }
+        });
+
+        // Agrupamento por Plano de Contas
+        // 1. Receitas
+        const receitasPorConta: Record<string, { codigo: string; descricao: string; total: number; itens: any[] }> = {};
+        // 2. Custos Operacionais (Custos Diretos vinculados a obras ou fornecedores)
+        const custosPorConta: Record<string, { codigo: string; descricao: string; total: number; itens: any[] }> = {};
+        // 3. Despesas Fixas / Administrativas
+        const despesasPorConta: Record<string, { codigo: string; descricao: string; total: number; itens: any[] }> = {};
+
+        let totalReceitasBalancete = 0;
+        let totalCustosBalancete = 0;
+        let totalDespesasBalancete = 0;
+
+        transacoesBalancete.forEach((t) => {
+          const cod = t.planoConta?.codigo || (t.tipo === "RECEITA" ? "1.9" : "2.9");
+          const desc = t.planoConta?.descricao || (t.tipo === "RECEITA" ? "Outras Receitas Operacionais" : "Despesas Gerais sem Classificação");
+          const key = `${cod} - ${desc}`;
+
+          if (t.tipo === "RECEITA") {
+            totalReceitasBalancete += t.valor;
+            if (!receitasPorConta[key]) {
+              receitasPorConta[key] = { codigo: cod, descricao: desc, total: 0, itens: [] };
+            }
+            receitasPorConta[key].total += t.valor;
+            receitasPorConta[key].itens.push(t);
+          } else {
+            // É DESPESA: Se tem obra vinculada ou plano de contas começa com 2 ou custo direto, consideramos custo da obra
+            const isCustoObra = !!t.obraId || cod.startsWith("2") || (t.categoria && t.categoria.includes("Obra"));
+            if (isCustoObra) {
+              totalCustosBalancete += t.valor;
+              if (!custosPorConta[key]) {
+                custosPorConta[key] = { codigo: cod, descricao: desc, total: 0, itens: [] };
+              }
+              custosPorConta[key].total += t.valor;
+              custosPorConta[key].itens.push(t);
+            } else {
+              totalDespesasBalancete += t.valor;
+              if (!despesasPorConta[key]) {
+                despesasPorConta[key] = { codigo: cod, descricao: desc, total: 0, itens: [] };
+              }
+              despesasPorConta[key].total += t.valor;
+              despesasPorConta[key].itens.push(t);
+            }
+          }
+        });
+
+        const margemBruta = totalReceitasBalancete - totalCustosBalancete;
+        const resultadoLiquido = margemBruta - totalDespesasBalancete;
+        const [anoB, mesB] = balanceteMes.split("-");
+        const mesesNomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const mesExtenso = `${mesesNomes[parseInt(mesB, 10) - 1]} de ${anoB}`;
+        const empresaNomeDisplay = empresaFilter === "ECO_STONE" ? "ECO STONE CASATAS & PEDRAS NATURAIS" : "GRUPO JHOSTON / JHOSTON POOLS";
+
+        return (
+          <div style={{ marginTop: "16px" }}>
+            {/* Controles do Balancete */}
+            <div className="card" style={{ padding: "16px 20px", marginBottom: "20px", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
+                    Mês de Apuração
+                  </label>
+                  <input
+                    type="month"
+                    className="form-control"
+                    style={{ height: "36px", width: "160px", fontSize: "13px" }}
+                    value={balanceteMes}
+                    onChange={(e) => setBalanceteMes(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", display: "block", marginBottom: "4px" }}>
+                    Regime Financeiro
+                  </label>
+                  <div style={{ display: "inline-flex", gap: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setBalanceteRegime("CAIXA")}
+                      className={`btn btn-sm ${balanceteRegime === "CAIXA" ? "btn-primary" : "btn-secondary"}`}
+                      title="Considera transações efetivamente quitadas"
+                    >
+                      Regime de Caixa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBalanceteRegime("COMPETENCIA")}
+                      className={`btn btn-sm ${balanceteRegime === "COMPETENCIA" ? "btn-primary" : "btn-secondary"}`}
+                      title="Considera transações pelo vencimento"
+                    >
+                      Competência
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="btn btn-secondary btn-sm"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                  Imprimir Balancete
+                </button>
+              </div>
+            </div>
+
+            {/* Demonstrativo Contábil / Mini Balancete Formatado */}
+            <div className="card" style={{ padding: "32px", backgroundColor: "#ffffff", color: "#0f172a", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}>
+              {/* Cabeçalho do Balancete */}
+              <div style={{ borderBottom: "2px solid #0f172a", paddingBottom: "16px", marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" }}>
+                    {empresaNomeDisplay}
+                  </h2>
+                  <p style={{ fontSize: "14px", fontWeight: 600, color: "#475569", marginTop: "2px" }}>
+                    BALANCETE FINANCEIRO GERENCIAL
+                  </p>
+                  <span style={{ fontSize: "12px", color: "#64748b" }}>
+                    Período: <strong>{mesExtenso}</strong> | Critério: <strong>{balanceteRegime === "CAIXA" ? "Regime de Caixa (Realizado)" : "Regime de Competência (Projetado)"}</strong>
+                  </span>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: "11px", color: "#94a3b8" }}>Gerado em: {new Date().toLocaleDateString("pt-BR")}</div>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: empresaFilter === "ECO_STONE" ? "#16a34a" : "#0f766e", marginTop: "4px" }}>
+                    {empresaFilter === "ECO_STONE" ? "🌿 ECO STONE" : "🏢 JHOSTON TEC"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Cards Rápidos de Síntese */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "28px" }}>
+                <div style={{ padding: "12px 16px", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#166534", textTransform: "uppercase" }}>(+) Receita Bruta</span>
+                  <div style={{ fontSize: "18px", fontWeight: 800, color: "#15803d", marginTop: "4px" }}>{formatCurrency(totalReceitasBalancete)}</div>
+                </div>
+                <div style={{ padding: "12px 16px", backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#991b1b", textTransform: "uppercase" }}>(-) Custos Diretos</span>
+                  <div style={{ fontSize: "18px", fontWeight: 800, color: "#b91c1c", marginTop: "4px" }}>{formatCurrency(totalCustosBalancete)}</div>
+                </div>
+                <div style={{ padding: "12px 16px", backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: "8px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#92400e", textTransform: "uppercase" }}>(=) Margem Bruta</span>
+                  <div style={{ fontSize: "18px", fontWeight: 800, color: margemBruta >= 0 ? "#b45309" : "#b91c1c", marginTop: "4px" }}>{formatCurrency(margemBruta)}</div>
+                </div>
+                <div style={{ padding: "12px 16px", backgroundColor: resultadoLiquido >= 0 ? "#ecfdf5" : "#fef2f2", border: `1.5px solid ${resultadoLiquido >= 0 ? "#10b981" : "#ef4444"}`, borderRadius: "8px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: resultadoLiquido >= 0 ? "#065f46" : "#991b1b", textTransform: "uppercase" }}>(=) Resultado Líquido</span>
+                  <div style={{ fontSize: "19px", fontWeight: 900, color: resultadoLiquido >= 0 ? "#059669" : "#dc2626", marginTop: "4px" }}>{formatCurrency(resultadoLiquido)}</div>
+                </div>
+              </div>
+
+              {/* Tabela Estruturada do Balancete */}
+              <div style={{ width: "100%", overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13.5px" }}>
+                  <thead>
+                    <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #cbd5e1" }}>
+                      <th style={{ textAlign: "left", padding: "10px 12px", color: "#334155", fontWeight: 700 }}>Classificação Contábil / Conta</th>
+                      <th style={{ textAlign: "center", padding: "10px 12px", color: "#334155", fontWeight: 700, width: "100px" }}>Lançamentos</th>
+                      <th style={{ textAlign: "right", padding: "10px 12px", color: "#334155", fontWeight: 700, width: "160px" }}>Total (R$)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* SEÇÃO 1: RECEITAS OPERACIONAIS */}
+                    <tr style={{ backgroundColor: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
+                      <td colSpan={2} style={{ padding: "10px 12px", fontWeight: 800, color: "#15803d" }}>
+                        (+) 1. RECEITAS OPERACIONAIS
+                      </td>
+                      <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 800, color: "#15803d" }}>
+                        {formatCurrency(totalReceitasBalancete)}
+                      </td>
+                    </tr>
+                    {Object.keys(receitasPorConta).length === 0 ? (
+                      <tr>
+                        <td colSpan={3} style={{ padding: "8px 24px", color: "#94a3b8", fontStyle: "italic", fontSize: "12px" }}>
+                          Nenhuma receita registrada neste período.
+                        </td>
+                      </tr>
+                    ) : (
+                      Object.entries(receitasPorConta).map(([key, data]) => (
+                        <tr key={key} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "8px 12px 8px 28px", color: "#334155" }}>
+                            <span style={{ fontFamily: "monospace", fontWeight: 600, color: "#64748b", marginRight: "8px" }}>{data.codigo}</span>
+                            {data.descricao}
+                          </td>
+                          <td style={{ textAlign: "center", padding: "8px 12px", color: "#64748b", fontSize: "12px" }}>
+                            {data.itens.length}
+                          </td>
+                          <td style={{ textAlign: "right", padding: "8px 12px", fontWeight: 600, color: "#0f172a" }}>
+                            {formatCurrency(data.total)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+
+                    {/* SEÇÃO 2: CUSTOS OPERACIONAIS */}
+                    <tr style={{ backgroundColor: "#f1f5f9", borderBottom: "1px solid #e2e8f0", marginTop: "10px" }}>
+                      <td colSpan={2} style={{ padding: "10px 12px", fontWeight: 800, color: "#b91c1c" }}>
+                        (-) 2. CUSTOS DIRETOS DE OBRAS E SERVIÇOS
+                      </td>
+                      <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 800, color: "#b91c1c" }}>
+                        {formatCurrency(totalCustosBalancete)}
+                      </td>
+                    </tr>
+                    {Object.keys(custosPorConta).length === 0 ? (
+                      <tr>
+                        <td colSpan={3} style={{ padding: "8px 24px", color: "#94a3b8", fontStyle: "italic", fontSize: "12px" }}>
+                          Nenhum custo direto registrado neste período.
+                        </td>
+                      </tr>
+                    ) : (
+                      Object.entries(custosPorConta).map(([key, data]) => (
+                        <tr key={key} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "8px 12px 8px 28px", color: "#334155" }}>
+                            <span style={{ fontFamily: "monospace", fontWeight: 600, color: "#64748b", marginRight: "8px" }}>{data.codigo}</span>
+                            {data.descricao}
+                          </td>
+                          <td style={{ textAlign: "center", padding: "8px 12px", color: "#64748b", fontSize: "12px" }}>
+                            {data.itens.length}
+                          </td>
+                          <td style={{ textAlign: "right", padding: "8px 12px", fontWeight: 600, color: "#0f172a" }}>
+                            {formatCurrency(data.total)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+
+                    {/* SUBTOTAL: MARGEM BRUTA */}
+                    <tr style={{ backgroundColor: "#fef3c7", borderTop: "2px solid #f59e0b", borderBottom: "2px solid #f59e0b" }}>
+                      <td colSpan={2} style={{ padding: "10px 12px", fontWeight: 800, color: "#92400e" }}>
+                        (=) RESULTADO BRUTO OPERACIONAL (MARGEM BRUTA)
+                      </td>
+                      <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 800, color: margemBruta >= 0 ? "#b45309" : "#b91c1c" }}>
+                        {formatCurrency(margemBruta)}
+                      </td>
+                    </tr>
+
+                    {/* SEÇÃO 3: DESPESAS ADMINISTRATIVAS & FIXAS */}
+                    <tr style={{ backgroundColor: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
+                      <td colSpan={2} style={{ padding: "10px 12px", fontWeight: 800, color: "#475569" }}>
+                        (-) 3. DESPESAS OPERACIONAIS, FIXAS E ADMINISTRATIVAS
+                      </td>
+                      <td style={{ textAlign: "right", padding: "10px 12px", fontWeight: 800, color: "#475569" }}>
+                        {formatCurrency(totalDespesasBalancete)}
+                      </td>
+                    </tr>
+                    {Object.keys(despesasPorConta).length === 0 ? (
+                      <tr>
+                        <td colSpan={3} style={{ padding: "8px 24px", color: "#94a3b8", fontStyle: "italic", fontSize: "12px" }}>
+                          Nenhuma despesa administrativa no período.
+                        </td>
+                      </tr>
+                    ) : (
+                      Object.entries(despesasPorConta).map(([key, data]) => (
+                        <tr key={key} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <td style={{ padding: "8px 12px 8px 28px", color: "#334155" }}>
+                            <span style={{ fontFamily: "monospace", fontWeight: 600, color: "#64748b", marginRight: "8px" }}>{data.codigo}</span>
+                            {data.descricao}
+                          </td>
+                          <td style={{ textAlign: "center", padding: "8px 12px", color: "#64748b", fontSize: "12px" }}>
+                            {data.itens.length}
+                          </td>
+                          <td style={{ textAlign: "right", padding: "8px 12px", fontWeight: 600, color: "#0f172a" }}>
+                            {formatCurrency(data.total)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+
+                    {/* TOTAL FINAL: RESULTADO LÍQUIDO */}
+                    <tr style={{ backgroundColor: resultadoLiquido >= 0 ? "#dcfce7" : "#fee2e2", borderTop: "3px solid #0f172a", borderBottom: "3px solid #0f172a" }}>
+                      <td colSpan={2} style={{ padding: "12px", fontWeight: 900, fontSize: "15px", color: resultadoLiquido >= 0 ? "#14532d" : "#7f1d1d" }}>
+                        (=) RESULTADO LÍQUIDO DO EXERCÍCIO (LUCRO / PREJUÍZO LÍQUIDO)
+                      </td>
+                      <td style={{ textAlign: "right", padding: "12px", fontWeight: 900, fontSize: "16px", color: resultadoLiquido >= 0 ? "#15803d" : "#b91c1c" }}>
+                        {formatCurrency(resultadoLiquido)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Rodapé formal */}
+              <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px dashed #cbd5e1", display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#64748b" }}>
+                <div>Documento gerado automaticamente pelo Sistema Integrado de Gestão.</div>
+                <div>Assinatura do Gestor Financeiro: __________________________________</div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Modal de Criação / Edição */}
       {isModalOpen && (

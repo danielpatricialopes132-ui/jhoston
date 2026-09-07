@@ -2,6 +2,8 @@
 
 import { useEffect, useState, startTransition } from "react";
 import { getEmpresas, createEmpresa, updateEmpresa, deleteEmpresa } from "./actions";
+import { getSession } from "@/app/login/actions";
+import { useRouter } from "next/navigation";
 
 interface Empresa {
   nome: string;
@@ -15,6 +17,8 @@ interface Empresa {
 }
 
 export default function EmpresasPage() {
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmpresa, setEditingEmpresa] = useState<Empresa | null>(null);
@@ -28,11 +32,22 @@ export default function EmpresasPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const loadData = () => {
-    getEmpresas().then((data) => setEmpresas(data as any));
+    getEmpresas()
+      .then((data) => setEmpresas(data as any))
+      .catch(() => {
+        setIsAuthorized(false);
+      });
   };
 
   useEffect(() => {
-    loadData();
+    getSession().then((session) => {
+      if (session?.userRole !== "MASTER") {
+        setIsAuthorized(false);
+      } else {
+        setIsAuthorized(true);
+        loadData();
+      }
+    });
   }, []);
 
   const openNewModal = () => {
@@ -101,15 +116,44 @@ export default function EmpresasPage() {
     }
   };
 
+  if (isAuthorized === false) {
+    return (
+      <div className="card" style={{ padding: "40px", textAlign: "center", maxWidth: "600px", margin: "40px auto" }}>
+        <span style={{ fontSize: "48px" }}>🔒</span>
+        <h3 style={{ fontSize: "20px", fontWeight: 700, marginTop: "16px", color: "var(--text-heading)" }}>
+          Acesso Restrito
+        </h3>
+        <p style={{ color: "var(--text-muted)", marginTop: "8px", fontSize: "14px" }}>
+          A configuração e cadastro de empresas é exclusiva para administradores com perfil <strong>MASTER</strong>.
+        </p>
+        <button 
+          className="btn btn-primary" 
+          style={{ marginTop: "20px" }}
+          onClick={() => router.push("/")}
+        >
+          Voltar ao Painel Principal
+        </button>
+      </div>
+    );
+  }
+
+  if (isAuthorized === null) {
+    return (
+      <div style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+        Verificando credenciais...
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="flex-row-between">
         <div>
           <h3 style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-heading)" }}>
-            Empresas Parceiras
+            Configurações de Empresas
           </h3>
           <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
-            Gerencie os dados, logos e cores das marcas que aparecem nos relatórios das obras.
+            Gerencie as empresas ativas no sistema, dados fiscais, logos e cores institucionais (Exclusivo Master).
           </p>
         </div>
         <button className="btn btn-primary" onClick={openNewModal}>
