@@ -17,6 +17,8 @@ import {
 import { getClientesList } from "../clientes/actions";
 import { getFornecedoresList } from "../fornecedores/actions";
 import { getEmpresas } from "../configuracoes/empresas/actions";
+import { getSession } from "@/app/login/actions";
+import { useToast } from "@/components/ToastProvider";
 
 interface Cliente {
   id: number;
@@ -131,8 +133,9 @@ export default function ObrasPage() {
   const [observacoesPermuta, setObservacoesPermuta] = useState("");
   const [empresa, setEmpresa] = useState("JHOSTON");
   const [errorMsg, setErrorMsg] = useState("");
-  const [clientSearchTerm, setClientSearchTerm] = useState("");
+  const { success: showSuccess, error: showError } = useToast();
   const [empresaFilter, setEmpresaFilter] = useState("TODAS");
+  const [clientSearchTerm, setClientSearchTerm] = useState("");
 
   // Extracted clients from IA that will be created on save
   const [extractedClients, setExtractedClients] = useState<any[]>([]);
@@ -146,6 +149,24 @@ export default function ObrasPage() {
     getClientesList().then((data) => setAllClientes(data as any));
     getFornecedoresList().then((data) => setFornecedores(data as any));
     getEmpresas().then((data) => setEmpresas(data as any));
+
+    getSession().then((sess) => {
+      if (sess?.userEmpresa && sess.userEmpresa !== "AMBAS") {
+        setEmpresaFilter(sess.userEmpresa);
+        setEmpresa(sess.userEmpresa);
+      }
+    });
+
+    const handleContextChange = (e: CustomEvent<string>) => {
+      if (e.detail && e.detail !== "AMBAS") {
+        setEmpresaFilter(e.detail);
+        setEmpresa(e.detail);
+      }
+    };
+    window.addEventListener("empresaContextChanged" as any, handleContextChange);
+    return () => {
+      window.removeEventListener("empresaContextChanged" as any, handleContextChange);
+    };
   }, []);
 
   const openNewModal = () => {
@@ -299,6 +320,7 @@ export default function ObrasPage() {
     if (confirm("Tem certeza que deseja excluir este documento?")) {
       const res = await deleteDocumentoObra(docId);
       if (res.success) {
+        showSuccess("Documento excluído com sucesso.");
         getObras().then((data) => {
           setObras(data as any);
           const up = data.find((ob) => ob.id === activeObra.id);
@@ -307,7 +329,7 @@ export default function ObrasPage() {
           }
         });
       } else {
-        alert(res.error || "Erro ao excluir o documento.");
+        showError(res.error || "Erro ao excluir o documento.");
       }
     }
   };
@@ -334,13 +356,16 @@ export default function ObrasPage() {
       const res = await createAutorizacaoCompra(payload);
       setAuthSubmitting(false);
       if (res.success) {
+        showSuccess("Autorização de compra gerada com sucesso!");
         getAutorizacoesCompra(activeObraForAuth.id).then((data) => setAutorizacoes(data as any));
         setSelectedFornecedorId("");
         setAuthItens("");
         setAuthValorLimite("");
         setAuthObservacoes("");
       } else {
-        setAuthError(res.error || "Erro ao gerar autorização de compra.");
+        const err = res.error || "Erro ao gerar autorização de compra.";
+        setAuthError(err);
+        showError(err);
       }
     });
   };
@@ -350,9 +375,10 @@ export default function ObrasPage() {
     if (confirm("Tem certeza que deseja excluir esta autorização de compra?")) {
       const res = await deleteAutorizacaoCompra(authId);
       if (res.success) {
+        showSuccess("Autorização excluída com sucesso.");
         getAutorizacoesCompra(activeObraForAuth.id).then((data) => setAutorizacoes(data as any));
       } else {
-        alert(res.error || "Erro ao excluir a autorização.");
+        showError(res.error || "Erro ao excluir a autorização.");
       }
     }
   };
@@ -485,10 +511,13 @@ export default function ObrasPage() {
       }
 
       if (res.success) {
+        showSuccess(editingObra ? "Obra atualizada com sucesso!" : "Obra cadastrada com sucesso!");
         refreshObras();
         closeModal();
       } else {
-        setErrorMsg((res as any).error || "Erro ao salvar os dados.");
+        const err = (res as any).error || "Erro ao salvar os dados.";
+        setErrorMsg(err);
+        showError(err);
       }
     });
   };
@@ -497,9 +526,10 @@ export default function ObrasPage() {
     if (confirm("Tem certeza que deseja excluir esta obra?")) {
       const res = await deleteObra(id);
       if (res.success) {
+        showSuccess("Obra excluída com sucesso.");
         refreshObras();
       } else {
-        alert(res.error);
+        showError(res.error || "Erro ao excluir a obra.");
       }
     }
   };
@@ -606,8 +636,24 @@ export default function ObrasPage() {
           <tbody>
             {filteredObras.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
-                  Nenhuma obra cadastrada ou encontrada.
+                <td colSpan={7} style={{ textAlign: "center", padding: "48px 16px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontSize: "42px" }}>🏗️</span>
+                    <h4 style={{ fontSize: "16px", fontWeight: 700, color: "var(--text-heading)", margin: 0 }}>
+                      Nenhuma obra encontrada
+                    </h4>
+                    <p style={{ fontSize: "13.5px", color: "var(--text-muted)", maxWidth: "420px", margin: 0 }}>
+                      Não há projetos cadastrados com os filtros atuais para esta empresa.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      style={{ marginTop: "8px" }}
+                      onClick={openNewModal}
+                    >
+                      + Cadastrar Primeira Obra
+                    </button>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -619,14 +665,20 @@ export default function ObrasPage() {
                       <span
                         style={{
                           fontSize: "11px",
-                          padding: "2px 6px",
-                          backgroundColor: "rgba(59, 130, 246, 0.15)",
-                          color: "#60a5fa",
-                          borderRadius: "4px",
-                          fontWeight: 600,
+                          padding: "2px 8px",
+                          backgroundColor: obra.empresa?.includes("ECO")
+                            ? "rgba(22, 163, 74, 0.12)"
+                            : "rgba(15, 118, 110, 0.12)",
+                          color: obra.empresa?.includes("ECO") ? "#16a34a" : "#0f766e",
+                          border: `1px solid ${obra.empresa?.includes("ECO") ? "rgba(22, 163, 74, 0.25)" : "rgba(15, 118, 110, 0.25)"}`,
+                          borderRadius: "6px",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
                         }}
                       >
-                        {obra.empresa || "Sem Empresa"}
+                        {obra.empresa?.includes("ECO") ? "🌿 ECO STONE" : "🏢 JHOSTON"}
                       </span>
                       <span>{obra.nome}</span>
                       {obra.documentos && obra.documentos.length > 0 && (

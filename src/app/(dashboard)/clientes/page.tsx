@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
+import { useToast } from "@/components/ToastProvider";
 import {
   getClientesList,
   salvarCliente,
@@ -39,6 +40,7 @@ interface Cliente {
 }
 
 export default function ClientesPage() {
+  const { showSuccess, showError } = useToast();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -171,6 +173,7 @@ export default function ClientesPage() {
 
       setDocSubmitting(false);
       if (res.success) {
+        showSuccess("Documento anexado com sucesso!");
         getClientesList().then((data) => {
           setClientes(data as any);
           const up = data.find((cl) => cl.id === activeCliente.id);
@@ -182,6 +185,7 @@ export default function ClientesPage() {
         setDocFile(null);
       } else {
         setDocError(res.error || "Erro ao salvar o documento.");
+        showError(res.error || "Erro ao salvar o documento.");
       }
     });
   };
@@ -191,6 +195,7 @@ export default function ClientesPage() {
     if (confirm("Tem certeza que deseja excluir este documento?")) {
       const res = await deleteDocumentoCliente(docId);
       if (res.success) {
+        showSuccess("Documento removido com sucesso!");
         getClientesList().then((data) => {
           setClientes(data as any);
           const up = data.find((cl) => cl.id === activeCliente.id);
@@ -199,7 +204,7 @@ export default function ClientesPage() {
           }
         });
       } else {
-        alert(res.error || "Erro ao excluir o documento.");
+        showError(res.error || "Erro ao excluir o documento.");
       }
     }
   };
@@ -227,10 +232,12 @@ export default function ClientesPage() {
     startTransition(async () => {
       const res = await salvarCliente(payload);
       if (res.success) {
+        showSuccess(editingCliente ? "Cliente atualizado com sucesso!" : "Cliente cadastrado com sucesso!");
         refreshData();
         closeModal();
       } else {
         setErrorMsg(res.error || "Erro ao salvar os dados.");
+        showError(res.error || "Erro ao salvar os dados.");
       }
     });
   };
@@ -243,9 +250,10 @@ export default function ClientesPage() {
     ) {
       const res = await deleteCliente(id);
       if (res.success) {
+        showSuccess("Cliente removido com sucesso!");
         refreshData();
       } else {
-        alert(res.error || "Erro ao excluir o cliente.");
+        showError(res.error || "Erro ao excluir o cliente.");
       }
     }
   };
@@ -323,8 +331,38 @@ export default function ClientesPage() {
           <tbody>
             {filteredClientes.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
-                  Nenhum cliente cadastrado ou encontrado.
+                <td colSpan={7} style={{ textAlign: "center", padding: "48px 24px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "12px" }}>
+                    <div
+                      style={{
+                        width: "56px",
+                        height: "56px",
+                        borderRadius: "50%",
+                        backgroundColor: "var(--bg-accent, #f1f5f9)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "24px",
+                      }}
+                    >
+                      👥
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "var(--text-heading)" }}>
+                        {searchTerm ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado ainda"}
+                      </h4>
+                      <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "var(--text-muted)" }}>
+                        {searchTerm
+                          ? "Tente buscar por outros termos, CPF/CNPJ ou telefone."
+                          : "Cadastre pessoas físicas ou jurídicas para vincular a novas obras."}
+                      </p>
+                    </div>
+                    {!searchTerm && (
+                      <button className="btn btn-primary btn-sm" onClick={openNewModal} style={{ marginTop: "8px" }}>
+                        + Cadastrar Primeiro Cliente
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ) : (

@@ -1,28 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { getSession } from "@/app/login/actions";
+import { useEffect, useState, startTransition } from "react";
+import { getSession, setContextoEmpresa, getEmpresasDisponiveis } from "@/app/login/actions";
+import { useRouter } from "next/navigation";
 
 interface DashboardHeaderProps {
   initialEmpresa?: string;
 }
 
 export function getCompanyDisplay(empresa?: string | null) {
-  if (!empresa) return { name: "JHOSTON TEC", icon: "🏢", color: "#0f766e", tag: "JHOSTON" };
+  if (!empresa) return { name: "JHOSTON TEC", icon: "🏢", color: "#0f766e", tag: "JHOSTON", bg: "rgba(15, 118, 110, 0.1)" };
 
   const norm = empresa.toUpperCase().trim();
   if (norm === "ECO_STONE" || norm.includes("ECO")) {
-    return { name: "ECO STONE", icon: "🌿", color: "#16a34a", tag: "ECO STONE" };
+    return { name: "ECO STONE", icon: "🌿", color: "#16a34a", tag: "ECO STONE", bg: "rgba(22, 163, 74, 0.1)" };
   }
   if (norm === "JHOSTON_REVEST" || norm.includes("REVEST")) {
-    return { name: "JHOSTON REVEST", icon: "✨", color: "#d97706", tag: "REVEST" };
+    return { name: "JHOSTON REVEST", icon: "✨", color: "#d97706", tag: "REVEST", bg: "rgba(217, 119, 6, 0.1)" };
   }
-  return { name: "JHOSTON TEC", icon: "🏢", color: "#0f766e", tag: "JHOSTON" };
+  return { name: "JHOSTON TEC", icon: "🏢", color: "#0f766e", tag: "JHOSTON", bg: "rgba(15, 118, 110, 0.1)" };
 }
 
 export default function DashboardHeader({ initialEmpresa = "JHOSTON" }: DashboardHeaderProps) {
+  const router = useRouter();
   const [empresa, setEmpresa] = useState(initialEmpresa);
+  const [isMaster, setIsMaster] = useState(false);
+  const [empresas, setEmpresas] = useState<Array<{ nome: string }>>([]);
+  const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
     // Sincroniza com evento disparado pela Sidebar
@@ -34,10 +39,13 @@ export default function DashboardHeader({ initialEmpresa = "JHOSTON" }: Dashboar
 
     window.addEventListener("empresaContextChanged" as any, handleContextChange);
 
-    // Também verifica a sessão atual
     getSession().then((sess) => {
       if (sess?.userEmpresa) {
         setEmpresa(sess.userEmpresa);
+      }
+      if (sess?.userRole === "MASTER") {
+        setIsMaster(true);
+        getEmpresasDisponiveis().then((list) => setEmpresas(list));
       }
     });
 
@@ -46,26 +54,66 @@ export default function DashboardHeader({ initialEmpresa = "JHOSTON" }: Dashboar
     };
   }, []);
 
+  const handleHeaderContextChange = (novaEmpresa: string) => {
+    if (novaEmpresa === empresa || isSwitching) return;
+    setIsSwitching(true);
+    startTransition(async () => {
+      await setContextoEmpresa(novaEmpresa);
+      setEmpresa(novaEmpresa);
+      setIsSwitching(false);
+      window.dispatchEvent(new CustomEvent("empresaContextChanged", { detail: novaEmpresa }));
+      router.refresh();
+    });
+  };
+
   const info = getCompanyDisplay(empresa);
 
   return (
     <header className="main-header">
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        <span style={{ fontSize: "22px" }}>{info.icon}</span>
+        <span style={{ fontSize: "24px" }}>{info.icon}</span>
         <div>
-          <h2
-            style={{
-              fontSize: "20px",
-              fontWeight: 700,
-              color: info.color,
-              lineHeight: 1.2,
-              margin: 0,
-              letterSpacing: "-0.3px",
-              transition: "color 0.2s ease",
-            }}
-          >
-            {info.name}
-          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <h2
+              style={{
+                fontSize: "18px",
+                fontWeight: 700,
+                color: info.color,
+                lineHeight: 1.2,
+                margin: 0,
+                letterSpacing: "-0.3px",
+                transition: "color 0.2s ease",
+              }}
+            >
+              {info.name}
+            </h2>
+
+            {isMaster && empresas.length > 1 && (
+              <select
+                value={empresa}
+                onChange={(e) => handleHeaderContextChange(e.target.value)}
+                disabled={isSwitching}
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  backgroundColor: info.bg,
+                  color: info.color,
+                  border: `1px solid ${info.color}40`,
+                  borderRadius: "6px",
+                  padding: "2px 6px",
+                  cursor: "pointer",
+                  outline: "none",
+                }}
+                title="Alternar Empresa Ativa"
+              >
+                {empresas.map((e) => (
+                  <option key={e.nome} value={e.nome} style={{ backgroundColor: "#0f172a", color: "#f8fafc" }}>
+                    Trocar para: {e.nome}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
           <span
             style={{
               fontSize: "11px",
@@ -75,7 +123,7 @@ export default function DashboardHeader({ initialEmpresa = "JHOSTON" }: Dashboar
               textTransform: "uppercase",
             }}
           >
-            Contexto Ativo
+            Contexto Ativo {isSwitching && " (Trocando...)"}
           </span>
         </div>
       </div>
