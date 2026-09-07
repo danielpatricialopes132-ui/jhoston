@@ -136,6 +136,7 @@ export default function ObrasPage() {
   const { success: showSuccess, error: showError } = useToast();
   const [empresaFilter, setEmpresaFilter] = useState("TODAS");
   const [clientSearchTerm, setClientSearchTerm] = useState("");
+  const [activeContext, setActiveContext] = useState("TODAS");
 
   // Extracted clients from IA that will be created on save
   const [extractedClients, setExtractedClients] = useState<any[]>([]);
@@ -154,6 +155,9 @@ export default function ObrasPage() {
       if (sess?.userEmpresa && sess.userEmpresa !== "AMBAS") {
         setEmpresaFilter(sess.userEmpresa);
         setEmpresa(sess.userEmpresa);
+        setActiveContext(sess.userEmpresa);
+      } else {
+        setActiveContext("TODAS");
       }
     });
 
@@ -161,6 +165,9 @@ export default function ObrasPage() {
       if (e.detail && e.detail !== "AMBAS") {
         setEmpresaFilter(e.detail);
         setEmpresa(e.detail);
+        setActiveContext(e.detail);
+      } else {
+        setActiveContext("TODAS");
       }
     };
     window.addEventListener("empresaContextChanged" as any, handleContextChange);
@@ -541,9 +548,13 @@ export default function ObrasPage() {
       (o.endereco && o.endereco.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus = statusFilter === "TODAS" || o.status === statusFilter;
+    
+    // Isolamento estrito para ECO STONE
+    const matchesContext = activeContext === "ECO STONE" ? o.empresa === "ECO STONE" : true;
+    
     const matchesEmpresa = empresaFilter === "TODAS" || o.empresa === empresaFilter;
  
-    return matchesSearch && matchesStatus && matchesEmpresa;
+    return matchesSearch && matchesStatus && matchesContext && matchesEmpresa;
   });
 
   const formatCurrency = (val: number) => {
@@ -589,21 +600,23 @@ export default function ObrasPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="form-group" style={{ flex: 1 }}>
-          <label className="form-label">Filtrar por Empresa</label>
-          <select
-            className="form-control"
-            value={empresaFilter}
-            onChange={(e) => setEmpresaFilter(e.target.value)}
-          >
-            <option value="TODAS">Todas as Empresas</option>
-            {empresas.map((emp) => (
-              <option key={emp.nome} value={emp.nome}>
-                {emp.nome}
-              </option>
-            ))}
-          </select>
-        </div>
+        {activeContext !== "ECO STONE" && (
+          <div className="form-group" style={{ flex: 1 }}>
+            <label className="form-label">Filtrar por Empresa</label>
+            <select
+              className="form-control"
+              value={empresaFilter}
+              onChange={(e) => setEmpresaFilter(e.target.value)}
+            >
+              <option value="TODAS">Todas as Empresas</option>
+              {empresas.map((emp) => (
+                <option key={emp.nome} value={emp.nome}>
+                  {emp.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="form-group" style={{ flex: 1 }}>
           <label className="form-label">Filtrar por Status</label>
           <select

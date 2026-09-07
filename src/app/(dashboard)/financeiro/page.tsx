@@ -84,6 +84,7 @@ export default function FinanceiroPage() {
   const [empresa, setEmpresa] = useState("JHOSTON");
   const [errorMsg, setErrorMsg] = useState("");
   const [empresaFilter, setEmpresaFilter] = useState("TODOS");
+  const [activeContext, setActiveContext] = useState("TODOS");
 
 
 
@@ -124,8 +125,23 @@ export default function FinanceiroPage() {
         const emp = res.userEmpresa === "AMBAS" ? "JHOSTON" : res.userEmpresa;
         setEmpresaFilter(emp);
         setEmpresa(emp);
+        setActiveContext(res.userEmpresa);
+      } else {
+        setActiveContext("TODOS");
       }
     });
+
+    const handleContextChange = (e: CustomEvent<string>) => {
+      if (e.detail) {
+        const emp = e.detail === "AMBAS" ? "JHOSTON" : e.detail;
+        setEmpresaFilter(emp);
+        setEmpresa(emp);
+        setActiveContext(e.detail);
+      } else {
+        setActiveContext("TODOS");
+      }
+    };
+    window.addEventListener("empresaContextChanged" as any, handleContextChange);
 
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -136,6 +152,10 @@ export default function FinanceiroPage() {
     }
 
     loadData();
+
+    return () => {
+      window.removeEventListener("empresaContextChanged" as any, handleContextChange);
+    };
   }, []);
 
   const openNewModal = (initialTipo: "RECEITA" | "DESPESA" = "DESPESA") => {
@@ -313,7 +333,11 @@ export default function FinanceiroPage() {
 
   // Filtrar transações globais para os cálculos dependendo da empresa
   const transacoesFiltradasEmpresa = transacoes.filter(
-    (t) => empresaFilter === "TODOS" || (t as any).empresa === empresaFilter
+    (t) => {
+      const matchesContext = activeContext === "ECO STONE" ? (t as any).empresa === "ECO STONE" : true;
+      const matchesEmp = empresaFilter === "TODOS" ? true : (t as any).empresa === empresaFilter;
+      return matchesContext && matchesEmp;
+    }
   );
 
   // Cálculos Financeiros Globais
@@ -333,9 +357,10 @@ export default function FinanceiroPage() {
     const matchesTipo = tipoFilter === "TODOS" || t.tipo === tipoFilter;
     const matchesStatus = statusFilter === "TODOS" || t.status === statusFilter;
     const matchesObra = obraFilter === "TODOS" || t.obraId?.toString() === obraFilter;
+    const matchesContext = activeContext === "ECO STONE" ? (t as any).empresa === "ECO STONE" : true;
     const matchesEmpresa = empresaFilter === "TODOS" || (t as any).empresa === empresaFilter;
 
-    return matchesSearch && matchesTipo && matchesStatus && matchesObra && matchesEmpresa;
+    return matchesSearch && matchesTipo && matchesStatus && matchesObra && matchesContext && matchesEmpresa;
   });
 
   // Carga e processamento dos gráficos
@@ -564,26 +589,28 @@ export default function FinanceiroPage() {
       </div>
 
       {/* Seletor de Empresa (Isolamento Estrito) */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }}>
-        <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Visualizar Empresa:</span>
-        <div style={{ display: "inline-flex", gap: "8px" }}>
-          {[
-            { id: "JHOSTON", name: "🏢 Jhoston Pools" },
-            { id: "ECO_STONE", name: "🌿 Eco Stone" }
-          ].map((c) => (
-            <button
-              key={c.id}
-              onClick={() => {
-                setEmpresaFilter(c.id);
-                setEmpresa(c.id);
-              }}
-              className={`btn btn-sm ${empresaFilter === c.id ? "btn-primary" : "btn-secondary"}`}
-            >
-              {c.name}
-            </button>
-          ))}
+      {activeContext !== "ECO STONE" && (
+        <div style={{ display: "flex", gap: "10px", marginBottom: "20px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }}>
+          <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Visualizar Empresa:</span>
+          <div style={{ display: "inline-flex", gap: "8px" }}>
+            {[
+              { id: "JHOSTON", name: "🏢 Jhoston Pools" },
+              { id: "ECO_STONE", name: "🌿 Eco Stone" }
+            ].map((c) => (
+              <button
+                key={c.id}
+                onClick={() => {
+                  setEmpresaFilter(c.id);
+                  setEmpresa(c.id);
+                }}
+                className={`btn btn-sm ${empresaFilter === c.id ? "btn-primary" : "btn-secondary"}`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Cards de Resumo */}
       <div className="grid-cols-4">
