@@ -1017,14 +1017,25 @@ export default function ObrasPage() {
                        value={empresa}
                        onChange={(e) => setEmpresa(e.target.value)}
                        required
+                       disabled={!!editingObra && !!editingObra.empresa?.includes("ECO")}
                      >
                        <option value="">Selecione uma empresa...</option>
-                       {empresas.map((emp) => (
+                       {(editingObra 
+                          ? (editingObra.empresa?.includes("ECO") 
+                              ? empresas.filter(e => e.nome.includes("ECO")) 
+                              : empresas.filter(e => !e.nome.includes("ECO")))
+                          : empresas
+                       ).map((emp) => (
                          <option key={emp.nome} value={emp.nome}>
                            {emp.nome}
                          </option>
                        ))}
                      </select>
+                     {!!editingObra && !!editingObra.empresa?.includes("ECO") && (
+                       <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                         Obras da Eco Stone não podem trocar de proprietária.
+                       </p>
+                     )}
                    </div>
                  </div>
               </div>

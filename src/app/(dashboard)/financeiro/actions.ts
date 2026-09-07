@@ -119,3 +119,45 @@ export async function alterarStatusTransacao(
   revalidatePath("/");
   return { success: true, data: transacao };
 }
+
+export async function salvarEmprestimoIntercompany(data: {
+  empresaOrigem: string;
+  empresaDestino: string;
+  valor: number;
+  data: string;
+  descricao: string;
+}) {
+  try {
+    const payloadOrigem = {
+      tipo: "DESPESA" as const,
+      descricao: data.descricao,
+      valor: data.valor,
+      dataVencimento: new Date(data.data),
+      dataPagamento: new Date(data.data),
+      status: "PAGO",
+      empresa: data.empresaOrigem,
+      categoria: "Empréstimo Intercompany"
+    };
+    const payloadDestino = {
+      tipo: "RECEITA" as const,
+      descricao: data.descricao,
+      valor: data.valor,
+      dataVencimento: new Date(data.data),
+      dataPagamento: new Date(data.data),
+      status: "PAGO",
+      empresa: data.empresaDestino,
+      categoria: "Empréstimo Intercompany"
+    };
+
+    await prisma.$transaction([
+      prisma.transacaoFinanceira.create({ data: payloadOrigem }),
+      prisma.transacaoFinanceira.create({ data: payloadDestino })
+    ]);
+
+    revalidatePath("/financeiro");
+    revalidatePath("/relatorios");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: "Erro ao registrar empréstimo intercompany." };
+  }
+}

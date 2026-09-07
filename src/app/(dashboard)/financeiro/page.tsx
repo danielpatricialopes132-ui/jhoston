@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
-import { getFinanceiroData, salvarTransacao, deleteTransacao, alterarStatusTransacao } from "./actions";
+import { getFinanceiroData, salvarTransacao, deleteTransacao, alterarStatusTransacao, salvarEmprestimoIntercompany } from "./actions";
 import { salvarFornecedor } from "../fornecedores/actions";
 import { getSession } from "@/app/login/actions";
 import Link from "next/link";
@@ -91,6 +91,15 @@ export default function FinanceiroPage() {
   const [isQuickFornecedorOpen, setIsQuickFornecedorOpen] = useState(false);
   const [quickNome, setQuickNome] = useState("");
   const [quickPix, setQuickPix] = useState("");
+
+  // Intercompany Loan Modal states
+  const [isIntercompanyModalOpen, setIsIntercompanyModalOpen] = useState(false);
+  const [intercompanyOrigem, setIntercompanyOrigem] = useState("JHOSTON");
+  const [intercompanyDestino, setIntercompanyDestino] = useState("ECO_STONE");
+  const [intercompanyValor, setIntercompanyValor] = useState("");
+  const [intercompanyData, setIntercompanyData] = useState(new Date().toISOString().split("T")[0]);
+  const [intercompanyDescricao, setIntercompanyDescricao] = useState("");
+  const [intercompanyErrorMsg, setIntercompanyErrorMsg] = useState("");
 
   const loadData = () => {
     getFinanceiroData().then((res) => {
@@ -217,6 +226,42 @@ export default function FinanceiroPage() {
   };
 
 
+
+  const handleIntercompanySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!intercompanyDescricao.trim()) {
+      setIntercompanyErrorMsg("A descrição é obrigatória.");
+      return;
+    }
+    if (!intercompanyValor || parseFloat(intercompanyValor) <= 0) {
+      setIntercompanyErrorMsg("Insira um valor válido.");
+      return;
+    }
+    if (intercompanyOrigem === intercompanyDestino) {
+      setIntercompanyErrorMsg("As empresas de origem e destino não podem ser a mesma.");
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await salvarEmprestimoIntercompany({
+        empresaOrigem: intercompanyOrigem,
+        empresaDestino: intercompanyDestino,
+        valor: parseFloat(intercompanyValor),
+        data: intercompanyData,
+        descricao: intercompanyDescricao,
+      });
+
+      if (res.success) {
+        loadData();
+        setIsIntercompanyModalOpen(false);
+        setIntercompanyValor("");
+        setIntercompanyDescricao("");
+        setIntercompanyErrorMsg("");
+      } else {
+        setIntercompanyErrorMsg(res.error || "Erro ao salvar empréstimo.");
+      }
+    });
+  };
 
   const handleQuickFornecedorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -510,6 +555,10 @@ export default function FinanceiroPage() {
           <button className="btn btn-primary" onClick={() => openNewModal("DESPESA")}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
             Nova Despesa (Fornecedor)
+          </button>
+          <button className="btn btn-secondary" onClick={() => setIsIntercompanyModalOpen(true)} style={{ backgroundColor: "#f3f4f6", color: "#1f2937", border: "1px solid #d1d5db" }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px", color: "#6b7280" }}><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+            Empréstimo Intercompany
           </button>
         </div>
       </div>
@@ -1449,6 +1498,104 @@ export default function FinanceiroPage() {
                 </button>
                 <button type="submit" className="btn btn-primary">
                   Cadastrar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Empréstimo Intercompany */}
+      {isIntercompanyModalOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: "500px", marginTop: "10%" }}>
+            <div className="modal-header">
+              <h4 style={{ fontSize: "16px", fontWeight: 600 }}>Empréstimo Intercompany</h4>
+              <button 
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px" }} 
+                onClick={() => setIsIntercompanyModalOpen(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleIntercompanySubmit}>
+              <div className="modal-body">
+                {intercompanyErrorMsg && (
+                  <div style={{ backgroundColor: "var(--error-bg)", color: "var(--error)", padding: "12px", borderRadius: "var(--radius-md)", marginBottom: "16px", fontSize: "14px", fontWeight: 500 }}>
+                    {intercompanyErrorMsg}
+                  </div>
+                )}
+                
+                <div style={{ padding: "12px", backgroundColor: "rgba(59, 130, 246, 0.05)", border: "1px solid rgba(59, 130, 246, 0.2)", borderRadius: "var(--radius-md)", marginBottom: "16px", fontSize: "12px", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                  <strong>Atenção:</strong> Esta ação criará automaticamente duas transações com a categoria "Empréstimo Intercompany":<br/>
+                  - Uma <strong>Despesa</strong> (Saída) na empresa de Origem.<br/>
+                  - Uma <strong>Receita</strong> (Entrada) na empresa de Destino.
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Origem (Saída) *</label>
+                    <select className="form-control" value={intercompanyOrigem} onChange={(e) => setIntercompanyOrigem(e.target.value)} required>
+                      <option value="JHOSTON">Jhoston Pools</option>
+                      <option value="ECO_STONE">Eco Stone</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Destino (Entrada) *</label>
+                    <select className="form-control" value={intercompanyDestino} onChange={(e) => setIntercompanyDestino(e.target.value)} required>
+                      <option value="JHOSTON">Jhoston Pools</option>
+                      <option value="ECO_STONE">Eco Stone</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Descrição *</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Ex: Empréstimo para cobrir folha"
+                    value={intercompanyDescricao}
+                    onChange={(e) => setIntercompanyDescricao(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Valor (R$) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      className="form-control"
+                      value={intercompanyValor}
+                      onChange={(e) => setIntercompanyValor(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Data *</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={intercompanyData}
+                      onChange={(e) => setIntercompanyData(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setIsIntercompanyModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Confirmar Transferência
                 </button>
               </div>
             </form>
