@@ -239,7 +239,7 @@ export default function AjudaPage() {
               <li><strong>Dia Trabalhado:</strong> Registra diária padrão cheia (8 horas trabalhadas).</li>
               <li><strong>Viagem (V):</strong> Marca o dia como diária de viagem de campo para cálculo de deslocamento.</li>
               <li><strong>Dia Chuvoso (CH):</strong> Permite o pagamento proporcional da diária devido à interrupção por chuvas (o usuário define o percentual a pagar, ex: 50% para meia diária).</li>
-              <li><strong>Não Aplicável (N/A):</strong> Indica que o funcionário não estava escalado para aquele projeto naquele dia (zera o pagamento para esta entrada).</li>
+              <li><strong>Não Aplicável (N/A):</strong> Indica que o colaborador não estava escalado para aquele projeto naquele dia (zera o pagamento para esta entrada).</li>
             </ul>
 
             <h5>B. Importador de Escala de WhatsApp</h5>

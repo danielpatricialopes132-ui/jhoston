@@ -164,7 +164,7 @@ export default function FuncionariosPage() {
       <div className="flex-row-between">
         <div>
           <h3 style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-heading)" }}>
-            Cadastro de Funcionários
+            Cadastro de Colaboradores
           </h3>
           <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
             Gerencie os dados da equipe, cargos, diárias padrão e chaves PIX.
@@ -172,14 +172,14 @@ export default function FuncionariosPage() {
         </div>
         <button className="btn btn-primary" onClick={openNewModal}>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "4px" }}><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
-          Novo Funcionário
+          Novo Colaborador
         </button>
       </div>
 
       {/* Barra de Filtros */}
       <div className="filters-bar">
         <div className="form-group" style={{ flex: 2 }}>
-          <label className="form-label">Buscar Funcionário</label>
+          <label className="form-label">Buscar Colaborador</label>
           <input
             type="text"
             className="form-control"
@@ -202,7 +202,7 @@ export default function FuncionariosPage() {
         </div>
       </div>
 
-      {/* Lista de Funcionários */}
+      {/* Lista de Colaboradores */}
       <div className="table-container">
         <table className="table">
           <thead>
@@ -221,7 +221,7 @@ export default function FuncionariosPage() {
             {filteredFuncionarios.length === 0 ? (
               <tr>
                 <td colSpan={8} style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>
-                  Nenhum funcionário cadastrado ou encontrado.
+                  Nenhum colaborador cadastrado ou encontrado.
                 </td>
               </tr>
             ) : (
@@ -280,13 +280,13 @@ export default function FuncionariosPage() {
         </table>
       </div>
 
-      {/* Modal de Novo/Editar Funcionário */}
+      {/* Modal de Novo/Editar Colaborador */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
               <h4 style={{ fontSize: "18px", fontWeight: 600 }}>
-                {editingFuncionario ? "Editar Funcionário" : "Novo Funcionário"}
+                {editingFuncionario ? "Editar Colaborador" : "Novo Colaborador"}
               </h4>
               <button
                 style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px" }}
@@ -379,7 +379,7 @@ export default function FuncionariosPage() {
                       style={{ width: "16px", height: "16px" }}
                     />
                     <label htmlFor="ativo-chk" className="form-label" style={{ cursor: "pointer", marginBottom: 0 }}>
-                      Funcionário Ativo
+                      Colaborador Ativo
                     </label>
                   </div>
                 )}

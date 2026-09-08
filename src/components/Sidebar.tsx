@@ -186,7 +186,7 @@ export default function Sidebar() {
     {
       title: "Equipe & Campo",
       items: [
-        { name: "Funcionários", path: "/funcionarios", icon: icons.funcionarios, adminOnly: true },
+        { name: "Colaboradores", path: "/funcionarios", icon: icons.funcionarios, adminOnly: true },
         { name: "Controle de Ponto", path: "/ponto", icon: icons.ponto, adminOnly: false },
         { name: "Diárias de Viagem", path: "/viagens", icon: icons.viagens, adminOnly: true },
         { name: "Controle de Vales", path: "/vales", icon: icons.vales, adminOnly: true },

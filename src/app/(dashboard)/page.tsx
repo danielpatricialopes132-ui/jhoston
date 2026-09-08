@@ -70,15 +70,19 @@ async function getDashboardData(empresaFilter: string) {
     }),
   ]);
 
+  const saldoContaAnterior = transacoesPagas
+    .filter((t) => t.tipo === "RECEITA" && t.planoContaId === 33) // id 33 is 0.2 based on previous script output
+    .reduce((acc, t) => acc + t.valor, 0);
+
   const receitasPagas = transacoesPagas
-    .filter((t) => t.tipo === "RECEITA")
+    .filter((t) => t.tipo === "RECEITA" && t.planoContaId !== 32 && t.planoContaId !== 33)
     .reduce((acc, t) => acc + t.valor, 0);
 
   const despesasPagas = transacoesPagas
-    .filter((t) => t.tipo === "DESPESA")
+    .filter((t) => t.tipo === "DESPESA" && t.planoContaId !== 32 && t.planoContaId !== 33)
     .reduce((acc, t) => acc + t.valor, 0);
 
-  const saldoCaixa = receitasPagas - despesasPagas;
+  const saldoCaixa = receitasPagas + saldoContaAnterior - despesasPagas;
 
   // Classificação de Contas a Pagar por data crítica (GMT-3)
   const now = new Date();
@@ -310,7 +314,7 @@ export default async function DashboardPage() {
           <div className="card-desc">Projetos em andamento</div>
         </div>
         <div className="glass-card metric-card">
-          <div className="card-title">Funcionários Ativos</div>
+          <div className="card-title">Colaboradores Ativos</div>
           <div className="card-value" style={{ color: "var(--secondary)" }}>
             {data.funcionariosCount}
           </div>
@@ -605,7 +609,7 @@ export default async function DashboardPage() {
           <table className="table" style={{ fontSize: "13px" }}>
             <thead>
               <tr>
-                <th>Funcionário</th>
+                <th>Colaborador</th>
                 <th>Data Concessão</th>
                 <th>Valor do Vale</th>
                 <th>Finalidade</th>

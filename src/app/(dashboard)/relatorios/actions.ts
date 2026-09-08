@@ -287,3 +287,138 @@ export async function getAndamentoObraReport(
 
   return { obra, relatos };
 }
+
+export async function getRelatorioGerencialContabil(empresaFilter: string) {
+  const obras = await prisma.obra.findMany({
+    where: {
+      ...(empresaFilter !== "TODAS" ? { empresa: empresaFilter } : {}),
+    },
+    include: {
+      adendos: true,
+      transacoesFinanceiras: {
+        where: {
+          status: "PAGO",
+          planoConta: {
+            codigo: { not: "0.2" } // 0.2 é saldo anterior, não entra na obra
+          }
+        },
+        include: {
+          adendo: true,
+          funcionario: true,
+          planoConta: true
+        }
+      }
+    },
+    orderBy: { status: "asc" }
+  });
+
+  const report = obras.map(obra => {
+    const faturamentoContratoBase = obra.valorFechado;
+    const faturamentoAdendos = obra.adendos.reduce((acc, a) => acc + a.valor, 0);
+    const faturamentoPrevisto = faturamentoContratoBase + faturamentoAdendos;
+
+    const receitas = obra.transacoesFinanceiras.filter(t => t.tipo === "RECEITA");
+    const despesas = obra.transacoesFinanceiras.filter(t => t.tipo === "DESPESA");
+
+    const receitasContratoBase = receitas.filter(r => !r.adendoId).reduce((acc, r) => acc + r.valor, 0);
+    const detalheAdendos = obra.adendos.map(a => {
+      const recebido = receitas.filter(r => r.adendoId === a.id).reduce((acc, r) => acc + r.valor, 0);
+      return {
+        id: a.id,
+        descricao: a.descricao,
+        valorPrevisto: a.valor,
+        recebido,
+        percentual: a.valor > 0 ? (recebido / a.valor) * 100 : 0
+      };
+    });
+
+    const entradasRealizadas = receitas.reduce((acc, r) => acc + r.valor, 0);
+    const percentualRecebimento = faturamentoPrevisto > 0 ? (entradasRealizadas / faturamentoPrevisto) * 100 : 0;
+
+    const despesasColaboradoresMap = new Map<string, number>();
+    let outrasDespesasRealizadas = 0;
+
+    for (const d of despesas) {
+      if (d.funcionarioId && d.funcionario) {
+        const nome = d.funcionario.nome;
+        despesasColaboradoresMap.set(nome, (despesasColaboradoresMap.get(nome) || 0) + d.valor);
+      } else if (d.planoConta && (d.planoConta.codigo.startsWith("2.3") || d.planoConta.codigo.startsWith("3.1"))) {
+         // caso seja folha mas nao tem funcionario linkado id, tenta pegar do clienteFornecedor
+         const nome = d.clienteFornecedor || "Colaborador Não Identificado";
+         despesasColaboradoresMap.set(nome, (despesasColaboradoresMap.get(nome) || 0) + d.valor);
+      } else {
+        outrasDespesasRealizadas += d.valor;
+      }
+    }
+
+    const detalheColaboradores = Array.from(despesasColaboradoresMap.entries()).map(([nome, valor]) => ({ nome, valor }));
+    const despesasRealizadas = despesas.reduce((acc, d) => acc + d.valor, 0);
+    
+    const saldoObra = entradasRealizadas - despesasRealizadas;
+    const margemRealizada = entradasRealizadas > 0 ? (saldoObra / entradasRealizadas) * 100 : 0;
+
+    return {
+      obraId: obra.id,
+      obraNome: obra.nome,
+      obraStatus: obra.status,
+      faturamentoPrevisto,
+      faturamentoContratoBase,
+      receitasContratoBase,
+      percentualContratoBase: faturamentoContratoBase > 0 ? (receitasContratoBase / faturamentoContratoBase) * 100 : 0,
+      detalheAdendos,
+      entradasRealizadas,
+      percentualRecebimento,
+      despesasRealizadas,
+      detalheColaboradores,
+      outrasDespesasRealizadas,
+      saldoObra,
+      margemRealizada
+    };
+  });
+
+  return report;
+}
+
+export async function getLivroCaixa(dataInicioStr: string, dataFimStr: string, empresaFilter: string) {
+  const dataInicio = new Date(dataInicioStr);
+  const dataFim = new Date(dataFimStr);
+  const startOfDay = new Date(dataInicio.setUTCHours(0, 0, 0, 0));
+  const endOfDay = new Date(dataFim.setUTCHours(23, 59, 59, 999));
+
+  const saldoInicial = 0;
+
+  const baseWherePeriodo = {
+    status: "PAGO",
+    dataPagamento: {
+      gte: startOfDay,
+      lte: endOfDay,
+    },
+    ...(empresaFilter !== "TODOS" ? { empresa: empresaFilter } : {}),
+    planoConta: {
+      codigo: { not: "0.1" }
+    }
+  };
+
+  const transacoesPeriodo = await prisma.transacaoFinanceira.findMany({
+    where: baseWherePeriodo,
+    include: {
+      planoConta: true,
+      obra: true,
+      adendo: true
+    },
+    orderBy: {
+      dataPagamento: "asc"
+    }
+  });
+
+  return {
+    saldoInicial,
+    transacoes: transacoesPeriodo
+  };
+}
+
+export async function gerarLinkCompartilhado(payload: any) {
+  const { encryptToken } = await import("@/lib/crypto");
+  const token = encryptToken(payload);
+  return token;
+}

@@ -19,7 +19,7 @@ interface Obra {
   status: string;
   valorFechado: number;
   clienteNome: string;
-  adendos?: { id: number; descricao: string; valor: number }[];
+  adendos?: { id: number; descricao: string; valor: number; status: string }[];
 }
 
 interface Fornecedor {
@@ -50,6 +50,27 @@ interface Transacao {
   empresa: string;
   adendoId: number | null;
 }
+
+const getCompanyBranding = (empresa: string) => {
+  if (empresa === "ECO_STONE") {
+    return {
+      logo: "https://i.ibb.co/Ld1JvL2/eco-stone-logo.png",
+      name: "ECO STONE",
+      subtitle: "Revestimentos em Pedra Naturais",
+      cnpj: "52.880.840/0001-44",
+      corporateName: "Eco Stone Revestimentos LTDA",
+      primaryColor: "#0f766e"
+    };
+  }
+  return {
+    logo: "https://i.ibb.co/q5k262h/jhoston-pools-logo.png",
+    name: "Jhoston Pools",
+    subtitle: "Soluções em Piscinas e Revestimentos",
+    cnpj: "42.062.261/0001-63",
+    corporateName: "Jhoston Revestimentos LTDA",
+    primaryColor: "#0284c7"
+  };
+};
 
 export default function FinanceiroPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -111,6 +132,9 @@ export default function FinanceiroPage() {
   const [intercompanyData, setIntercompanyData] = useState(new Date().toISOString().split("T")[0]);
   const [intercompanyDescricao, setIntercompanyDescricao] = useState("");
   const [intercompanyErrorMsg, setIntercompanyErrorMsg] = useState("");
+
+  const [isRPAModalOpen, setIsRPAModalOpen] = useState(false);
+  const [rpaTransaction, setRpaTransaction] = useState<any>(null);
 
   const loadData = () => {
     getFinanceiroData().then((res) => {
@@ -364,12 +388,22 @@ export default function FinanceiroPage() {
   );
 
   // Cálculos Financeiros Globais
-  const receitasRecebidas = transacoesFiltradasEmpresa.filter((t) => t.tipo === "RECEITA" && t.status === "PAGO").reduce((acc, t) => acc + t.valor, 0);
-  const despesasPagas = transacoesFiltradasEmpresa.filter((t) => t.tipo === "DESPESA" && t.status === "PAGO").reduce((acc, t) => acc + t.valor, 0);
-  const caixaAtual = receitasRecebidas - despesasPagas;
+  const saldoContaAnterior = transacoesFiltradasEmpresa
+    .filter((t) => t.tipo === "RECEITA" && t.status === "PAGO" && t.planoConta?.codigo === "0.2")
+    .reduce((acc, t) => acc + t.valor, 0);
 
-  const contasAReceberPendente = transacoesFiltradasEmpresa.filter((t) => t.tipo === "RECEITA" && t.status !== "PAGO").reduce((acc, t) => acc + t.valor, 0);
-  const contasAPagarPendente = transacoesFiltradasEmpresa.filter((t) => t.tipo === "DESPESA" && t.status !== "PAGO").reduce((acc, t) => acc + t.valor, 0);
+  const receitasRecebidas = transacoesFiltradasEmpresa
+    .filter((t) => t.tipo === "RECEITA" && t.status === "PAGO" && t.planoConta?.codigo !== "0.1" && t.planoConta?.codigo !== "0.2")
+    .reduce((acc, t) => acc + t.valor, 0);
+
+  const despesasPagas = transacoesFiltradasEmpresa
+    .filter((t) => t.tipo === "DESPESA" && t.status === "PAGO" && t.planoConta?.codigo !== "0.1" && t.planoConta?.codigo !== "0.2")
+    .reduce((acc, t) => acc + t.valor, 0);
+
+  const caixaAtual = receitasRecebidas + saldoContaAnterior - despesasPagas;
+
+  const contasAReceberPendente = transacoesFiltradasEmpresa.filter((t) => t.tipo === "RECEITA" && t.status !== "PAGO" && t.planoConta?.codigo !== "0.1" && t.planoConta?.codigo !== "0.2").reduce((acc, t) => acc + t.valor, 0);
+  const contasAPagarPendente = transacoesFiltradasEmpresa.filter((t) => t.tipo === "DESPESA" && t.status !== "PAGO" && t.planoConta?.codigo !== "0.1" && t.planoConta?.codigo !== "0.2").reduce((acc, t) => acc + t.valor, 0);
 
   // Filtragem da lista
   const filteredTransacoes = transacoes.filter((t) => {
@@ -408,6 +442,11 @@ export default function FinanceiroPage() {
   const monthlyData = getLast6Months();
   transacoesFiltradasEmpresa.forEach((t) => {
     if (t.status === "PAGO") {
+      // Ignorar Lançamentos Iniciais no Gráfico Mensal para não distorcer as barras
+      if (t.descricao.includes("Saldo Recebido Anterior") || t.descricao.includes("Saldo em Conta Anterior")) {
+        return;
+      }
+      
       const dateStr = t.dataPagamento || t.dataVencimento;
       if (dateStr) {
         const monthKey = dateStr.slice(0, 7);
@@ -432,7 +471,20 @@ export default function FinanceiroPage() {
   let totalDespesasRealizadas = 0;
   transacoesFiltradasEmpresa.forEach((t) => {
     if (t.tipo === "DESPESA" && t.status === "PAGO") {
-      const cat = t.categoria || "Outros";
+      let cat = "Outros";
+      if (t.planoConta?.codigo) {
+        if (t.planoConta.codigo.startsWith("2.3") || t.planoConta.codigo.startsWith("3.1")) {
+          cat = "Folha";
+        } else if (t.planoConta.codigo.startsWith("2.5") || t.planoConta.codigo.startsWith("2.6")) {
+          cat = "Viagem";
+        } else if (t.planoConta.codigo.startsWith("2.1") || t.planoConta.codigo.startsWith("2.2") || t.planoConta.codigo.startsWith("2.4") || t.planoConta.codigo.startsWith("3.") || t.planoConta.codigo.startsWith("4.")) {
+          // Simplificação: vamos chamar de Fornecedores o resto das operacionais
+          cat = "Fornecedores";
+        }
+      } else {
+        cat = t.categoria || "Outros";
+      }
+
       if (cat in categoriesMap) {
         categoriesMap[cat] += t.valor;
       } else {
@@ -802,6 +854,7 @@ export default function FinanceiroPage() {
                   <tr>
                     <th>Obra / Cliente</th>
                     <th>Valor do Contrato</th>
+                    <th>Valor Recebido (Realizado)</th>
                     <th>Custos Incorridos</th>
                     <th style={{ width: "220px" }}>Consumo do Orçamento</th>
                     <th>Margem Realizada</th>
@@ -811,7 +864,7 @@ export default function FinanceiroPage() {
                 <tbody>
                   {obras.filter(o => o.status === "ATIVA" && (empresaFilter === "TODOS" || (o as any).empresa === empresaFilter)).length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{ textAlign: "center", color: "var(--text-muted)", padding: "24px", fontStyle: "italic" }}>
+                      <td colSpan={7} style={{ textAlign: "center", color: "var(--text-muted)", padding: "24px", fontStyle: "italic" }}>
                         Nenhuma obra ativa encontrada para análise.
                       </td>
                     </tr>
@@ -820,7 +873,12 @@ export default function FinanceiroPage() {
                       const despesas = transacoesFiltradasEmpresa
                         .filter((t) => t.obraId === o.id && t.tipo === "DESPESA")
                         .reduce((acc, t) => acc + t.valor, 0);
-                      const valorFechado = o.valorFechado || 0;
+                      const receitasRealizadas = transacoesFiltradasEmpresa
+                        .filter((t) => t.obraId === o.id && t.tipo === "RECEITA" && t.status === "PAGO" && t.planoConta?.codigo !== "0.2")
+                        .reduce((acc, t) => acc + t.valor, 0);
+
+                      const adendosValor = o.adendos?.filter(a => a.status !== "CANCELADO").reduce((acc, ad) => acc + ad.valor, 0) || 0;
+                      const valorFechado = (o.valorFechado || 0) + adendosValor;
                       const lucro = valorFechado - despesas;
                       const margemPct = valorFechado > 0 ? (lucro / valorFechado) * 100 : 0;
                       const consumoPct = valorFechado > 0 ? (despesas / valorFechado) * 100 : 0;
@@ -834,6 +892,7 @@ export default function FinanceiroPage() {
                             <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{o.clienteNome || "Cliente não especificado"}</span>
                           </td>
                           <td style={{ fontWeight: 600, verticalAlign: "middle" }}>{formatCurrency(valorFechado)}</td>
+                          <td style={{ fontWeight: 600, color: "var(--success)", verticalAlign: "middle" }}>{formatCurrency(receitasRealizadas)}</td>
                           <td style={{ fontWeight: 600, color: "var(--error)", verticalAlign: "middle" }}>{formatCurrency(despesas)}</td>
                           <td style={{ verticalAlign: "middle" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 600, color: "var(--text-muted)" }}>
@@ -1025,6 +1084,15 @@ export default function FinanceiroPage() {
                   </td>
                   <td style={{ textAlign: "right", minWidth: "220px" }}>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "flex-end" }}>
+
+                      {t.tipo === "DESPESA" && t.status === "PAGO" && (
+                        <button className="btn btn-secondary btn-sm" onClick={() => {
+                          setRpaTransaction(t);
+                          setIsRPAModalOpen(true);
+                        }}>
+                          Gerar RPA
+                        </button>
+                      )}
 
                       <button
                         className={`btn btn-sm ${t.status === "PAGO" ? "btn-secondary" : "btn-primary"}`}
@@ -1402,13 +1470,13 @@ export default function FinanceiroPage() {
                   </div>
                 </div>
 
-                {/* Condicional para Fornecedores Cadastrados / Funcionários */}
+                {/* Condicional para Fornecedores Cadastrados / Colaboradores */}
                 {tipo === "DESPESA" ? (
                   planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("folha de pagamento") ||
                   planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("salário") ||
                   planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("adiantamento") ? (
                     <div className="form-group">
-                      <label className="form-label">Funcionário *</label>
+                      <label className="form-label">Colaborador *</label>
                       <select 
                         className="form-control" 
                         value={funcionarioId} 
@@ -1419,7 +1487,7 @@ export default function FinanceiroPage() {
                         }}
                         required
                       >
-                        <option value="">-- Selecione um Funcionário --</option>
+                        <option value="">-- Selecione um Colaborador --</option>
                         {funcionarios.map((f) => (
                           <option key={f.id} value={f.id}>
                             {f.nome} - {f.cargo || "Sem cargo"}
@@ -1798,6 +1866,101 @@ export default function FinanceiroPage() {
         </div>
       )}
 
+      {/* --- MODAL DO RPA IMPRIMÍVEL (LANÇAMENTO ÚNICO) --- */}
+      {isRPAModalOpen && rpaTransaction && (
+        <div className="modal-overlay" style={{ zIndex: 2000 }}>
+          <div className="modal-content" style={{ width: "95%", maxWidth: "700px" }}>
+            <div className="modal-header">
+              <h4 style={{ fontSize: "18px", fontWeight: 700 }}>Recibo de Pagamento de Autônomo (RPA)</h4>
+              <button
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px" }}
+                onClick={() => setIsRPAModalOpen(false)}
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="modal-body printable-holerite">
+              {(() => {
+                const branding = getCompanyBranding(rpaTransaction.empresa || empresaFilter);
+                return (
+                  <div style={{ border: "1px solid #ccc", padding: "24px", borderRadius: "8px", backgroundColor: "#fff" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `2px solid ${branding.primaryColor}`, paddingBottom: "16px", marginBottom: "20px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                        <img
+                          src={branding.logo}
+                          alt={branding.name}
+                          style={{ height: "56px", maxWidth: "140px", objectFit: "contain" }}
+                        />
+                        <div>
+                          <h3 style={{ margin: 0, textTransform: "uppercase", color: branding.primaryColor, fontSize: "18px", fontWeight: 800 }}>
+                            {branding.name}
+                          </h3>
+                          <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{branding.corporateName} — CNPJ: {branding.cnpj}</span>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right", border: "2px solid #e2e8f0", padding: "8px 16px", borderRadius: "6px" }}>
+                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block", textTransform: "uppercase" }}>RECIBO - RPA</span>
+                        <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>Nº {new Date().getTime().toString().slice(-6)}</span>
+                      </div>
+                    </div>
+
+                <div style={{ padding: "16px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", marginBottom: "20px" }}>
+                  <p style={{ margin: 0, fontSize: "14px", lineHeight: "1.6", textAlign: "justify" }}>
+                    Recebi(emos) de <strong>{branding.corporateName}</strong>, inscrita no CNPJ sob o nº <strong>{branding.cnpj}</strong>, a importância de 
+                    <strong style={{ fontSize: "16px" }}> {formatCurrency(rpaTransaction.valor)}</strong>, 
+                    referente a <strong>{rpaTransaction.descricao}</strong>, prestando serviços sem vínculo empregatício. O pagamento foi efetuado na data de <strong>{formatDateBR(rpaTransaction.dataPagamento || rpaTransaction.dataVencimento)}</strong>.
+                  </p>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "13px", marginBottom: "20px" }}>
+                  <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                    <span style={{ color: "var(--text-muted)" }}>Nome do Beneficiário:</span>
+                    <strong style={{ display: "block", fontSize: "14px" }}>{rpaTransaction.clienteFornecedor || "___________________________"}</strong>
+                  </div>
+                  <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                    <span style={{ color: "var(--text-muted)" }}>CPF / RG:</span>
+                    <strong style={{ display: "block", fontSize: "14px" }}>___________________________</strong>
+                  </div>
+                  <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                    <span style={{ color: "var(--text-muted)" }}>Chave PIX:</span>
+                    <strong style={{ display: "block", fontSize: "14px" }}>___________________________</strong>
+                  </div>
+                  <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                    <span style={{ color: "var(--text-muted)" }}>Assinatura:</span>
+                    <strong style={{ display: "block", fontSize: "14px" }}>___________________________</strong>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: "2px solid #ccc", paddingTop: "12px", fontSize: "13px", textAlign: "center" }}>
+                  <strong style={{ color: "var(--primary)", fontSize: "15px" }}>VALOR PAGO: {formatCurrency(rpaTransaction.valor)}</strong>
+                </div>
+
+              </div>
+            );
+          })()}
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setIsRPAModalOpen(false)}>
+                Fechar
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  document.body.classList.add("printing-holerite");
+                  window.print();
+                  document.body.classList.remove("printing-holerite");
+                }}
+              >
+                Gerar PDF (RPA)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+

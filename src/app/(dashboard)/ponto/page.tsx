@@ -391,7 +391,7 @@ export default function PontoPage() {
         const remaining = unidentifiedNames.filter(n => n !== whatsappName);
         setUnidentifiedNames(remaining);
 
-        alert(`Funcionário ${newEmp.nome} cadastrado com sucesso!`);
+        alert(`Colaborador ${newEmp.nome} cadastrado com sucesso!`);
         
         if (remaining.length === 0) {
           generateImportedPreview(updatedMappings);
@@ -579,7 +579,7 @@ export default function PontoPage() {
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Funcionário</th>
+                      <th>Colaborador</th>
                       <th>Cargo</th>
                       <th style={{ width: "220px" }}>Status do Dia</th>
                       <th style={{ width: "130px" }}>Horas</th>
@@ -597,7 +597,7 @@ export default function PontoPage() {
                     ) : pontoRows.length === 0 ? (
                       <tr>
                         <td colSpan={ehAdmin ? 6 : 5} style={{ textAlign: "center", padding: "32px", color: "var(--text-muted)" }}>
-                          Nenhum funcionário ativo cadastrado no sistema.
+                          Nenhum colaborador ativo cadastrado no sistema.
                         </td>
                       </tr>
                     ) : (
@@ -709,7 +709,7 @@ export default function PontoPage() {
                 <tr>
                   <th>Data</th>
                   <th>Obra</th>
-                  <th>Funcionário</th>
+                  <th>Colaborador</th>
                   <th>Status do Dia</th>
                   <th>Horas</th>
                   <th>Relato do Campo</th>
@@ -834,7 +834,7 @@ export default function PontoPage() {
                               onChange={(e) => handleMapToExisting(name, e.target.value)}
                               defaultValue=""
                             >
-                              <option value="">-- Selecione o Funcionário Correto --</option>
+                              <option value="">-- Selecione o Colaborador Correto --</option>
                               {funcionariosGlobais.map((f) => (
                                 <option key={f.id} value={f.id}>
                                   {f.nome} ({f.cargo})
@@ -845,7 +845,7 @@ export default function PontoPage() {
                         </div>
 
                         <div style={{ borderTop: "1px dashed var(--border-color)", paddingTop: "12px", marginTop: "4px" }}>
-                          <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-muted)" }}>Ou cadastrar como Novo Funcionário:</span>
+                          <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-muted)" }}>Ou cadastrar como Novo Colaborador:</span>
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px", marginTop: "8px" }}>
                             <input
                               type="text"
@@ -943,7 +943,7 @@ export default function PontoPage() {
                           <table className="table" style={{ fontSize: "13px" }}>
                             <thead>
                               <tr>
-                                <th>Funcionário</th>
+                                <th>Colaborador</th>
                                 <th style={{ width: "200px" }}>Status</th>
                                 <th style={{ width: "80px" }}>Horas</th>
                                 <th>Observações</th>

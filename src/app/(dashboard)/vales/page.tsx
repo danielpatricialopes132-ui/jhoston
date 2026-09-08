@@ -87,7 +87,7 @@ export default function ValesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFuncionarioId) {
-      setErrorMsg("Selecione o funcionário.");
+      setErrorMsg("Selecione o colaborador.");
       return;
     }
     if (!valor || parseFloat(valor) <= 0) {
@@ -199,7 +199,7 @@ export default function ValesPage() {
           <input
             type="text"
             className="form-control"
-            placeholder="Buscar por funcionário ou descrição..."
+            placeholder="Buscar por colaborador ou descrição..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -236,7 +236,7 @@ export default function ValesPage() {
           <thead>
             <tr>
               <th style={{ width: "80px" }}>ID</th>
-              <th>Funcionário</th>
+              <th>Colaborador</th>
               <th>Data</th>
               <th style={{ width: "120px" }}>Tipo</th>
               <th>Valor</th>
@@ -354,14 +354,14 @@ export default function ValesPage() {
                   </div>
                 )}
                 <div className="form-group">
-                  <label className="form-label">Funcionário *</label>
+                  <label className="form-label">Colaborador *</label>
                   <select
                     className="form-control"
                     value={selectedFuncionarioId}
                     onChange={(e) => setSelectedFuncionarioId(e.target.value)}
                     required
                   >
-                    <option value="">-- Selecione o Funcionário --</option>
+                    <option value="">-- Selecione o Colaborador --</option>
                     {funcionarios.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.nome} ({f.cargo})

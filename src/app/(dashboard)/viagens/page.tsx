@@ -203,7 +203,7 @@ export default function ViagensPage() {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
   };
 
-  // Listar funcionários para acompanhante que não sejam o motorista selecionado
+  // Listar colaboradores para acompanhante que não sejam o motorista selecionado
   const acompanhantesDisponiveis = funcionarios.filter(
     (f) => f.id !== parseInt(selectedMotoristaId)
   );
@@ -278,7 +278,7 @@ export default function ViagensPage() {
                     <table className="table" style={{ fontSize: "13px" }}>
                       <thead>
                         <tr>
-                          <th>Funcionário</th>
+                          <th>Colaborador</th>
                           <th>Papel</th>
                           <th>Tipo de Diária</th>
                           <th>Valor Calculado</th>

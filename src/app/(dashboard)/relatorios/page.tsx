@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, startTransition } from "react";
-import { getRelatoriosMetadata, getFolhaPontoObra, getPagamentoFuncionarios, getLucratividadeObras, getAndamentoObraReport as getAndamentoObra } from "./actions";
+import { getRelatoriosMetadata, getFolhaPontoObra, getPagamentoFuncionarios, getLucratividadeObras, getAndamentoObraReport as getAndamentoObra, getRelatorioGerencialContabil, getLivroCaixa, gerarLinkCompartilhado } from "./actions";
 import { getCompanyBranding } from "@/lib/branding";
 
 interface Obra {
@@ -53,7 +53,7 @@ interface PagamentoItem {
 }
 
 export default function RelatoriosPage() {
-  const [activeTab, setActiveTab] = useState<"ponto" | "pagamento" | "lucratividade" | "andamento">("ponto");
+  const [activeTab, setActiveTab] = useState<"ponto" | "pagamento" | "lucratividade" | "andamento" | "gerencial" | "livro_caixa">("ponto");
   const [obras, setObras] = useState<Obra[]>([]);
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +65,7 @@ export default function RelatoriosPage() {
   const [selectedAno, setSelectedAno] = useState(new Date().getFullYear());
   const [folhaPontoData, setFolhaPontoData] = useState<{ pontos: Ponto[]; funcionarios: Funcionario[] } | null>(null);
 
-  // States: Aba 2 (Pagamento de Funcionários)
+  // States: Aba 2 (Pagamento de Colaboradores)
   const [dataInicio, setDataInicio] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split("T")[0];
@@ -93,6 +93,17 @@ export default function RelatoriosPage() {
   });
   const [andamentoReport, setAndamentoReport] = useState<any | null>(null);
 
+  // States: Aba 5 (Gerencial Contábil)
+  const [gerencialReport, setGerencialReport] = useState<any[]>([]);
+
+  // States: Aba 6 (Livro Caixa)
+  const [dataInicioLivro, setDataInicioLivro] = useState("2026-09-05");
+  const [dataFimLivro, setDataFimLivro] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split("T")[0];
+  });
+  const [livroCaixaReport, setLivroCaixaReport] = useState<any | null>(null);
+
   // Opções de Meses
   const mesesOptions = [
     { value: 1, label: "Janeiro" },
@@ -109,7 +120,7 @@ export default function RelatoriosPage() {
     { value: 12, label: "Dezembro" },
   ];
 
-  // Carregar metadados iniciais (obras, funcionários)
+  // Carregar metadados iniciais (obras, colaboradores)
   useEffect(() => {
     getRelatoriosMetadata().then((res) => {
       setObras(res.obras as any);
@@ -165,21 +176,74 @@ export default function RelatoriosPage() {
     });
   };
 
+  // 5. Gerar Relatório Gerencial
+  const gerarRelatorioGerencial = () => {
+    setIsLoading(true);
+    getRelatorioGerencialContabil(empresaFilter).then((res) => {
+      setGerencialReport(res);
+      setIsLoading(false);
+    });
+  };
+
+  // 6. Gerar Livro Caixa
+  const gerarLivroCaixa = () => {
+    setIsLoading(true);
+    getLivroCaixa(dataInicioLivro, dataFimLivro, empresaFilter).then((res) => {
+      setLivroCaixaReport(res);
+      setIsLoading(false);
+    });
+  };
+
+  const handleCopyLink = async (tipo: string) => {
+    try {
+      const payload = {
+        tipo,
+        empresa: empresaFilter,
+        ...(tipo === "livro_caixa" ? { dataInicio: dataInicioLivro, dataFim: dataFimLivro } : {})
+      };
+      const token = await gerarLinkCompartilhado(payload);
+      const url = `${window.location.origin}/public/relatorios/${token}`;
+      await navigator.clipboard.writeText(url);
+      alert("Link copiado para a área de transferência!");
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao gerar link compartilhado.");
+    }
+  };
+
   // Disparar geradores dependendo da aba
   useEffect(() => {
     if (activeTab === "lucratividade") {
       gerarRelatorioLucratividade();
+    } else if (activeTab === "gerencial") {
+      gerarRelatorioGerencial();
     }
-  }, [activeTab]);
+  }, [activeTab, empresaFilter]);
 
   // Auxiliares de Data e Moeda
   const daysInMonth = (month: number, year: number) => new Date(year, month, 0).getDate();
   const totalDays = folhaPontoData ? daysInMonth(selectedMes, selectedAno) : 0;
   const daysArray = Array.from({ length: totalDays }, (_, i) => i + 1);
 
-  const formatDateBR = (dateStr: string) => {
-    const [year, month, day] = dateStr.split("-");
-    return `${day}/${month}/${year}`;
+  const formatDateBR = (dateInput: string | Date | any) => {
+    if (!dateInput) return "";
+    
+    if (dateInput instanceof Date) {
+      return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(dateInput);
+    }
+    
+    try {
+      if (typeof dateInput === 'string') {
+        const parts = dateInput.split("T")[0].split("-");
+        if (parts.length === 3) {
+          const [year, month, day] = parts;
+          return `${day}/${month}/${year}`;
+        }
+      }
+      return String(dateInput);
+    } catch {
+      return String(dateInput);
+    }
   };
 
   const formatCurrency = (val: number) => {
@@ -213,6 +277,9 @@ export default function RelatoriosPage() {
                 setEmpresaFilter(c.id);
                 setSelectedObraId("");
                 setAndamentoObraId("");
+                if (activeTab === "livro_caixa" && dataInicioLivro && dataFimLivro) {
+                  // We'll let a manual refresh or effect handle it, but wait, the effect doesn't handle livro_caixa automatically yet
+                }
               }}
               className={`btn btn-sm ${empresaFilter === c.id ? "btn-primary" : "btn-secondary"}`}
             >
@@ -223,34 +290,48 @@ export default function RelatoriosPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-color)", marginBottom: "24px" }} className="no-print">
+      <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-color)", marginBottom: "24px", overflowX: "auto", paddingBottom: "4px" }} className="no-print">
         <button
           className={`btn ${activeTab === "ponto" ? "btn-primary" : "btn-secondary"}`}
           onClick={() => setActiveTab("ponto")}
-          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: "nowrap" }}
         >
           Ponto por Obra
         </button>
         <button
           className={`btn ${activeTab === "pagamento" ? "btn-primary" : "btn-secondary"}`}
           onClick={() => setActiveTab("pagamento")}
-          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: "nowrap" }}
         >
-          Pagamento de Funcionários
+          Pagamento de Colaboradores
         </button>
         <button
           className={`btn ${activeTab === "lucratividade" ? "btn-primary" : "btn-secondary"}`}
           onClick={() => setActiveTab("lucratividade")}
-          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: "nowrap" }}
         >
-          Lucratividade por Obra
+          Lucratividade Sintética
         </button>
         <button
           className={`btn ${activeTab === "andamento" ? "btn-primary" : "btn-secondary"}`}
           onClick={() => setActiveTab("andamento")}
-          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: "nowrap" }}
         >
-          Andamento de Obra
+          Andamento Diário
+        </button>
+        <button
+          className={`btn ${activeTab === "gerencial" ? "btn-primary" : "btn-secondary"}`}
+          onClick={() => setActiveTab("gerencial")}
+          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: "nowrap" }}
+        >
+          Gerencial Contábil
+        </button>
+        <button
+          className={`btn ${activeTab === "livro_caixa" ? "btn-primary" : "btn-secondary"}`}
+          onClick={() => { setActiveTab("livro_caixa"); gerarLivroCaixa(); }}
+          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: "nowrap" }}
+        >
+          Livro Caixa
         </button>
       </div>
 
@@ -336,7 +417,7 @@ export default function RelatoriosPage() {
                 <table className="table" style={{ borderCollapse: "collapse", fontSize: "12px", width: "100%", minWidth: "900px" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#f8fafc" }}>
-                      <th style={{ padding: "8px 12px", border: "1px solid #e2e8f0", zIndex: 10, position: "sticky", left: 0, backgroundColor: "#f8fafc", width: "150px" }}>Funcionário</th>
+                      <th style={{ padding: "8px 12px", border: "1px solid #e2e8f0", zIndex: 10, position: "sticky", left: 0, backgroundColor: "#f8fafc", width: "150px" }}>Colaborador</th>
                       {daysArray.map((day) => (
                         <th key={day} style={{ padding: "6px", border: "1px solid #e2e8f0", textAlign: "center", width: "25px" }}>{day}</th>
                       ))}
@@ -500,7 +581,7 @@ export default function RelatoriosPage() {
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Funcionário</th>
+                      <th>Colaborador</th>
                       <th>Cargo</th>
                       <th>Ganhos Ponto</th>
                       <th>Ganhos Viagem</th>
@@ -571,7 +652,7 @@ export default function RelatoriosPage() {
                               setIsHoleriteModalOpen(true);
                             }}
                           >
-                            Holerite
+                            Gerar RPA
                           </button>
                         </td>
                       </tr>
@@ -659,9 +740,9 @@ export default function RelatoriosPage() {
                               {item.obra.status}
                             </span>
                           </td>
-                          <td style={{ color: "var(--success)", fontWeight: 600 }}>{formatCurrency(item.receita)}</td>
-                          <td style={{ color: "var(--text-muted)" }}>{formatCurrency(item.custosDiretos)}</td>
-                          <td style={{ color: "var(--text-muted)" }}>{formatCurrency(item.custoMaoDeObra)}</td>
+                          <td style={{ color: "var(--success)", fontWeight: 600 }}>{formatCurrency(item.faturamentoTotal)}</td>
+                          <td style={{ color: "var(--text-muted)" }}>{formatCurrency(item.custoDireto)}</td>
+                          <td style={{ color: "var(--text-muted)" }}>{formatCurrency(item.custoMaoDeObraTotal)}</td>
                           <td style={{ fontWeight: 600 }}>{formatCurrency(item.custoTotal)}</td>
                           <td style={{ fontWeight: 700, color: item.lucroLiquido >= 0 ? "var(--primary)" : "var(--error)" }}>
                             {formatCurrency(item.lucroLiquido)}
@@ -844,12 +925,284 @@ export default function RelatoriosPage() {
         </div>
       )}
 
-      {/* --- MODAL DO HOLERITE IMPRIMÍVEL --- */}
+      {/* --- ABA 5: GERENCIAL CONTÁBIL --- */}
+      {activeTab === "gerencial" && (
+        <div>
+          <div className="card no-print" style={{ padding: "20px", marginBottom: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h4 style={{ margin: 0, color: "var(--text-heading)", fontSize: "16px" }}>Relatório Gerencial Contábil</h4>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button className="btn btn-secondary" onClick={() => window.print()}>
+                  Gerar PDF / Imprimir
+                </button>
+                <button className="btn btn-secondary" onClick={() => handleCopyLink("gerencial")}>
+                  🔗 Gerar Link Compartilhado
+                </button>
+              </div>
+            </div>
+          </div>
+          {isLoading ? (
+            <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>Gerando relatório gerencial contábil...</p>
+          ) : gerencialReport.length === 0 ? (
+            <div className="card" style={{ textAlign: "center", padding: "32px", color: "var(--text-muted)" }}>
+              Nenhuma obra encontrada ou com transações financeiras pagas.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              {(() => {
+                const branding = getCompanyBranding(empresaFilter);
+                return (
+                  <div className="card" style={{ padding: "24px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px", borderBottom: `3px solid ${branding.primaryColor}`, paddingBottom: "12px" }}>
+                      <img src={branding.logo} alt={branding.name} style={{ height: "46px", maxWidth: "130px", objectFit: "contain" }} />
+                      <div>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: branding.primaryColor, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          {empresaFilter === "TODOS" ? "CONSOLIDADO GERAL" : `${branding.name} — ${branding.subtitle}`}
+                        </span>
+                        <h4 style={{ fontSize: "17px", fontWeight: 800, margin: "2px 0 0 0", color: "var(--text-heading)" }}>Relatório Gerencial Contábil (Analítico)</h4>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+              {gerencialReport.map((obra: any) => (
+                <div key={obra.obraId} className="card" style={{ padding: "24px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid var(--primary)", paddingBottom: "12px", marginBottom: "20px" }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: "18px", color: "var(--primary)" }}>{obra.obraNome}</h4>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Status: {obra.obraStatus}</span>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <strong style={{ fontSize: "14px", display: "block" }}>Lucro Caixa: <span style={{ color: obra.saldoObra >= 0 ? "var(--success)" : "var(--error)" }}>{formatCurrency(obra.saldoObra)}</span></strong>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Margem: {obra.margemRealizada.toFixed(2)}%</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+                    {/* ENTRADAS */}
+                    <div>
+                      <h5 style={{ color: "var(--success)", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>Entradas (Faturamento)</h5>
+                      <div style={{ marginBottom: "12px", fontSize: "14px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span>Contrato Base (Previsto: {formatCurrency(obra.faturamentoContratoBase)})</span>
+                          <strong>{formatCurrency(obra.receitasContratoBase)}</strong>
+                        </div>
+                      </div>
+                      
+                      {obra.detalheAdendos.length > 0 && (
+                        <div style={{ marginBottom: "12px" }}>
+                          <strong style={{ fontSize: "13px", color: "var(--text-muted)" }}>Adendos:</strong>
+                          <ul style={{ listStyle: "none", padding: 0, margin: "4px 0", fontSize: "13px" }}>
+                            {obra.detalheAdendos.map((ad: any) => (
+                              <li key={ad.id} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px dashed #e2e8f0" }}>
+                                <span>{ad.descricao} (Prev: {formatCurrency(ad.valorPrevisto)})</span>
+                                <strong>{formatCurrency(ad.recebido)}</strong>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "16px", paddingTop: "8px", borderTop: "1px solid #e2e8f0", fontWeight: 700, fontSize: "15px" }}>
+                        <span>Total Realizado:</span>
+                        <span style={{ color: "var(--success)" }}>{formatCurrency(obra.entradasRealizadas)}</span>
+                      </div>
+                      <div style={{ fontSize: "11px", textAlign: "right", color: "var(--text-muted)" }}>
+                        {obra.percentualRecebimento.toFixed(1)}% do Previsto Total ({formatCurrency(obra.faturamentoPrevisto)})
+                      </div>
+                    </div>
+
+                    {/* SAÍDAS */}
+                    <div>
+                      <h5 style={{ color: "var(--error)", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>Saídas (Custos / Despesas)</h5>
+                      
+                      {obra.detalheColaboradores.length > 0 && (
+                        <div style={{ marginBottom: "12px" }}>
+                          <strong style={{ fontSize: "13px", color: "var(--text-muted)" }}>Folha de Pagamento (Colaboradores):</strong>
+                          <ul style={{ listStyle: "none", padding: 0, margin: "4px 0", fontSize: "13px" }}>
+                            {obra.detalheColaboradores.map((col: any, idx: number) => (
+                              <li key={idx} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px dashed #e2e8f0" }}>
+                                <span>{col.nome}</span>
+                                <strong>{formatCurrency(col.valor)}</strong>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <div style={{ marginBottom: "12px", fontSize: "14px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span>Outras Despesas (Fornecedores/Gerais)</span>
+                          <strong>{formatCurrency(obra.outrasDespesasRealizadas)}</strong>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "16px", paddingTop: "8px", borderTop: "1px solid #e2e8f0", fontWeight: 700, fontSize: "15px" }}>
+                        <span>Total Realizado:</span>
+                        <span style={{ color: "var(--error)" }}>{formatCurrency(obra.despesasRealizadas)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* --- ABA 6: LIVRO CAIXA --- */}
+      {activeTab === "livro_caixa" && (
+        <div>
+          <div className="card no-print" style={{ padding: "20px", marginBottom: "20px" }}>
+            <h4 style={{ margin: "0 0 16px 0", fontSize: "16px", color: "var(--text-heading)" }}>Filtrar Período do Livro Caixa</h4>
+            <div style={{ display: "flex", gap: "16px", alignItems: "flex-end", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: "200px" }}>
+                <label className="form-label">Data Início (Corte Inicial)</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={dataInicioLivro}
+                  onChange={(e) => setDataInicioLivro(e.target.value)}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: "200px" }}>
+                <label className="form-label">Data Fim</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={dataFimLivro}
+                  onChange={(e) => setDataFimLivro(e.target.value)}
+                />
+              </div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button className="btn btn-primary" onClick={gerarLivroCaixa} disabled={isLoading}>
+                  {isLoading ? "Gerando..." : "Gerar Livro Caixa"}
+                </button>
+                <button className="btn btn-secondary" onClick={() => window.print()}>
+                  Imprimir Extrato
+                </button>
+                <button className="btn btn-secondary" onClick={() => handleCopyLink("livro_caixa")}>
+                  🔗 Gerar Link Compartilhado
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {livroCaixaReport && (
+            <div className="card" style={{ padding: "24px" }}>
+              <style>{`
+                @media print {
+                  @page {
+                    size: landscape;
+                    margin: 10mm;
+                  }
+                  .livro-caixa-table th, .livro-caixa-table td {
+                    font-size: 11px !important;
+                    padding: 6px !important;
+                    word-break: normal !important;
+                  }
+                  .livro-caixa-table {
+                    width: 100% !important;
+                  }
+                }
+              `}</style>
+              {(() => {
+                const branding = getCompanyBranding(empresaFilter);
+                return (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "20px", borderBottom: `2px solid ${branding.primaryColor}`, paddingBottom: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <img src={branding.logo} alt={branding.name} style={{ height: "46px", maxWidth: "130px", objectFit: "contain" }} />
+                      <div>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: branding.primaryColor, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          {empresaFilter === "TODOS" ? "CONSOLIDADO GERAL" : `${branding.name} — ${branding.subtitle}`}
+                        </span>
+                        <h4 style={{ margin: "2px 0 4px 0", fontSize: "18px", color: "var(--text-heading)", fontWeight: 800 }}>Livro Caixa (Extrato Financeiro)</h4>
+                        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Período: {formatDateBR(dataInicioLivro)} a {formatDateBR(dataFimLivro)}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div style={{ overflowX: "auto" }}>
+                <table className="table livro-caixa-table" style={{ fontSize: "13px", minWidth: "800px" }}>
+                  <thead>
+                    <tr>
+                      <th>Data Pagamento</th>
+                      <th>Descrição do Lançamento</th>
+                      <th>Cliente / Fornecedor</th>
+                      <th>Plano de Contas</th>
+                      <th>Obra Relacionada</th>
+                      <th style={{ textAlign: "right" }}>Entrada</th>
+                      <th style={{ textAlign: "right" }}>Saída</th>
+                      <th style={{ textAlign: "right" }}>Saldo Acumulado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      let saldoAcumulado = livroCaixaReport.saldoInicial;
+                      return livroCaixaReport.transacoes.map((t: any) => {
+                        if (t.tipo === "RECEITA") saldoAcumulado += t.valor;
+                        else if (t.tipo === "DESPESA") saldoAcumulado -= t.valor;
+                        
+                        return (
+                          <tr key={t.id}>
+                            <td style={{ whiteSpace: "nowrap" }}>{formatDateBR(t.dataPagamento)}</td>
+                            <td>
+                              {t.descricao}
+                              {t.adendo && (
+                                <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                                  Adendo: {t.adendo.descricao}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              {t.clienteFornecedor ? (
+                                <strong style={{ fontSize: "12px" }}>{t.clienteFornecedor}</strong>
+                              ) : (
+                                <em style={{ color: "var(--text-muted)", fontSize: "11px" }}>--</em>
+                              )}
+                            </td>
+                            <td>
+                              <span style={{ fontSize: "11px", fontWeight: 500, color: "var(--text-muted)" }}>
+                                {t.planoConta?.codigo} - {t.planoConta?.descricao}
+                              </span>
+                            </td>
+                            <td>{t.obra?.nome || <em style={{ color: "var(--text-muted)", fontSize: "11px" }}>--</em>}</td>
+                            <td style={{ textAlign: "right", color: "var(--success)" }}>
+                              {t.tipo === "RECEITA" ? formatCurrency(t.valor) : "-"}
+                            </td>
+                            <td style={{ textAlign: "right", color: "var(--error)" }}>
+                              {t.tipo === "DESPESA" ? formatCurrency(t.valor) : "-"}
+                            </td>
+                            <td style={{ textAlign: "right", fontWeight: 600, color: saldoAcumulado >= 0 ? "var(--primary)" : "var(--error)" }}>
+                              {formatCurrency(saldoAcumulado)}
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
+                    {livroCaixaReport.transacoes.length === 0 && (
+                      <tr>
+                        <td colSpan={8} style={{ textAlign: "center", padding: "20px", color: "var(--text-muted)" }}>
+                          Nenhuma movimentação encontrada neste período.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* --- MODAL DO RPA IMPRIMÍVEL --- */}
       {isHoleriteModalOpen && selectedHoleriteFunc && (
         <div className="modal-overlay" style={{ zIndex: 2000 }}>
-          <div className="modal-content" style={{ width: "95%", maxWidth: "600px" }}>
+          <div className="modal-content" style={{ width: "95%", maxWidth: "700px" }}>
             <div className="modal-header">
-              <h4 style={{ fontSize: "18px", fontWeight: 700 }}>Holerite de Pagamento</h4>
+              <h4 style={{ fontSize: "18px", fontWeight: 700 }}>Recibo de Pagamento de Autônomo (RPA)</h4>
               <button
                 style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px" }}
                 onClick={() => setIsHoleriteModalOpen(false)}
@@ -862,13 +1215,13 @@ export default function RelatoriosPage() {
               {(() => {
                 const branding = getCompanyBranding(empresaFilter);
                 return (
-                  <div style={{ border: "1px solid #ccc", padding: "20px", borderRadius: "8px", backgroundColor: "#fff" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `2px solid ${branding.primaryColor}`, paddingBottom: "12px", marginBottom: "16px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <div style={{ border: "1px solid #ccc", padding: "24px", borderRadius: "8px", backgroundColor: "#fff" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `2px solid ${branding.primaryColor}`, paddingBottom: "16px", marginBottom: "20px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                         <img
                           src={branding.logo}
                           alt={branding.name}
-                          style={{ height: "46px", maxWidth: "120px", objectFit: "contain" }}
+                          style={{ height: "56px", maxWidth: "140px", objectFit: "contain" }}
                         />
                         <div>
                           <h3 style={{ margin: 0, textTransform: "uppercase", color: branding.primaryColor, fontSize: "18px", fontWeight: 800 }}>
@@ -877,24 +1230,36 @@ export default function RelatoriosPage() {
                           <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{branding.corporateName} — CNPJ: {branding.cnpj}</span>
                         </div>
                       </div>
-                      <div style={{ textAlign: "right" }}>
-                        <span style={{ fontSize: "11px", fontWeight: 700, color: branding.primaryColor, display: "block", textTransform: "uppercase" }}>RECIBO DE DIÁRIAS</span>
-                        <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Fechamento Autorizado</span>
+                      <div style={{ textAlign: "right", border: "2px solid #e2e8f0", padding: "8px 16px", borderRadius: "6px" }}>
+                        <span style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a", display: "block", textTransform: "uppercase" }}>RECIBO - RPA</span>
+                        <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>Nº {new Date().getTime().toString().slice(-6)}</span>
                       </div>
                     </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "13px", marginBottom: "16px", backgroundColor: "#f8fafc", padding: "10px", borderRadius: "4px" }}>
-                  <div>
-                    <strong>Colaborador:</strong> {selectedHoleriteFunc.funcionario.nome}
+                <div style={{ padding: "16px", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", marginBottom: "20px" }}>
+                  <p style={{ margin: 0, fontSize: "14px", lineHeight: "1.6", textAlign: "justify" }}>
+                    Recebi(emos) de <strong>{branding.corporateName}</strong>, inscrita no CNPJ sob o nº <strong>{branding.cnpj}</strong>, a importância líquida de 
+                    <strong style={{ fontSize: "16px" }}> {formatCurrency(selectedHoleriteFunc.valorLiquidoPendente)}</strong>, 
+                    referente à prestação de serviços sem vínculo empregatício, atuando como <strong>{selectedHoleriteFunc.funcionario.cargo || "Profissional Autônomo"}</strong>, durante o período de <strong>{formatDateBR(dataInicio)}</strong> a <strong>{formatDateBR(dataFim)}</strong>.
+                  </p>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "13px", marginBottom: "20px" }}>
+                  <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                    <span style={{ color: "var(--text-muted)" }}>Nome do Prestador:</span>
+                    <strong style={{ display: "block", fontSize: "14px" }}>{selectedHoleriteFunc.funcionario.nome}</strong>
                   </div>
-                  <div>
-                    <strong>Cargo:</strong> {selectedHoleriteFunc.funcionario.cargo}
+                  <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                    <span style={{ color: "var(--text-muted)" }}>CPF / RG:</span>
+                    <strong style={{ display: "block", fontSize: "14px" }}>___________________________</strong>
                   </div>
-                  <div>
-                    <strong>Período:</strong> {formatDateBR(dataInicio)} a {formatDateBR(dataFim)}
+                  <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                    <span style={{ color: "var(--text-muted)" }}>Chave PIX:</span>
+                    <strong style={{ display: "block", fontSize: "14px" }}>{selectedHoleriteFunc.funcionario.pix || "___________________________"}</strong>
                   </div>
-                  <div>
-                    <strong>Chave PIX:</strong> {selectedHoleriteFunc.funcionario.pix || "Não informado"}
+                  <div style={{ borderBottom: "1px solid #e2e8f0", paddingBottom: "4px" }}>
+                    <span style={{ color: "var(--text-muted)" }}>Assinatura:</span>
+                    <strong style={{ display: "block", fontSize: "14px" }}>___________________________</strong>
                   </div>
                 </div>
 
@@ -956,16 +1321,7 @@ export default function RelatoriosPage() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: "40px", display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)" }}>
-                  <div style={{ textAlign: "center", width: "45%" }}>
-                    <div style={{ borderBottom: "1px solid #94a3b8", height: "30px" }}></div>
-                    <span style={{ marginTop: "4px", display: "block" }}>Assinatura do Colaborador</span>
-                  </div>
-                  <div style={{ textAlign: "center", width: "45%" }}>
-                    <div style={{ borderBottom: "1px solid #94a3b8", height: "30px" }}></div>
-                    <span style={{ marginTop: "4px", display: "block" }}>Pelo Escritório / {getCompanyBranding(empresaFilter).name}</span>
-                  </div>
-                </div>
+
               </div>
             );
           })()}
@@ -983,7 +1339,7 @@ export default function RelatoriosPage() {
                   document.body.classList.remove("printing-holerite");
                 }}
               >
-                Gerar PDF Holerite (WhatsApp)
+                Gerar PDF (RPA)
               </button>
             </div>
           </div>
