@@ -43,3 +43,11 @@ next-env.d.ts
 /src/generated/prisma
 
 .vercel
+
+# Arquivos temporários e rascunhos locais
+scratch/
+check_details.js
+check_status.js
+delete_finance.js
+reset_finance.ts
+temp_out.json
