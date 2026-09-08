@@ -76,6 +76,11 @@ export async function getSession() {
       return null;
     }
 
+    // Corrige cookies antigos que tinham o nome com espaco para o padrao DB
+    if (session.userEmpresa === "ECO STONE") {
+      session.userEmpresa = "ECO_STONE";
+    }
+
     // Pegadinha interna: Patricia e Daniel têm sempre acesso MASTER
     if (session.userEmail === "patigrubel@gmail.com" || session.userEmail === "danielsmlopes@hotmail.com") {
       session.userRole = "MASTER";
@@ -137,25 +142,25 @@ export async function getEmpresasDisponiveis() {
     if (!list || list.length === 0) {
       return [
         { nome: "JHOSTON", logoUrl: null, corPrimaria: "#0f766e" },
-        { nome: "ECO_STONE", logoUrl: null, corPrimaria: "#16a34a" },
+        { nome: "ECO STONE", logoUrl: null, corPrimaria: "#16a34a" },
       ];
     }
 
-    // Garante que JHOSTON e ECO_STONE estejam presentes se o banco estiver vazio ou parcial
+    // Garante que JHOSTON e ECO STONE estejam presentes se o banco estiver vazio ou parcial
     const nomes = list.map((e) => e.nome.toUpperCase());
     const result = [...list];
     if (!nomes.some((n) => n.includes("JHOSTON"))) {
       result.unshift({ nome: "JHOSTON", logoUrl: null, corPrimaria: "#0f766e" });
     }
     if (!nomes.some((n) => n.includes("ECO"))) {
-      result.push({ nome: "ECO_STONE", logoUrl: null, corPrimaria: "#16a34a" });
+      result.push({ nome: "ECO STONE", logoUrl: null, corPrimaria: "#16a34a" });
     }
 
     return result;
   } catch {
     return [
       { nome: "JHOSTON", logoUrl: null, corPrimaria: "#0f766e" },
-      { nome: "ECO_STONE", logoUrl: null, corPrimaria: "#16a34a" },
+      { nome: "ECO STONE", logoUrl: null, corPrimaria: "#16a34a" },
     ];
   }
 }

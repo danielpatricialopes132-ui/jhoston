@@ -18,7 +18,7 @@ interface Session {
 interface PontoRow {
   funcionarioId: number;
   nome: string;
-  cargo: string;
+  cargo: string | null;
   tipoDia: string;
   horasTrabalhadas: string;
   percentualPago: string;

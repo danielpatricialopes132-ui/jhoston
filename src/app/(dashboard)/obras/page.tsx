@@ -13,6 +13,10 @@ import {
   deleteAutorizacaoCompra,
   analisarContratoComIA,
   importarObraComContrato,
+  createAdendo,
+  updateAdendo,
+  deleteAdendo,
+  getObraResumoFinanceiro,
 } from "./actions";
 import { getClientesList } from "../clientes/actions";
 import { getFornecedoresList } from "../fornecedores/actions";
@@ -34,6 +38,13 @@ interface Documento {
   createdAt: Date;
 }
 
+interface Adendo {
+  id: number;
+  descricao: string;
+  valor: number;
+  status: string;
+}
+
 interface Obra {
   id: number;
   nome: string;
@@ -47,6 +58,7 @@ interface Obra {
   procuradorId: number | null;
   procurador: Cliente | null;
   empresa: string;
+  adendos: Adendo[];
 }
 
 interface FornecedorInfo {
@@ -98,6 +110,20 @@ export default function ObrasPage() {
   const [authObservacoes, setAuthObservacoes] = useState("");
   const [authError, setAuthError] = useState("");
   const [authSubmitting, setAuthSubmitting] = useState(false);
+
+  // Adendos states
+  const [isAdendosModalOpen, setIsAdendosModalOpen] = useState(false);
+  const [activeObraForAdendos, setActiveObraForAdendos] = useState<Obra | null>(null);
+  const [adendoDescricao, setAdendoDescricao] = useState("");
+  const [adendoValor, setAdendoValor] = useState("");
+  const [adendoError, setAdendoError] = useState("");
+  const [adendoSubmitting, setAdendoSubmitting] = useState(false);
+
+  // Resumo Financeiro states
+  const [isResumoModalOpen, setIsResumoModalOpen] = useState(false);
+  const [activeObraForResumo, setActiveObraForResumo] = useState<Obra | null>(null);
+  const [resumoData, setResumoData] = useState<any>(null);
+  const [resumoLoading, setResumoLoading] = useState(false);
 
   // IA Contract Reader states
   const [isIAImportModalOpen, setIsIAImportModalOpen] = useState(false);
@@ -248,14 +274,49 @@ export default function ObrasPage() {
 
   const openIAImportModal = () => {
     setIaFileBase64(null);
-    setIaFileName("");
-    setIaError("");
     setIaResult(null);
+    setIaError("");
+    setIaSubmitting(false);
     setIsIAImportModalOpen(true);
   };
 
   const closeIAImportModal = () => {
     setIsIAImportModalOpen(false);
+    setIaFileBase64(null);
+    setIaResult(null);
+  };
+
+  const openAdendosModal = (obra: Obra) => {
+    setActiveObraForAdendos(obra);
+    setAdendoDescricao("");
+    setAdendoValor("");
+    setAdendoError("");
+    setIsAdendosModalOpen(true);
+  };
+
+  const closeAdendosModal = () => {
+    setIsAdendosModalOpen(false);
+    setActiveObraForAdendos(null);
+  };
+
+  const openResumoModal = async (obra: Obra) => {
+    setActiveObraForResumo(obra);
+    setIsResumoModalOpen(true);
+    setResumoLoading(true);
+    const res = await getObraResumoFinanceiro(obra.id);
+    if (res.success) {
+      setResumoData(res.data);
+    } else {
+      showError(res.error || "Erro ao carregar resumo financeiro.");
+      setResumoData(null);
+    }
+    setResumoLoading(false);
+  };
+
+  const closeResumoModal = () => {
+    setIsResumoModalOpen(false);
+    setActiveObraForResumo(null);
+    setResumoData(null);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -465,6 +526,47 @@ export default function ObrasPage() {
     setEditingObra(null);
     setIsModalOpen(true);
   };
+  const handleAdendoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeObraForAdendos) return;
+    if (!adendoDescricao.trim() || !adendoValor) {
+      setAdendoError("Preencha todos os campos do adendo.");
+      return;
+    }
+
+    setAdendoSubmitting(true);
+    setAdendoError("");
+
+    startTransition(async () => {
+      const res = await createAdendo({
+        obraId: activeObraForAdendos.id,
+        descricao: adendoDescricao,
+        valor: parseFloat(adendoValor)
+      });
+      setAdendoSubmitting(false);
+      if (res.success) {
+        showSuccess("Adendo/Serviço extra cadastrado!");
+        setAdendoDescricao("");
+        setAdendoValor("");
+        refreshObras();
+        setActiveObraForAdendos(prev => prev ? { ...prev, adendos: [...(prev.adendos || []), res.data as any] } : prev);
+      } else {
+        setAdendoError(res.error || "Erro ao criar adendo.");
+      }
+    });
+  };
+
+  const handleAdendoDelete = async (adendoId: number) => {
+    if (!confirm("Excluir este adendo? Os recebimentos atrelados a ele perderão o vínculo.")) return;
+    const res = await deleteAdendo(adendoId);
+    if (res.success) {
+      showSuccess("Adendo excluído.");
+      refreshObras();
+      setActiveObraForAdendos(prev => prev ? { ...prev, adendos: prev.adendos.filter(a => a.id !== adendoId) } : prev);
+    } else {
+      showError(res.error || "Erro ao excluir.");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -550,7 +652,7 @@ export default function ObrasPage() {
     const matchesStatus = statusFilter === "TODAS" || o.status === statusFilter;
     
     // Isolamento estrito para ECO STONE
-    const matchesContext = activeContext === "ECO STONE" ? o.empresa === "ECO STONE" : true;
+    const matchesContext = activeContext === "AMBAS" ? true : activeContext === "ECO_STONE" ? o.empresa === "ECO_STONE" : o.empresa !== "ECO_STONE";
     
     const matchesEmpresa = empresaFilter === "TODAS" || o.empresa === empresaFilter;
  
@@ -600,7 +702,7 @@ export default function ObrasPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        {activeContext !== "ECO STONE" && (
+        {activeContext !== "ECO_STONE" && (
           <div className="form-group" style={{ flex: 1 }}>
             <label className="form-label">Filtrar por Empresa</label>
             <select
@@ -744,7 +846,12 @@ export default function ObrasPage() {
                     )}
                   </td>
                   <td style={{ fontWeight: 600, color: "var(--text-heading)" }}>
-                    {formatCurrency(obra.valorFechado || 0)}
+                    {formatCurrency(obra.valorFechado + (obra.adendos?.reduce((sum, a) => sum + a.valor, 0) || 0))}
+                    {obra.adendos && obra.adendos.length > 0 && (
+                      <div style={{ fontSize: "11px", color: "var(--primary)", fontWeight: 500, marginTop: "4px" }}>
+                        (Base: {formatCurrency(obra.valorFechado)} + {obra.adendos.length} Adendo{obra.adendos.length > 1 ? "s" : ""})
+                      </div>
+                    )}
                   </td>
                   <td>{obra.endereco || <em style={{ color: "var(--text-muted)" }}>Não informado</em>}</td>
                   <td>
@@ -792,6 +899,20 @@ export default function ObrasPage() {
                         onClick={() => openDocModal(obra)}
                       >
                         📂 Docs
+                      </button>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => openAdendosModal(obra)}
+                        style={{ backgroundColor: "rgba(139, 92, 246, 0.08)", color: "#8b5cf6", border: "1px solid rgba(139, 92, 246, 0.2)" }}
+                      >
+                        ➕ Adendos
+                      </button>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => openResumoModal(obra)}
+                        style={{ backgroundColor: "rgba(22, 163, 74, 0.08)", color: "#16a34a", border: "1px solid rgba(22, 163, 74, 0.2)" }}
+                      >
+                        📊 Resumo Financeiro
                       </button>
                       <button
                         className="btn btn-secondary btn-sm"
@@ -1463,6 +1584,244 @@ export default function ObrasPage() {
             
             <div className="modal-footer">
               <button type="button" className="btn btn-secondary" onClick={closeIAImportModal}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Adendos */}
+      {isAdendosModalOpen && activeObraForAdendos && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "600px", width: "95%" }}>
+            <div className="modal-header">
+              <h4 style={{ fontSize: "18px", fontWeight: 600 }}>
+                Adendos / Serviços Extras
+              </h4>
+              <button
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "var(--text-heading)" }}
+                onClick={closeAdendosModal}
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <div style={{ marginBottom: "16px" }}>
+                <strong style={{ fontSize: "14px", color: "var(--text-heading)" }}>Obra: {activeObraForAdendos.nome}</strong>
+                <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                  Valor Base: {formatCurrency(activeObraForAdendos.valorFechado)}
+                </div>
+              </div>
+
+              {/* Form de Novo Adendo */}
+              <div style={{ padding: "16px", backgroundColor: "var(--bg-app)", borderRadius: "var(--radius-md)", marginBottom: "20px", border: "1px dashed var(--border-color)" }}>
+                <h5 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px", color: "var(--text-heading)" }}>
+                  Novo Adendo / Serviço Extra
+                </h5>
+                <form onSubmit={handleAdendoSubmit}>
+                  {adendoError && (
+                    <div style={{ color: "var(--error)", fontSize: "13px", marginBottom: "8px", fontWeight: 500 }}>
+                      {adendoError}
+                    </div>
+                  )}
+                  
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "12px" }}>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: "12px" }}>Descrição do Serviço *</label>
+                      <input
+                        type="text"
+                        className="form-control form-control-sm"
+                        placeholder="Ex: Pintura extra, troca de piso..."
+                        value={adendoDescricao}
+                        onChange={(e) => setAdendoDescricao(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" style={{ fontSize: "12px" }}>Valor Acordado (R$) *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="form-control form-control-sm"
+                        placeholder="Ex: 1500.00"
+                        value={adendoValor}
+                        onChange={(e) => setAdendoValor(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn btn-primary btn-sm" disabled={adendoSubmitting} style={{ width: "100%", justifyContent: "center" }}>
+                    {adendoSubmitting ? "Salvando..." : "Salvar Adendo"}
+                  </button>
+                </form>
+              </div>
+
+              {/* Lista de Adendos */}
+              <h5 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px", color: "var(--text-heading)" }}>
+                Adendos Cadastrados
+              </h5>
+              <div style={{ maxHeight: "250px", overflowY: "auto" }}>
+                {!activeObraForAdendos.adendos || activeObraForAdendos.adendos.length === 0 ? (
+                  <p style={{ color: "var(--text-muted)", fontSize: "13px", fontStyle: "italic", textAlign: "center", padding: "16px 0" }}>
+                    Nenhum adendo cadastrado para esta obra.
+                  </p>
+                ) : (
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                    {activeObraForAdendos.adendos.map((a) => (
+                      <li
+                        key={a.id}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "10px 12px",
+                          borderBottom: "1px solid var(--border-color)",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <div style={{ flex: 1, marginRight: "16px" }}>
+                          <strong style={{ color: "var(--text-heading)" }}>{a.descricao}</strong>
+                          <div style={{ fontSize: "12px", color: "var(--primary)", fontWeight: 600, marginTop: "2px" }}>
+                            {formatCurrency(a.valor)}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleAdendoDelete(a.id)}
+                            style={{ padding: "4px 8px", fontSize: "11px" }}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontSize: "13px", fontWeight: 600 }}>
+                Total (Base + Adendos): <span style={{ color: "var(--primary)" }}>{formatCurrency(activeObraForAdendos.valorFechado + (activeObraForAdendos.adendos?.reduce((sum, a) => sum + a.valor, 0) || 0))}</span>
+              </div>
+              <button type="button" className="btn btn-secondary" onClick={closeAdendosModal}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Modal de Resumo Financeiro */}
+      {isResumoModalOpen && activeObraForResumo && (
+        <div className="modal-overlay" onClick={closeResumoModal}>
+          <div className="modal-content" style={{ maxWidth: "600px", width: "95%" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📊 Resumo Financeiro da Obra</h2>
+              <button className="modal-close" onClick={closeResumoModal}>&times;</button>
+            </div>
+            
+            <div className="modal-body">
+              {resumoLoading ? (
+                <div style={{ textAlign: "center", padding: "40px" }}>
+                  <p>Calculando resumo financeiro...</p>
+                </div>
+              ) : resumoData ? (
+                <div>
+                  <h3 style={{ fontSize: "16px", marginBottom: "8px" }}>{activeObraForResumo.nome}</h3>
+                  <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "24px" }}>
+                    Resumo de valores contratados (Contrato Principal e Adendos) vs Receitas.
+                  </p>
+
+                  {/* Contrato Principal */}
+                  <div style={{ marginBottom: "24px", padding: "16px", backgroundColor: "var(--bg-accent)", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
+                    <h4 style={{ fontSize: "15px", fontWeight: 700, marginBottom: "12px", color: "var(--text-heading)", display: "flex", justifyContent: "space-between" }}>
+                      <span>Contrato Principal</span>
+                      <span>Acordado: {formatCurrency(resumoData.principal.valor)}</span>
+                    </h4>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                      <div style={{ padding: "12px", backgroundColor: "rgba(16, 185, 129, 0.1)", borderRadius: "6px", border: "1px solid rgba(16, 185, 129, 0.2)" }}>
+                        <div style={{ fontSize: "12px", fontWeight: 600, color: "#10b981", marginBottom: "4px" }}>Pago / Recebido</div>
+                        <div style={{ fontSize: "16px", fontWeight: 700, color: "#065f46" }}>{formatCurrency(resumoData.principal.recebido)}</div>
+                      </div>
+                      <div style={{ padding: "12px", backgroundColor: "rgba(245, 158, 11, 0.1)", borderRadius: "6px", border: "1px solid rgba(245, 158, 11, 0.2)" }}>
+                        <div style={{ fontSize: "12px", fontWeight: 600, color: "#d97706", marginBottom: "4px" }}>Pendente / A Vencer</div>
+                        <div style={{ fontSize: "16px", fontWeight: 700, color: "#92400e" }}>{formatCurrency(resumoData.principal.pendente)}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Adendos */}
+                  {resumoData.adendos && resumoData.adendos.length > 0 && (
+                    <div style={{ marginBottom: "24px" }}>
+                      <h4 style={{ fontSize: "15px", fontWeight: 700, marginBottom: "12px", color: "var(--text-heading)" }}>Adendos</h4>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                        {resumoData.adendos.map((adendo: any) => (
+                          <div key={adendo.id} style={{ padding: "12px", backgroundColor: "var(--bg-panel)", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                              <strong style={{ fontSize: "14px" }}>{adendo.descricao}</strong>
+                              <span style={{ fontSize: "14px", fontWeight: 700 }}>Acordado: {formatCurrency(adendo.valor)}</span>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Pago/Recebido:</span>
+                                <strong style={{ color: "#10b981" }}>{formatCurrency(adendo.recebido)}</strong>
+                              </div>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
+                                <span style={{ color: "var(--text-muted)" }}>Pendente:</span>
+                                <strong style={{ color: "#d97706" }}>{formatCurrency(adendo.pendente)}</strong>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Total Geral */}
+                  <div style={{ padding: "16px", backgroundColor: "rgba(15, 118, 110, 0.05)", borderRadius: "8px", border: "2px solid var(--primary)" }}>
+                    <h4 style={{ fontSize: "16px", fontWeight: 800, marginBottom: "16px", color: "var(--primary)", textAlign: "center" }}>
+                      TOTAL GERAL (Principal + Adendos)
+                    </h4>
+                    
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", textAlign: "center" }}>
+                      <div>
+                        <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" }}>Total Acordado</div>
+                        <div style={{ fontSize: "15px", fontWeight: 800, color: "var(--text-heading)", marginTop: "4px" }}>{formatCurrency(resumoData.total.valor)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" }}>Total Recebido</div>
+                        <div style={{ fontSize: "15px", fontWeight: 800, color: "#10b981", marginTop: "4px" }}>{formatCurrency(resumoData.total.recebido)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" }}>Total Pendente</div>
+                        <div style={{ fontSize: "15px", fontWeight: 800, color: "#d97706", marginTop: "4px" }}>{formatCurrency(resumoData.total.pendente)}</div>
+                      </div>
+                    </div>
+                    
+                    {resumoData.total.faltante > 0 && (
+                      <div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px dashed var(--primary)", textAlign: "center" }}>
+                        <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>Ainda falta lançar no financeiro (Acordado - Recebido - Pendente):</div>
+                        <div style={{ fontSize: "16px", fontWeight: 700, color: "#ef4444" }}>{formatCurrency(Math.max(0, resumoData.total.valor - (resumoData.total.recebido + resumoData.total.pendente)))}</div>
+                      </div>
+                    )}
+                  </div>
+                  
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "20px", color: "#ef4444" }}>
+                  Ocorreu um erro ao carregar os dados.
+                </div>
+              )}
+            </div>
+            
+            <div className="modal-footer" style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button type="button" className="btn btn-secondary" onClick={closeResumoModal}>
                 Fechar
               </button>
             </div>

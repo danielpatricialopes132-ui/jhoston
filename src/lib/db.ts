@@ -23,4 +23,6 @@ export const prisma =
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prismaClientV2 = prisma;
 }
+// Force reload Prisma client
+
 

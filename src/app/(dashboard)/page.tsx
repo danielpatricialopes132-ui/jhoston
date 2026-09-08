@@ -145,7 +145,8 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const empresaFilter = (!session.userEmpresa || session.userEmpresa === "AMBAS") ? "JHOSTON" : session.userEmpresa;
+  let empresaFilter = (!session.userEmpresa || session.userEmpresa === "AMBAS") ? "JHOSTON" : session.userEmpresa;
+  if (empresaFilter === "ECO STONE") empresaFilter = "ECO_STONE";
   const isMaster = session.userRole === "MASTER";
   const data = await getDashboardData(empresaFilter);
 
@@ -199,7 +200,7 @@ export default async function DashboardPage() {
       ? "CONSOLIDADO"
       : empresaFilter === "ECO_STONE"
       ? "ECO STONE"
-      : empresaFilter === "JHOSTON_REVEST"
+      : empresaFilter === "JHOSTON REVEST"
       ? "JHOSTON REVEST"
       : "JHOSTON TEC";
 

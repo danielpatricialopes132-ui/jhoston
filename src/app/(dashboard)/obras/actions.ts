@@ -3,12 +3,16 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
+import { unstable_noStore as noStore } from "next/cache";
+
 export async function getObras() {
+  noStore();
   return await prisma.obra.findMany({
     include: {
       clientes: true,
       documentos: true,
       procurador: true,
+      adendos: true,
     },
     orderBy: { id: "desc" },
   });
@@ -49,6 +53,7 @@ export async function createObra(data: {
     include: {
       clientes: true,
       procurador: true,
+      adendos: true,
     },
   });
   revalidatePath("/obras");
@@ -95,6 +100,7 @@ export async function updateObra(
     include: {
       clientes: true,
       procurador: true,
+      adendos: true,
     },
   });
   revalidatePath("/obras");
@@ -379,3 +385,109 @@ export async function importarObraComContrato(data: {
   }
 }
 
+
+export async function createAdendo(data: { obraId: number; descricao: string; valor: number; status?: string }) {
+  try {
+    const adendo = await prisma.adendoObra.create({ data });
+    revalidatePath("/obras");
+    revalidatePath("/financeiro");
+    return { success: true, data: adendo };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateAdendo(id: number, data: { descricao?: string; valor?: number; status?: string }) {
+  try {
+    const adendo = await prisma.adendoObra.update({ where: { id }, data });
+    revalidatePath("/obras");
+    revalidatePath("/financeiro");
+    return { success: true, data: adendo };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteAdendo(id: number) {
+  try {
+    await prisma.adendoObra.delete({ where: { id } });
+    revalidatePath("/obras");
+    revalidatePath("/financeiro");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getObraResumoFinanceiro(obraId: number) {
+  try {
+    const obra = await prisma.obra.findUnique({
+      where: { id: obraId },
+      include: {
+        adendos: true,
+      },
+    });
+
+    if (!obra) {
+      return { success: false, error: "Obra não encontrada" };
+    }
+
+    const receitas = await prisma.transacaoFinanceira.findMany({
+      where: {
+        obraId,
+        tipo: "RECEITA",
+      },
+    });
+
+    // Contrato Principal
+    const valorPrincipal = obra.valorFechado;
+    const receitasPrincipal = receitas.filter(r => r.adendoId === null);
+    const recebidoPrincipal = receitasPrincipal.filter(r => r.status === "PAGO").reduce((acc, r) => acc + r.valor, 0);
+    const pendentePrincipal = receitasPrincipal.filter(r => r.status !== "PAGO").reduce((acc, r) => acc + r.valor, 0);
+    const faltantePrincipal = Math.max(0, valorPrincipal - recebidoPrincipal);
+
+    // Adendos
+    const resumoAdendos = obra.adendos.map(adendo => {
+      const receitasAdendo = receitas.filter(r => r.adendoId === adendo.id);
+      const recebido = receitasAdendo.filter(r => r.status === "PAGO").reduce((acc, r) => acc + r.valor, 0);
+      const pendente = receitasAdendo.filter(r => r.status !== "PAGO").reduce((acc, r) => acc + r.valor, 0);
+      const faltante = Math.max(0, adendo.valor - recebido);
+
+      return {
+        id: adendo.id,
+        descricao: adendo.descricao,
+        valor: adendo.valor,
+        recebido,
+        pendente,
+        faltante
+      };
+    });
+
+    // Total Geral
+    const totalAcordado = valorPrincipal + resumoAdendos.reduce((acc, a) => acc + a.valor, 0);
+    const totalRecebido = recebidoPrincipal + resumoAdendos.reduce((acc, a) => acc + a.recebido, 0);
+    const totalPendente = pendentePrincipal + resumoAdendos.reduce((acc, a) => acc + a.pendente, 0);
+    const totalFaltante = Math.max(0, totalAcordado - totalRecebido);
+
+    return {
+      success: true,
+      data: {
+        principal: {
+          valor: valorPrincipal,
+          recebido: recebidoPrincipal,
+          pendente: pendentePrincipal,
+          faltante: faltantePrincipal,
+        },
+        adendos: resumoAdendos,
+        total: {
+          valor: totalAcordado,
+          recebido: totalRecebido,
+          pendente: totalPendente,
+          faltante: totalFaltante,
+        }
+      }
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

@@ -88,31 +88,7 @@ export default function DashboardHeader({ initialEmpresa = "JHOSTON" }: Dashboar
               {info.name}
             </h2>
 
-            {isMaster && empresas.length > 1 && (
-              <select
-                value={empresa}
-                onChange={(e) => handleHeaderContextChange(e.target.value)}
-                disabled={isSwitching}
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  backgroundColor: info.bg,
-                  color: info.color,
-                  border: `1px solid ${info.color}40`,
-                  borderRadius: "6px",
-                  padding: "2px 6px",
-                  cursor: "pointer",
-                  outline: "none",
-                }}
-                title="Alternar Empresa Ativa"
-              >
-                {empresas.map((e) => (
-                  <option key={e.nome} value={e.nome} style={{ backgroundColor: "#0f172a", color: "#f8fafc" }}>
-                    Trocar para: {e.nome}
-                  </option>
-                ))}
-              </select>
-            )}
+            {/* Dropdown removido para evitar duplicidade com a Sidebar */}
           </div>
           <span
             style={{

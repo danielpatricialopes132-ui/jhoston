@@ -2,15 +2,17 @@
 
 import { useEffect, useState, startTransition } from "react";
 import { getFuncionarios, createFuncionario, updateFuncionario, deleteFuncionario } from "./actions";
+import { getSession } from "@/app/login/actions";
 
 interface Funcionario {
   id: number;
   nome: string;
-  cargo: string;
+  cargo: string | null;
   diariaPadrao: number;
   adicionalMotorista: number;
   pix: string | null;
   ativo: boolean;
+  empresa: string;
 }
 
 export default function FuncionariosPage() {
@@ -28,13 +30,37 @@ export default function FuncionariosPage() {
   const [pix, setPix] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [activeContext, setActiveContext] = useState("TODAS");
+  const [empresa, setEmpresa] = useState("JHOSTON");
 
   const refreshFuncionarios = () => {
-    getFuncionarios().then((data) => setFuncionarios(data));
+    getFuncionarios().then((data) => setFuncionarios(data as any));
   };
 
   useEffect(() => {
     refreshFuncionarios();
+
+    getSession().then((sess) => {
+      if (sess?.userEmpresa && sess.userEmpresa !== "AMBAS") {
+        setActiveContext(sess.userEmpresa);
+        setEmpresa(sess.userEmpresa);
+      } else {
+        setActiveContext("TODAS");
+      }
+    });
+
+    const handleContextChange = (e: CustomEvent<string>) => {
+      if (e.detail && e.detail !== "AMBAS") {
+        setActiveContext(e.detail);
+        setEmpresa(e.detail);
+      } else {
+        setActiveContext("TODAS");
+      }
+    };
+    window.addEventListener("empresaContextChanged" as any, handleContextChange);
+    return () => {
+      window.removeEventListener("empresaContextChanged" as any, handleContextChange);
+    };
   }, []);
 
   const openNewModal = () => {
@@ -45,6 +71,7 @@ export default function FuncionariosPage() {
     setAdicionalMotorista("50"); // Adicional padrão sugerido
     setPix("");
     setAtivo(true);
+    setEmpresa(activeContext === "TODAS" ? "JHOSTON" : activeContext);
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -52,11 +79,12 @@ export default function FuncionariosPage() {
   const openEditModal = (f: Funcionario) => {
     setEditingFuncionario(f);
     setNome(f.nome);
-    setCargo(f.cargo);
+    setCargo(f.cargo || "");
     setDiariaPadrao(f.diariaPadrao.toString());
     setAdicionalMotorista(f.adicionalMotorista.toString());
     setPix(f.pix || "");
     setAtivo(f.ativo);
+    setEmpresa(f.empresa || "JHOSTON");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -68,8 +96,8 @@ export default function FuncionariosPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome.trim() || !cargo.trim()) {
-      setErrorMsg("Nome e Cargo são obrigatórios.");
+    if (!nome.trim()) {
+      setErrorMsg("Nome é obrigatório.");
       return;
     }
 
@@ -79,7 +107,8 @@ export default function FuncionariosPage() {
       diariaPadrao: parseFloat(diariaPadrao) || 0,
       adicionalMotorista: parseFloat(adicionalMotorista) || 0,
       pix,
-      ativo
+      ativo,
+      empresa
     };
 
     startTransition(async () => {
@@ -117,7 +146,7 @@ export default function FuncionariosPage() {
   const filteredFuncionarios = funcionarios.filter((f) => {
     const matchesSearch =
       f.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      f.cargo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (f.cargo && f.cargo.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (f.pix && f.pix.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus =
@@ -125,7 +154,9 @@ export default function FuncionariosPage() {
       (statusFilter === "ATIVO" && f.ativo) ||
       (statusFilter === "INATIVO" && !f.ativo);
 
-    return matchesSearch && matchesStatus;
+    const matchesContext = activeContext === "AMBAS" ? true : activeContext === "ECO_STONE" ? f.empresa === "ECO_STONE" : f.empresa !== "ECO_STONE";
+
+    return matchesSearch && matchesStatus && matchesContext;
   });
 
   return (
@@ -198,7 +229,7 @@ export default function FuncionariosPage() {
                 <tr key={f.id}>
                   <td style={{ fontWeight: 600, color: "var(--text-muted)" }}>#{f.id}</td>
                   <td style={{ fontWeight: 600, color: "var(--text-heading)" }}>{f.nome}</td>
-                  <td>{f.cargo}</td>
+                  <td>{f.cargo || <em style={{ color: "var(--text-muted)", fontSize: "12px" }}>Não informado</em>}</td>
                   <td style={{ fontWeight: 500 }}>{formatCurrency(f.diariaPadrao)}</td>
                   <td style={{ fontWeight: 500, color: "var(--secondary)" }}>
                     {f.adicionalMotorista > 0 ? `+ ${formatCurrency(f.adicionalMotorista)}` : "Sem adicional"}
@@ -293,14 +324,13 @@ export default function FuncionariosPage() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Cargo *</label>
+                  <label className="form-label">Cargo (Opcional)</label>
                   <input
                     type="text"
                     className="form-control"
                     placeholder="Ex: Instalador, Motorista, Técnico"
                     value={cargo}
                     onChange={(e) => setCargo(e.target.value)}
-                    required
                   />
                 </div>
                 <div className="form-row">

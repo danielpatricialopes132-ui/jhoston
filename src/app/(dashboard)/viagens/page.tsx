@@ -12,7 +12,7 @@ interface Obra {
 interface Funcionario {
   id: number;
   nome: string;
-  cargo: string;
+  cargo: string | null;
   diariaPadrao: number;
   adicionalMotorista: number;
 }

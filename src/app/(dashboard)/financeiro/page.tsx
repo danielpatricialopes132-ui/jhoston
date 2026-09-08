@@ -18,6 +18,7 @@ interface Obra {
   status: string;
   valorFechado: number;
   clienteNome: string;
+  adendos?: { id: number; descricao: string; valor: number }[];
 }
 
 interface Fornecedor {
@@ -46,6 +47,7 @@ interface Transacao {
   fornecedorId: number | null;
   fornecedor: Fornecedor | null;
   empresa: string;
+  adendoId: number | null;
 }
 
 export default function FinanceiroPage() {
@@ -74,6 +76,7 @@ export default function FinanceiroPage() {
   const [planoContaId, setPlanoContaId] = useState("");
   const [centroCustoId, setCentroCustoId] = useState("");
   const [selectedObraId, setSelectedObraId] = useState("");
+  const [adendoId, setAdendoId] = useState("");
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
   const [dataVencimento, setDataVencimento] = useState(new Date().toISOString().split("T")[0]);
@@ -164,6 +167,7 @@ export default function FinanceiroPage() {
     setPlanoContaId("");
     setCentroCustoId("");
     setSelectedObraId("");
+    setAdendoId("");
     setDescricao("");
     setValor("");
     setDataVencimento(new Date().toISOString().split("T")[0]);
@@ -171,7 +175,7 @@ export default function FinanceiroPage() {
     setDataPagamento("");
     setClienteFornecedor("");
     setFornecedorId("");
-    setEmpresa("JHOSTON");
+    setEmpresa(empresaFilter !== "TODOS" ? empresaFilter : "JHOSTON");
     setErrorMsg("");
     setIsModalOpen(true);
   };
@@ -182,6 +186,7 @@ export default function FinanceiroPage() {
     setPlanoContaId(t.planoContaId ? t.planoContaId.toString() : "");
     setCentroCustoId(t.centroCustoId ? t.centroCustoId.toString() : "");
     setSelectedObraId(t.obraId ? t.obraId.toString() : "");
+    setAdendoId(t.adendoId ? t.adendoId.toString() : "");
     setDescricao(t.descricao);
     setValor(t.valor.toString());
     setDataVencimento(t.dataVencimento);
@@ -224,6 +229,7 @@ export default function FinanceiroPage() {
       planoContaId: planoContaId ? parseInt(planoContaId) : null,
       centroCustoId: centroCustoId ? parseInt(centroCustoId) : null,
       obraId: selectedObraId ? parseInt(selectedObraId) : null,
+      adendoId: adendoId ? parseInt(adendoId) : null,
       descricao,
       valor: parseFloat(valor),
       dataVencimento,
@@ -334,7 +340,7 @@ export default function FinanceiroPage() {
   // Filtrar transações globais para os cálculos dependendo da empresa
   const transacoesFiltradasEmpresa = transacoes.filter(
     (t) => {
-      const matchesContext = activeContext === "ECO STONE" ? (t as any).empresa === "ECO STONE" : true;
+      const matchesContext = activeContext === "AMBAS" ? true : activeContext === "ECO_STONE" ? (t as any).empresa === "ECO_STONE" : (t as any).empresa !== "ECO_STONE";
       const matchesEmp = empresaFilter === "TODOS" ? true : (t as any).empresa === empresaFilter;
       return matchesContext && matchesEmp;
     }
@@ -357,7 +363,7 @@ export default function FinanceiroPage() {
     const matchesTipo = tipoFilter === "TODOS" || t.tipo === tipoFilter;
     const matchesStatus = statusFilter === "TODOS" || t.status === statusFilter;
     const matchesObra = obraFilter === "TODOS" || t.obraId?.toString() === obraFilter;
-    const matchesContext = activeContext === "ECO STONE" ? (t as any).empresa === "ECO STONE" : true;
+    const matchesContext = activeContext === "AMBAS" ? true : activeContext === "ECO_STONE" ? (t as any).empresa === "ECO_STONE" : (t as any).empresa !== "ECO_STONE";
     const matchesEmpresa = empresaFilter === "TODOS" || (t as any).empresa === empresaFilter;
 
     return matchesSearch && matchesTipo && matchesStatus && matchesObra && matchesContext && matchesEmpresa;
@@ -589,7 +595,7 @@ export default function FinanceiroPage() {
       </div>
 
       {/* Seletor de Empresa (Isolamento Estrito) */}
-      {activeContext !== "ECO STONE" && (
+      {activeContext !== "ECO_STONE" && (
         <div style={{ display: "flex", gap: "10px", marginBottom: "20px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }}>
           <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Visualizar Empresa:</span>
           <div style={{ display: "inline-flex", gap: "8px" }}>
@@ -956,8 +962,8 @@ export default function FinanceiroPage() {
                       {t.status === "PAGO" ? "Pago" : "Pendente"}
                     </span>
                   </td>
-                  <td style={{ textAlign: "right" }}>
-                    <div style={{ display: "inline-flex", gap: "8px" }}>
+                  <td style={{ textAlign: "right", minWidth: "220px" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "flex-end" }}>
 
                       <button
                         className={`btn btn-sm ${t.status === "PAGO" ? "btn-secondary" : "btn-primary"}`}
@@ -1381,7 +1387,10 @@ export default function FinanceiroPage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Obra Vinculada</label>
-                    <select className="form-control" value={selectedObraId} onChange={(e) => setSelectedObraId(e.target.value)}>
+                    <select className="form-control" value={selectedObraId} onChange={(e) => {
+                      setSelectedObraId(e.target.value);
+                      setAdendoId(""); // Limpa o adendo ao trocar de obra
+                    }}>
                       <option value="">-- Sem obra vinculada --</option>
                       {obras.map((o) => (
                         <option key={o.id} value={o.id}>{o.nome}</option>
@@ -1398,6 +1407,20 @@ export default function FinanceiroPage() {
                     </select>
                   </div>
                 </div>
+
+                {selectedObraId && obras.find(o => o.id.toString() === selectedObraId)?.adendos?.length ? (
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label" style={{ color: "var(--primary)" }}>Vincular a Adendo / Serviço Extra (Opcional)</label>
+                      <select className="form-control" value={adendoId} onChange={(e) => setAdendoId(e.target.value)}>
+                        <option value="">-- Contrato Principal --</option>
+                        {obras.find(o => o.id.toString() === selectedObraId)?.adendos?.map((a) => (
+                          <option key={a.id} value={a.id}>{a.descricao} - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(a.valor)}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="form-group">
                   <label className="form-label">Descrição da Transação *</label>

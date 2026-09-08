@@ -6,7 +6,7 @@ import { getValesData, salvarVale, deleteVale, alterarStatusDescontoVale, lancar
 interface Funcionario {
   id: number;
   nome: string;
-  cargo: string;
+  cargo: string | null;
 }
 
 interface Vale {

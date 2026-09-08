@@ -5,7 +5,10 @@ import { revalidatePath } from "next/cache";
 
 export async function getFinanceiroData() {
   const [obras, transacoes, fornecedores, planoContas, centrosCusto] = await Promise.all([
-    prisma.obra.findMany({ orderBy: { nome: "asc" } }),
+    prisma.obra.findMany({ 
+      orderBy: { nome: "asc" },
+      include: { adendos: true }
+    }),
     prisma.transacaoFinanceira.findMany({
       include: {
         obra: true,
@@ -30,6 +33,7 @@ export async function salvarTransacao(data: {
   planoContaId?: number | null;
   centroCustoId?: number | null;
   obraId?: number | null;
+  adendoId?: number | null;
   descricao: string;
   valor: number;
   dataVencimento: string;
@@ -57,6 +61,7 @@ export async function salvarTransacao(data: {
     planoContaId: data.planoContaId || null,
     centroCustoId: data.centroCustoId || null,
     obraId: data.obraId || null,
+    adendoId: data.adendoId || null,
     descricao: data.descricao,
     valor: data.valor,
     dataVencimento: new Date(data.dataVencimento),
