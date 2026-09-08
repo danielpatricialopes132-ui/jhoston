@@ -154,7 +154,7 @@ export default function FuncionariosPage() {
       (statusFilter === "ATIVO" && f.ativo) ||
       (statusFilter === "INATIVO" && !f.ativo);
 
-    const matchesContext = activeContext === "AMBAS" ? true : activeContext === "ECO_STONE" ? f.empresa === "ECO_STONE" : f.empresa !== "ECO_STONE";
+    const matchesContext = (activeContext === "TODAS" || activeContext === "AMBAS") ? true : activeContext === "ECO_STONE" ? f.empresa === "ECO_STONE" : f.empresa === "JHOSTON";
 
     return matchesSearch && matchesStatus && matchesContext;
   });

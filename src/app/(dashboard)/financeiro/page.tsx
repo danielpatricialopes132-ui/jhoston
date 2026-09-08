@@ -3,6 +3,7 @@
 import { useEffect, useState, startTransition } from "react";
 import { getFinanceiroData, salvarTransacao, deleteTransacao, alterarStatusTransacao, salvarEmprestimoIntercompany } from "./actions";
 import { salvarFornecedor } from "../fornecedores/actions";
+import { getValesData } from "../vales/actions";
 import { getSession } from "@/app/login/actions";
 import Link from "next/link";
 
@@ -58,6 +59,8 @@ export default function FinanceiroPage() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [obras, setObras] = useState<Obra[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [funcionarios, setFuncionarios] = useState<any[]>([]);
+  const [valesPendentes, setValesPendentes] = useState<any[]>([]);
   const [planoContas, setPlanoContas] = useState<any[]>([]);
   const [centrosCusto, setCentrosCusto] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -84,6 +87,10 @@ export default function FinanceiroPage() {
   const [dataPagamento, setDataPagamento] = useState("");
   const [clienteFornecedor, setClienteFornecedor] = useState("");
   const [fornecedorId, setFornecedorId] = useState("");
+  const [funcionarioId, setFuncionarioId] = useState("");
+  const [valesDescontadosIds, setValesDescontadosIds] = useState<number[]>([]);
+  const [descontoAutomatico, setDescontoAutomatico] = useState<boolean>(true);
+  const [totalVales, setTotalVales] = useState(0);
   const [empresa, setEmpresa] = useState("JHOSTON");
   const [errorMsg, setErrorMsg] = useState("");
   const [empresaFilter, setEmpresaFilter] = useState("TODOS");
@@ -117,6 +124,10 @@ export default function FinanceiroPage() {
         dataPagamento: t.dataPagamento ? new Date(t.dataPagamento).toISOString().split("T")[0] : null,
       }));
       setTransacoes(mapped as any);
+      getValesData().then((vRes) => {
+        setFuncionarios(vRes.funcionarios);
+        setValesPendentes(vRes.vales.filter((v: any) => v.statusDesconto === "PENDENTE"));
+      });
     });
   };
 
@@ -175,6 +186,9 @@ export default function FinanceiroPage() {
     setDataPagamento("");
     setClienteFornecedor("");
     setFornecedorId("");
+    setFuncionarioId("");
+    setValesDescontadosIds([]);
+    setTotalVales(0);
     setEmpresa(empresaFilter !== "TODOS" ? empresaFilter : "JHOSTON");
     setErrorMsg("");
     setIsModalOpen(true);
@@ -237,6 +251,9 @@ export default function FinanceiroPage() {
       status,
       clienteFornecedor,
       fornecedorId: fornecedorId ? parseInt(fornecedorId) : null,
+      funcionarioId: funcionarioId ? parseInt(funcionarioId) : null,
+      valesDescontadosIds,
+      descontoAutomatico,
       empresa,
     };
 
@@ -340,7 +357,7 @@ export default function FinanceiroPage() {
   // Filtrar transações globais para os cálculos dependendo da empresa
   const transacoesFiltradasEmpresa = transacoes.filter(
     (t) => {
-      const matchesContext = activeContext === "AMBAS" ? true : activeContext === "ECO_STONE" ? (t as any).empresa === "ECO_STONE" : (t as any).empresa !== "ECO_STONE";
+      const matchesContext = (activeContext === "TODOS" || activeContext === "AMBAS") ? true : activeContext === "ECO_STONE" ? (t as any).empresa === "ECO_STONE" : (t as any).empresa === "JHOSTON";
       const matchesEmp = empresaFilter === "TODOS" ? true : (t as any).empresa === empresaFilter;
       return matchesContext && matchesEmp;
     }
@@ -363,7 +380,7 @@ export default function FinanceiroPage() {
     const matchesTipo = tipoFilter === "TODOS" || t.tipo === tipoFilter;
     const matchesStatus = statusFilter === "TODOS" || t.status === statusFilter;
     const matchesObra = obraFilter === "TODOS" || t.obraId?.toString() === obraFilter;
-    const matchesContext = activeContext === "AMBAS" ? true : activeContext === "ECO_STONE" ? (t as any).empresa === "ECO_STONE" : (t as any).empresa !== "ECO_STONE";
+    const matchesContext = (activeContext === "TODOS" || activeContext === "AMBAS") ? true : activeContext === "ECO_STONE" ? (t as any).empresa === "ECO_STONE" : (t as any).empresa === "JHOSTON";
     const matchesEmpresa = empresaFilter === "TODOS" || (t as any).empresa === empresaFilter;
 
     return matchesSearch && matchesTipo && matchesStatus && matchesObra && matchesContext && matchesEmpresa;
@@ -933,26 +950,70 @@ export default function FinanceiroPage() {
                       </span>
                     </div>
                   </td>
-                  <td style={{ fontWeight: 600 }}>
-                    {t.clienteFornecedor || <em style={{ color: "var(--text-muted)" }}>Não informado</em>}
+                  <td style={{ fontWeight: 600, maxWidth: "150px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={t.clienteFornecedor || ""}>
+                    {t.clienteFornecedor || <em style={{ color: "var(--text-muted)", fontWeight: "normal" }}>Não informado</em>}
                   </td>
                   <td>
                     {t.planoConta ? (
-                      <span style={{ fontSize: "12px", border: "1px solid var(--border-color)", padding: "2px 6px", borderRadius: "4px" }}>{t.planoConta.codigo} - {t.planoConta.descricao}</span>
+                      <span 
+                        title={`${t.planoConta.codigo} - ${t.planoConta.descricao}`}
+                        style={{ 
+                          fontSize: "12px", 
+                          border: "1px solid var(--border-color)", 
+                          padding: "2px 6px", 
+                          borderRadius: "4px",
+                          display: "inline-block",
+                          maxWidth: "160px",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          verticalAlign: "middle"
+                        }}
+                      >
+                        {t.planoConta.codigo} - {t.planoConta.descricao}
+                      </span>
                     ) : (
                       <em style={{ color: "var(--text-muted)", fontSize: "12px" }}>{t.categoria || "S/ Conta"}</em>
                     )}
                   </td>
                   <td>
                     {t.centroCusto ? (
-                      <span style={{ fontSize: "12px", border: "1px solid var(--border-color)", padding: "2px 6px", borderRadius: "4px" }}>{t.centroCusto.nome}</span>
+                      <span 
+                        title={t.centroCusto.nome}
+                        style={{ 
+                          fontSize: "12px", 
+                          border: "1px solid var(--border-color)", 
+                          padding: "2px 6px", 
+                          borderRadius: "4px",
+                          display: "inline-block",
+                          maxWidth: "140px",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          verticalAlign: "middle"
+                        }}
+                      >{t.centroCusto.nome}</span>
                     ) : t.obra ? (
-                      <span style={{ fontWeight: 500, color: "var(--primary)" }}>{t.obra.nome}</span>
+                      <span 
+                        title={t.obra.nome}
+                        style={{ 
+                          fontWeight: 500, 
+                          color: "var(--primary)",
+                          display: "inline-block",
+                          maxWidth: "140px",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          verticalAlign: "middle"
+                        }}
+                      >{t.obra.nome}</span>
                     ) : (
                       <em style={{ color: "var(--text-muted)", fontSize: "12px" }}>Caixa Geral</em>
                     )}
                   </td>
-                  <td>{t.descricao}</td>
+                  <td style={{ maxWidth: "160px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={t.descricao}>
+                    {t.descricao}
+                  </td>
                   <td>{formatDateBR(t.dataVencimento)}</td>
                   <td style={{ fontWeight: 700, color: t.tipo === "RECEITA" ? "var(--success)" : "var(--text-heading)" }}>
                     {t.tipo === "RECEITA" ? "+" : "-"} {formatCurrency(t.valor)}
@@ -1341,8 +1402,91 @@ export default function FinanceiroPage() {
                   </div>
                 </div>
 
-                {/* Condicional para Fornecedores Cadastrados - agora simplificado */}
+                {/* Condicional para Fornecedores Cadastrados / Funcionários */}
                 {tipo === "DESPESA" ? (
+                  planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("folha de pagamento") ||
+                  planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("salário") ||
+                  planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("adiantamento") ? (
+                    <div className="form-group">
+                      <label className="form-label">Funcionário *</label>
+                      <select 
+                        className="form-control" 
+                        value={funcionarioId} 
+                        onChange={(e) => {
+                          setFuncionarioId(e.target.value);
+                          setValesDescontadosIds([]);
+                          setTotalVales(0);
+                        }}
+                        required
+                      >
+                        <option value="">-- Selecione um Funcionário --</option>
+                        {funcionarios.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            {f.nome} - {f.cargo || "Sem cargo"}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      {funcionarioId && valesPendentes.filter(v => v.funcionarioId.toString() === funcionarioId).length > 0 && (
+                        <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#fff3cd', borderRadius: '8px', border: '1px solid #ffe69c' }}>
+                          <h5 style={{ margin: '0 0 8px 0', color: '#856404' }}>Vales Pendentes</h5>
+                          {valesPendentes.filter(v => v.funcionarioId.toString() === funcionarioId).map(v => (
+                            <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                              <input 
+                                type="checkbox" 
+                                id={`vale-${v.id}`}
+                                checked={valesDescontadosIds.includes(v.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setValesDescontadosIds([...valesDescontadosIds, v.id]);
+                                    setTotalVales(prev => prev + v.valor);
+                                  } else {
+                                    setValesDescontadosIds(valesDescontadosIds.filter(id => id !== v.id));
+                                    setTotalVales(prev => prev - v.valor);
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`vale-${v.id}`} style={{ color: '#856404', fontSize: '14px', cursor: 'pointer' }}>
+                                R$ {v.valor.toFixed(2)} - {new Date(v.data).toLocaleDateString()} {v.descricao ? `(${v.descricao})` : ''}
+                              </label>
+                            </div>
+                          ))}
+                          
+                          {valesDescontadosIds.length > 0 && (
+                            <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #ffe69c' }}>
+                              <h6 style={{ margin: '0 0 8px 0', color: '#664d03', fontSize: '13px' }}>O valor R$ {valor || "0,00"} informado acima é:</h6>
+                              
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                                  <input 
+                                    type="radio" 
+                                    name="descontoModo" 
+                                    checked={descontoAutomatico} 
+                                    onChange={() => setDescontoAutomatico(true)} 
+                                  />
+                                  <div>
+                                    <strong>Valor Bruto (Recomendado):</strong> O sistema vai descontar os Vales (R$ {valesPendentes.filter(v => valesDescontadosIds.includes(v.id)).reduce((acc, v) => acc + v.valor, 0).toFixed(2)}) automaticamente antes de salvar.
+                                  </div>
+                                </label>
+                                
+                                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                                  <input 
+                                    type="radio" 
+                                    name="descontoModo" 
+                                    checked={!descontoAutomatico} 
+                                    onChange={() => setDescontoAutomatico(false)} 
+                                  />
+                                  <div>
+                                    <strong>Valor Já Líquido:</strong> Eu já fiz a subtração. O sistema deve salvar exatamente o valor que eu digitei (R$ {valor || "0,00"}).
+                                  </div>
+                                </label>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
                   <div className="form-group">
                     <label className="form-label">Fornecedor Cadastrado *</label>
                     <div style={{ display: "flex", gap: "8px" }}>
@@ -1371,6 +1515,7 @@ export default function FinanceiroPage() {
                       </button>
                     </div>
                   </div>
+                  )
                 ) : (
                   <div className="form-group">
                     <label className="form-label">{tipo === "RECEITA" ? "Cliente" : "Fornecedor / Favorecido"}</label>

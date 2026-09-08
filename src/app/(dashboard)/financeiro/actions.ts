@@ -41,6 +41,8 @@ export async function salvarTransacao(data: {
   status: string;
   clienteFornecedor?: string;
   fornecedorId?: number | null;
+  funcionarioId?: number | null;
+  valesDescontadosIds?: number[];
   empresa?: string;
 }) {
   let clienteFornecedor = data.clienteFornecedor || "";
@@ -52,6 +54,16 @@ export async function salvarTransacao(data: {
     });
     if (fornecedor) {
       clienteFornecedor = fornecedor.nome;
+    }
+  }
+
+  // Se for uma despesa vinculada a um funcionário, preenchemos o clienteFornecedor com o nome do funcionário
+  if (data.tipo === "DESPESA" && data.funcionarioId) {
+    const funcionario = await prisma.funcionario.findUnique({
+      where: { id: data.funcionarioId },
+    });
+    if (funcionario) {
+      clienteFornecedor = funcionario.nome;
     }
   }
 
@@ -69,24 +81,50 @@ export async function salvarTransacao(data: {
     status: data.status,
     clienteFornecedor: clienteFornecedor,
     fornecedorId: data.fornecedorId || null,
+    funcionarioId: data.funcionarioId || null,
     empresa: data.empresa || "JHOSTON",
   };
 
   let transacao;
-  if (data.id) {
-    transacao = await prisma.transacaoFinanceira.update({
-      where: { id: data.id },
-      data: payload,
-    });
-  } else {
-    transacao = await prisma.transacaoFinanceira.create({
-      data: payload,
-    });
-  }
+  
+  // Utiliza $transaction para garantir atomicidade se houver vales sendo descontados
+  transacao = await prisma.$transaction(async (tx) => {
+    // 1. Calcula o desconto dos vales antes de salvar a transação (se o usuário escolheu Valor Bruto)
+    if (data.valesDescontadosIds && data.valesDescontadosIds.length > 0 && data.descontoAutomatico !== false) {
+      const vales = await tx.vale.findMany({
+        where: { id: { in: data.valesDescontadosIds } }
+      });
+      const totalDesconto = vales.reduce((acc: number, v: any) => acc + v.valor, 0);
+      payload.valor = Math.max(0, payload.valor - totalDesconto);
+    }
+
+    let t;
+    if (data.id) {
+      t = await tx.transacaoFinanceira.update({
+        where: { id: data.id },
+        data: payload,
+      });
+    } else {
+      t = await tx.transacaoFinanceira.create({
+        data: payload,
+      });
+    }
+
+    // 2. Atualiza os vales como descontados
+    if (data.valesDescontadosIds && data.valesDescontadosIds.length > 0) {
+      await tx.vale.updateMany({
+        where: { id: { in: data.valesDescontadosIds } },
+        data: { statusDesconto: "DESCONTADO" },
+      });
+    }
+    
+    return t;
+  });
 
   revalidatePath("/financeiro");
   revalidatePath("/relatorios");
   revalidatePath("/fornecedores");
+  revalidatePath("/vales");
   revalidatePath("/");
   return { success: true, data: transacao };
 }

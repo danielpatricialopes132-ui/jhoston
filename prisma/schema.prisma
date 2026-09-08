@@ -19,6 +19,7 @@ model Funcionario {
   pontos             RegistroPonto[]
   vales              Vale[]
   diariasViagem      DiariaViagem[]
+  transacoesFinanceiras TransacaoFinanceira[]
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 }
@@ -162,6 +163,8 @@ model TransacaoFinanceira {
   clienteFornecedor String?
   fornecedorId      Int?
   fornecedor        Fornecedor? @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
+  funcionarioId     Int?
+  funcionario       Funcionario? @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
   empresa           String      @default("JHOSTON")
   vale              Vale?
   diariaViagem      DiariaViagem?

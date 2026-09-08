@@ -652,7 +652,7 @@ export default function ObrasPage() {
     const matchesStatus = statusFilter === "TODAS" || o.status === statusFilter;
     
     // Isolamento estrito para ECO STONE
-    const matchesContext = activeContext === "AMBAS" ? true : activeContext === "ECO_STONE" ? o.empresa === "ECO_STONE" : o.empresa !== "ECO_STONE";
+    const matchesContext = (activeContext === "TODAS" || activeContext === "AMBAS") ? true : activeContext === "ECO_STONE" ? o.empresa === "ECO_STONE" : o.empresa === "JHOSTON";
     
     const matchesEmpresa = empresaFilter === "TODAS" || o.empresa === empresaFilter;
  
