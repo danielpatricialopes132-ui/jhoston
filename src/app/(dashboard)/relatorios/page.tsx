@@ -55,10 +55,13 @@ interface PagamentoItem {
   valorLiquidoPendente: number;
 }
 
+import { Send } from "lucide-react";
+
 export default function RelatoriosPage() {
   const [activeTab, setActiveTab] = useState<"ponto" | "pagamento" | "lucratividade" | "andamento" | "gerencial" | "livro_caixa">("ponto");
   const [obras, setObras] = useState<Obra[]>([]);
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const [agendas, setAgendas] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [empresaFilter, setEmpresaFilter] = useState("TODOS");
 
@@ -131,6 +134,7 @@ export default function RelatoriosPage() {
     getRelatoriosMetadata().then((res) => {
       setObras(res.obras as any);
       setFuncionarios(res.funcionarios);
+      setAgendas(res.agendas || []);
     });
   }, []);
 
@@ -331,14 +335,73 @@ export default function RelatoriosPage() {
         </div>
         <div style={{ display: "flex", gap: "8px", alignItems: "center", backgroundColor: "var(--bg-card)", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
           <span style={{ fontSize: "14px", fontWeight: 600 }}>WhatsApp para Envio:</span>
-          <input
-            type="text"
-            placeholder="Ex: 11999999999"
-            className="form-control"
-            style={{ width: "160px" }}
-            value={whatsappNumberReport}
-            onChange={(e) => setWhatsappNumberReport(e.target.value)}
-          />
+          <div style={{ display: "flex", gap: "4px" }}>
+            <input
+              type="text"
+              placeholder="Ex: 11999999999"
+              className="form-control"
+              style={{ width: "160px" }}
+              value={whatsappNumberReport}
+              onChange={(e) => setWhatsappNumberReport(e.target.value)}
+              list="agenda-contacts"
+            />
+            <datalist id="agenda-contacts">
+              {agendas.map((contato, index) => (
+                <option key={index} value={contato.telefone}>
+                  {contato.nome} ({contato.tipo})
+                </option>
+              ))}
+            </datalist>
+            <button
+              onClick={async () => {
+                if (!whatsappNumberReport) {
+                  alert("Informe um número de WhatsApp.");
+                  return;
+                }
+                setIsSendingWhatsAppReport(true);
+                try {
+                  const element = document.getElementById("report-content");
+                  if (element) {
+                    const canvas = await html2canvas(element, { scale: 2 });
+                    const imgData = canvas.toDataURL("image/jpeg", 0.8);
+                    
+                    const pdf = new jsPDF("p", "mm", "a4");
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                    pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+                    
+                    const pdfBlob = pdf.output("blob");
+                    const base64data = await new Promise<string>((resolve) => {
+                      const reader = new FileReader();
+                      reader.readAsDataURL(pdfBlob);
+                      reader.onloadend = () => resolve(reader.result as string);
+                    });
+                    
+                    await sendWhatsAppFile({
+                      number: whatsappNumberReport, 
+                      base64: base64data, 
+                      fileName: "Relatorio.pdf", 
+                      caption: "Segue o relatório solicitado."
+                    });
+                    alert("Relatório enviado com sucesso!");
+                  } else {
+                    alert("Não foi possível encontrar o conteúdo do relatório para gerar o PDF.");
+                  }
+                } catch (error) {
+                  console.error("Erro ao enviar relatório:", error);
+                  alert("Erro ao enviar o relatório. Verifique o console.");
+                } finally {
+                  setIsSendingWhatsAppReport(false);
+                }
+              }}
+              className="btn btn-primary"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 12px" }}
+              disabled={isSendingWhatsAppReport}
+              title="Enviar via WhatsApp"
+            >
+              {isSendingWhatsAppReport ? "..." : <Send size={16} />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -416,6 +479,7 @@ export default function RelatoriosPage() {
         </button>
       </div>
 
+      <div id="report-content" style={{ backgroundColor: "#fff", minHeight: "600px", padding: "10px", borderRadius: "8px" }}>
       {/* --- ABA 1: FOLHA DE PONTO POR OBRA --- */}
       {activeTab === "ponto" && (
         <div>
@@ -1296,6 +1360,7 @@ export default function RelatoriosPage() {
           )}
         </div>
       )}
+      </div>
 
       {/* --- MODAL DO RPA IMPRIMÍVEL --- */}
       {isHoleriteModalOpen && selectedHoleriteFunc && (

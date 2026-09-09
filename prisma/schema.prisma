@@ -516,14 +516,16 @@ model ConfiguracaoEmpresa {
 }
 
 model Contato {
-  id           Int           @id @default(autoincrement())
-  nome         String
-  telefone     String
-  categoria    String        @default("OUTROS") // "CLIENTE", "FORNECEDOR", "EQUIPE", "OUTROS"
-  empresa      String        @default("JHOSTON")
-  compromissos Compromisso[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id             Int           @id @default(autoincrement())
+  nome           String
+  telefone       String
+  email          String?
+  tipoFornecedor String?
+  categoria      String        @default("OUTROS") // "CLIENTE", "FORNECEDOR", "EQUIPE", "OUTROS"
+  empresa        String        @default("JHOSTON")
+  compromissos   Compromisso[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model Compromisso {

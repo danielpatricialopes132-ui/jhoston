@@ -20,7 +20,7 @@ export async function getContatos() {
   })
 }
 
-export async function salvarContato(data: { id?: number, nome: string, telefone: string, categoria: string }) {
+export async function salvarContato(data: { id?: number, nome: string, telefone: string, categoria: string, email?: string, tipoFornecedor?: string }) {
   const session = await getSession()
   if (!session) throw new Error("Não autorizado")
 
@@ -32,7 +32,9 @@ export async function salvarContato(data: { id?: number, nome: string, telefone:
       data: {
         nome: data.nome,
         telefone: data.telefone,
-        categoria: data.categoria
+        categoria: data.categoria,
+        email: data.email || null,
+        tipoFornecedor: data.categoria === 'FORNECEDOR' ? (data.tipoFornecedor || null) : null
       }
     })
     revalidatePath("/agenda")
@@ -43,6 +45,8 @@ export async function salvarContato(data: { id?: number, nome: string, telefone:
         nome: data.nome,
         telefone: data.telefone,
         categoria: data.categoria,
+        email: data.email || null,
+        tipoFornecedor: data.categoria === 'FORNECEDOR' ? (data.tipoFornecedor || null) : null,
         empresa
       }
     })

@@ -3,11 +3,12 @@
 import { prisma } from "@/lib/db";
 
 export async function getRelatoriosMetadata() {
-  const [obras, funcionarios] = await Promise.all([
+  const [obras, funcionarios, agendas] = await Promise.all([
     prisma.obra.findMany({ orderBy: { nome: "asc" } }),
     prisma.funcionario.findMany({ orderBy: { nome: "asc" } }),
+    prisma.contato.findMany({ orderBy: { nome: "asc" } }),
   ]);
-  return { obras, funcionarios };
+  return { obras, funcionarios, agendas };
 }
 
 // 1. Relatório de Folha de Ponto por Obra
