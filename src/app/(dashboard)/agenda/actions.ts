@@ -5,7 +5,7 @@ import { getSession } from "@/app/login/actions"
 import { revalidatePath } from "next/cache"
 
 // ==========================================
-// CONTATOS
+// CONTATOS (Agenda)
 // ==========================================
 
 export async function getContatos() {

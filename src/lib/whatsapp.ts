@@ -139,7 +139,7 @@ export async function createWhatsAppGroup(subject: string, participants: string[
   try {
     const formattedParticipants = participants.map(formatNumber);
 
-    const response = await fetch(${EVOLUTION_API_URL}/group/create/, {
+    const response = await fetch(`${EVOLUTION_API_URL}/group/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ export async function createWhatsAppGroup(subject: string, participants: string[
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error('Erro na API Evolution (Create Group):', errorData);
-      throw new Error(Falha ao criar grupo: );
+      throw new Error(`Falha ao criar grupo: ${JSON.stringify(errorData)}`);
     }
 
     const data = await response.json();
