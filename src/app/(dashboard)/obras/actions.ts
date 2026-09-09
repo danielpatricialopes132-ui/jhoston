@@ -117,7 +117,7 @@ export async function deleteObra(id: number) {
     revalidatePath("/");
     return { success: true };
   } catch (error) {
-    return { success: false, error: "Não foi possível excluir a obra pois existem registros (ponto, viagens ou financeiro) vinculados a ela." };
+    return { success: false, error: "NÃ£o foi possÃ­vel excluir a obra pois existem registros (ponto, viagens ou financeiro) vinculados a ela." };
   }
 }
 
@@ -128,7 +128,7 @@ export async function addDocumentoObra(data: {
   base64Data: string;
 }) {
   if (!data.nome.trim()) {
-    return { success: false, error: "O nome do documento é obrigatório." };
+    return { success: false, error: "O nome do documento Ã© obrigatÃ³rio." };
   }
 
   try {
@@ -188,10 +188,10 @@ export async function createAutorizacaoCompra(data: {
   observacoes?: string;
 }) {
   if (!data.itens.trim()) {
-    return { success: false, error: "A descrição dos itens autorizados é obrigatória." };
+    return { success: false, error: "A descriÃ§Ã£o dos itens autorizados Ã© obrigatÃ³ria." };
   }
   if (data.valorLimite < 0) {
-    return { success: false, error: "O valor limite não pode ser negativo." };
+    return { success: false, error: "O valor limite nÃ£o pode ser negativo." };
   }
 
   try {
@@ -208,8 +208,8 @@ export async function createAutorizacaoCompra(data: {
     revalidatePath("/obras");
     return { success: true, data: auth };
   } catch (error) {
-    console.error("Erro ao criar autorização de compra:", error);
-    return { success: false, error: "Erro ao criar a autorização de compra no banco de dados." };
+    console.error("Erro ao criar autorizaÃ§Ã£o de compra:", error);
+    return { success: false, error: "Erro ao criar a autorizaÃ§Ã£o de compra no banco de dados." };
   }
 }
 
@@ -222,8 +222,8 @@ export async function deleteAutorizacaoCompra(id: number) {
     revalidatePath("/obras");
     return { success: true };
   } catch (error) {
-    console.error("Erro ao excluir autorização de compra:", error);
-    return { success: false, error: "Erro ao excluir a autorização de compra." };
+    console.error("Erro ao excluir autorizaÃ§Ã£o de compra:", error);
+    return { success: false, error: "Erro ao excluir a autorizaÃ§Ã£o de compra." };
   }
 }
 
@@ -256,11 +256,11 @@ export async function analisarContratoComIA(base64Data: string) {
   if (!apiKey) {
     return {
       success: false,
-      error: "A chave de API do Gemini (GEMINI_API_KEY) não foi encontrada nas variáveis de ambiente (.env). Por favor, adicione-a para habilitar esta funcionalidade.",
+      error: "A chave de API do Gemini (GEMINI_API_KEY) nÃ£o foi encontrada nas variÃ¡veis de ambiente (.env). Por favor, adicione-a para habilitar esta funcionalidade.",
     };
   }
 
-  const prompt = "Você é um assistente especialista em analisar contratos de prestação de serviços e construção civil da Jhoston Tec. Analise o documento em PDF anexo e extraia as seguintes informações no formato JSON estrito, sem formatação markdown ou blocos de código (não use ```json ... ```, apenas retorne o texto puro em JSON): { \"obraNome\": \"Nome resumido da obra/projeto\", \"endereco\": \"Endereço da obra ou local da construção\", \"valorFechado\": valor final do contrato como número decimal, \"clientes\": [ { \"nome\": \"Nome completo ou Razão Social\", \"tipo\": \"PF\" ou \"PJ\", \"cpfCnpj\": \"CPF ou CNPJ formatado se disponível\", \"rg\": \"RG se disponível (para PF)\", \"ie\": \"Inscrição Estadual se disponível (para PJ)\", \"contato\": \"Nome do representante/procurador legal (para PJ)\", \"telefone\": \"Telefone de contato se disponível\", \"email\": \"E-mail se disponível\", \"endereco\": \"Endereço completo do cliente se disponível\" } ], \"formaPagamento\": \"Resumo da forma de pagamento, parcelas, prazos, etc\" }";
+  const prompt = "VocÃª Ã© um assistente especialista em analisar contratos de prestaÃ§Ã£o de serviÃ§os e construÃ§Ã£o civil da Jhoston Tec. Analise o documento em PDF anexo e extraia as seguintes informaÃ§Ãµes no formato JSON estrito, sem formataÃ§Ã£o markdown ou blocos de cÃ³digo (nÃ£o use ```json ... ```, apenas retorne o texto puro em JSON): { \"obraNome\": \"Nome resumido da obra/projeto\", \"endereco\": \"EndereÃ§o da obra ou local da construÃ§Ã£o\", \"valorFechado\": valor final do contrato como nÃºmero decimal, \"clientes\": [ { \"nome\": \"Nome completo ou RazÃ£o Social\", \"tipo\": \"PF\" ou \"PJ\", \"cpfCnpj\": \"CPF ou CNPJ formatado se disponÃ­vel\", \"rg\": \"RG se disponÃ­vel (para PF)\", \"ie\": \"InscriÃ§Ã£o Estadual se disponÃ­vel (para PJ)\", \"contato\": \"Nome do representante/procurador legal (para PJ)\", \"telefone\": \"Telefone de contato se disponÃ­vel\", \"email\": \"E-mail se disponÃ­vel\", \"endereco\": \"EndereÃ§o completo do cliente se disponÃ­vel\" } ], \"formaPagamento\": \"Resumo da forma de pagamento, parcelas, prazos, etc\" }";
 
   try {
     const response = await fetch(
@@ -303,7 +303,7 @@ export async function analisarContratoComIA(base64Data: string) {
     const textContent = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!textContent) {
-      return { success: false, error: "O Gemini não retornou nenhuma resposta válida." };
+      return { success: false, error: "O Gemini nÃ£o retornou nenhuma resposta vÃ¡lida." };
     }
 
     try {
@@ -311,11 +311,11 @@ export async function analisarContratoComIA(base64Data: string) {
       return { success: true, data: extractedData };
     } catch (parseError) {
       console.error("Erro ao parsear JSON do Gemini:", textContent, parseError);
-      return { success: false, error: "A resposta da inteligência artificial não veio no formato JSON esperado. Tente novamente." };
+      return { success: false, error: "A resposta da inteligÃªncia artificial nÃ£o veio no formato JSON esperado. Tente novamente." };
     }
   } catch (error) {
-    console.error("Erro na análise do contrato:", error);
-    return { success: false, error: "Erro interno ao processar a requisição com a IA." };
+    console.error("Erro na anÃ¡lise do contrato:", error);
+    return { success: false, error: "Erro interno ao processar a requisiÃ§Ã£o com a IA." };
   }
 }
 
@@ -341,7 +341,7 @@ export async function importarObraComContrato(data: {
     for (const c of data.clientes) {
       if (!c.nome.trim()) continue;
 
-      // Busca se cliente já existe por nome (case-insensitive) ou CPF/CNPJ
+      // Busca se cliente jÃ¡ existe por nome (case-insensitive) ou CPF/CNPJ
       let existingClient = await prisma.cliente.findFirst({
         where: {
           OR: [
@@ -429,7 +429,7 @@ export async function getObraResumoFinanceiro(obraId: number) {
     });
 
     if (!obra) {
-      return { success: false, error: "Obra não encontrada" };
+      return { success: false, error: "Obra nÃ£o encontrada" };
     }
 
     const receitas = await prisma.transacaoFinanceira.findMany({
@@ -496,10 +496,10 @@ import { createWhatsAppGroup } from '@/lib/whatsapp';
 
 export async function createObraWhatsAppGroup(obraId: number, participantesBase: string[]) {
   const obra = await prisma.obra.findUnique({ where: { id: obraId } });
-  if (!obra) throw new Error('Obra n�o encontrada');
+  if (!obra) throw new Error('Obra não encontrada');
   
   if (obra.whatsappGroupId) {
-    throw new Error('Esta obra j� possui um grupo do WhatsApp.');
+    throw new Error('Esta obra já possui um grupo do WhatsApp.');
   }
 
   // Filtrar vazios
@@ -509,17 +509,17 @@ export async function createObraWhatsAppGroup(obraId: number, participantesBase:
     throw new Error('Nenhum participante fornecido');
   }
 
-  const groupName = Obra: .substring(0, 25);
+  const groupName = `Obra: ${obra.nome}`.substring(0, 25);
   const response = await createWhatsAppGroup(groupName, participantes);
   
   // A API Evolution retorna propriedades dependendo do sucesso, precisamos pegar o ID do grupo
   // O formato costuma ser { subject: '...', id: '...', ... } ou algo similar.
-  // Vamos assumir que h� um .id ou retornar string
+  // Vamos assumir que há um .id ou retornar string
   const groupId = response?.id || response?.groupMetadata?.id || response?.jid || null;
   
   if (!groupId) {
-    console.error('Resposta da API n�o conteve ID do grupo:', response);
-    throw new Error('Grupo foi criado mas n�o retornou o ID. Verifique o WhatsApp.');
+    console.error('Resposta da API não conteve ID do grupo:', response);
+    throw new Error('Grupo foi criado mas não retornou o ID. Verifique o WhatsApp.');
   }
 
   await prisma.obra.update({

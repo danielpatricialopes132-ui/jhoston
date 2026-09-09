@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -127,10 +127,13 @@ export async function shareDiarioOnWhatsApp(relatoId: number) {
   if (!relato.obra.whatsappGroupId) throw new Error('Obra não possui grupo de WhatsApp vinculado.');
 
   const dataFormatada = new Date(relato.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-  const mensagem = \🏗️ *DIÁRIO DE OBRA: \*\n📅 *Data:* \\n👤 *Autor:* \\n\n📝 *Relato:*\n\\;
+  const mensagem = `🏗️ *DIÁRIO DE OBRA: ${relato.obra.nome}*\n📅 *Data:* ${dataFormatada}\n👤 *Autor:* ${relato.usuario.nome}\n\n📝 *Relato:*\n${relato.conteudo}`;
 
   // Enviar texto
-  await sendWhatsAppText(relato.obra.whatsappGroupId, mensagem);
+  await sendWhatsAppText({
+    number: relato.obra.whatsappGroupId,
+    text: mensagem
+  });
 
   // Enviar fotos
   if (relato.fotos && relato.fotos.length > 0) {
@@ -140,13 +143,13 @@ export async function shareDiarioOnWhatsApp(relatoId: number) {
       const base64Content = foto.base64Data.split(',')[1] || foto.base64Data;
       const mime = foto.base64Data.match(/data:(.*?);/)?.[1] || 'image/jpeg';
       
-      await sendWhatsAppFile(
-        relato.obra.whatsappGroupId,
-        base64Content,
-        mime,
-        \oto_\.jpg\,
-        \Foto \ do relato\
-      );
+      await sendWhatsAppFile({
+        number: relato.obra.whatsappGroupId,
+        base64: base64Content,
+        mimetype: mime,
+        fileName: `foto_${i+1}.jpg`,
+        caption: `Foto ${i+1} do relato`
+      });
     }
   }
 
