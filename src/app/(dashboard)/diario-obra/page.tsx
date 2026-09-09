@@ -14,6 +14,7 @@ interface Obra {
   progressoRevestimento: number;
   progressoAcabamento: number;
   empresa: string;
+  whatsappGroupId?: string | null;
 }
 
 interface Foto {
@@ -33,6 +34,7 @@ interface Relato {
     nome: string;
     role: string;
   };
+  obra: Obra;
   fotos: Foto[];
   createdAt: string;
 }

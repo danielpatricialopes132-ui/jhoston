@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -109,6 +109,8 @@ export async function deleteRelatoDiario(id: number) {
   }
 }
 
+
+
 import { sendWhatsAppText, sendWhatsAppFile } from '@/lib/whatsapp';
 
 export async function shareDiarioOnWhatsApp(relatoId: number) {
@@ -121,11 +123,11 @@ export async function shareDiarioOnWhatsApp(relatoId: number) {
     }
   });
 
-  if (!relato) throw new Error('Relato n�o encontrado.');
-  if (!relato.obra.whatsappGroupId) throw new Error('Obra n�o possui grupo de WhatsApp vinculado.');
+  if (!relato) throw new Error('Relato não encontrado.');
+  if (!relato.obra.whatsappGroupId) throw new Error('Obra não possui grupo de WhatsApp vinculado.');
 
   const dataFormatada = new Date(relato.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-  const mensagem = ??? *DI�RIO DE OBRA: *\n?? *Data:* \n?? *Autor:* \n\n?? *Relato:*\n;
+  const mensagem = \🏗️ *DIÁRIO DE OBRA: \*\n📅 *Data:* \\n👤 *Autor:* \\n\n📝 *Relato:*\n\\;
 
   // Enviar texto
   await sendWhatsAppText(relato.obra.whatsappGroupId, mensagem);
@@ -134,7 +136,7 @@ export async function shareDiarioOnWhatsApp(relatoId: number) {
   if (relato.fotos && relato.fotos.length > 0) {
     for (let i = 0; i < relato.fotos.length; i++) {
       const foto = relato.fotos[i];
-      // A base64Data j� possui o prefixo data:image/...;base64,
+      // A base64Data já possui o prefixo data:image/...;base64,
       const base64Content = foto.base64Data.split(',')[1] || foto.base64Data;
       const mime = foto.base64Data.match(/data:(.*?);/)?.[1] || 'image/jpeg';
       
@@ -142,8 +144,8 @@ export async function shareDiarioOnWhatsApp(relatoId: number) {
         relato.obra.whatsappGroupId,
         base64Content,
         mime,
-        oto_.jpg,
-        Foto  do relato
+        \oto_\.jpg\,
+        \Foto \ do relato\
       );
     }
   }
