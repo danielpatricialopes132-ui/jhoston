@@ -3,6 +3,9 @@
 import { useEffect, useState, startTransition } from "react";
 import { getRelatoriosMetadata, getFolhaPontoObra, getPagamentoFuncionarios, getLucratividadeObras, getAndamentoObraReport as getAndamentoObra, getRelatorioGerencialContabil, getLivroCaixa, gerarLinkCompartilhado } from "./actions";
 import { getCompanyBranding } from "@/lib/branding";
+import { sendWhatsAppFile, sendWhatsAppText } from "@/lib/whatsapp";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 interface Obra {
   id: number;
@@ -58,6 +61,9 @@ export default function RelatoriosPage() {
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [empresaFilter, setEmpresaFilter] = useState("TODOS");
+
+  const [whatsappNumberReport, setWhatsappNumberReport] = useState("");
+  const [isSendingWhatsAppReport, setIsSendingWhatsAppReport] = useState(false);
 
   // States: Aba 1 (Ponto por Obra)
   const [selectedObraId, setSelectedObraId] = useState("");
@@ -204,10 +210,22 @@ export default function RelatoriosPage() {
       const token = await gerarLinkCompartilhado(payload);
       const url = `${window.location.origin}/public/relatorios/${token}`;
       await navigator.clipboard.writeText(url);
-      alert("Link copiado para a área de transferência!");
+      
+      if (whatsappNumberReport) {
+        setIsSendingWhatsAppReport(true);
+        await sendWhatsAppText({
+          number: whatsappNumberReport,
+          text: `Confira o relatório online através deste link seguro: \n\n${url}`
+        });
+        alert("Link copiado para a área de transferência e enviado via WhatsApp!");
+        setIsSendingWhatsAppReport(false);
+      } else {
+        alert("Link copiado para a área de transferência! (Para enviar via WhatsApp, preencha o número no topo)");
+      }
     } catch (error) {
+      setIsSendingWhatsAppReport(false);
       console.error(error);
-      alert("Erro ao gerar link compartilhado.");
+      alert("Erro ao gerar link ou enviar pelo WhatsApp.");
     }
   };
 
@@ -250,15 +268,78 @@ export default function RelatoriosPage() {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
   };
 
+  const handleSendReportWhatsApp = async (elementId: string, reportName: string) => {
+    if (!whatsappNumberReport) {
+      alert("Por favor, informe o número do WhatsApp.");
+      return;
+    }
+    setIsSendingWhatsAppReport(true);
+    try {
+      const element = document.getElementById(elementId);
+      if (element) {
+        // Hide elements with 'no-print' class before capturing
+        const noPrintElements = element.querySelectorAll('.no-print');
+        noPrintElements.forEach(el => (el as HTMLElement).style.display = 'none');
+
+        const canvas = await html2canvas(element, { scale: 2 });
+        
+        // Restore elements
+        noPrintElements.forEach(el => (el as HTMLElement).style.display = '');
+
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF({
+          orientation: "landscape",
+          unit: "mm",
+          format: "a4",
+        });
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        // Se a altura passar de 1 página A4 landscape (210mm), pode ser necessário multi-página. 
+        // Para simplicidade, imprimimos uma única imagem no PDF longo ou cortamos.
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        const pdfBase64 = pdf.output("datauristring");
+
+        await sendWhatsAppFile({
+          number: whatsappNumberReport,
+          base64: pdfBase64,
+          fileName: `${reportName.replace(/ /g, '_')}.pdf`,
+          caption: `Segue o relatório: ${reportName}.`
+        });
+        alert("Relatório enviado com sucesso pelo WhatsApp!");
+      } else {
+        alert("Erro ao localizar o relatório na página.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao enviar relatório pelo WhatsApp. Verifique o console.");
+    } finally {
+      setIsSendingWhatsAppReport(false);
+    }
+  };
+
   return (
     <div>
-      <div style={{ marginBottom: "20px" }} className="no-print">
-        <h3 style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-heading)" }}>
-          Central de Relatórios & Fechamentos
-        </h3>
-        <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
-          Consolide a frequência dos diaristas, gere folhas de pagamentos com bônus e vales, emita holerites individuais e acompanhe custos físicos/financeiros de projetos.
-        </p>
+      <div style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }} className="no-print">
+        <div>
+          <h3 style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-heading)" }}>
+            Central de Relatórios & Fechamentos
+          </h3>
+          <p style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "4px" }}>
+            Consolide a frequência dos diaristas, gere folhas de pagamentos com bônus e vales, emita holerites individuais e acompanhe custos físicos/financeiros de projetos.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", backgroundColor: "var(--bg-card)", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
+          <span style={{ fontSize: "14px", fontWeight: 600 }}>WhatsApp para Envio:</span>
+          <input
+            type="text"
+            placeholder="Ex: 11999999999"
+            className="form-control"
+            style={{ width: "160px" }}
+            value={whatsappNumberReport}
+            onChange={(e) => setWhatsappNumberReport(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Seletor de Empresa */}
@@ -406,14 +487,19 @@ export default function RelatoriosPage() {
                         </p>
                       </div>
                     </div>
-                    <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-                      Gerar PDF (WhatsApp)
-                    </button>
+                    <div style={{ display: "flex", gap: "8px" }} className="no-print">
+                      <button className="btn btn-secondary btn-sm" disabled={isSendingWhatsAppReport} onClick={() => handleSendReportWhatsApp("relatorio-ponto", `Folha_Ponto_${currentObra?.nome}`)}>
+                        {isSendingWhatsAppReport ? "Enviando..." : "Gerar PDF (WhatsApp)"}
+                      </button>
+                      <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
+                        Imprimir
+                      </button>
+                    </div>
                   </div>
                 );
               })()}
 
-              <div className="table-container" style={{ margin: 0, border: "none", borderRadius: 0, overflowX: "auto" }}>
+              <div id="relatorio-ponto" className="table-container" style={{ margin: 0, border: "none", borderRadius: 0, overflowX: "auto" }}>
                 <table className="table" style={{ borderCollapse: "collapse", fontSize: "12px", width: "100%", minWidth: "900px" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#f8fafc" }}>
@@ -570,14 +656,19 @@ export default function RelatoriosPage() {
                         </p>
                       </div>
                     </div>
-                    <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-                      Gerar PDF (WhatsApp)
-                    </button>
+                    <div style={{ display: "flex", gap: "8px" }} className="no-print">
+                      <button className="btn btn-secondary btn-sm" disabled={isSendingWhatsAppReport} onClick={() => handleSendReportWhatsApp("relatorio-pagamentos", `Resumo_Pagamentos`)}>
+                        {isSendingWhatsAppReport ? "Enviando..." : "Gerar PDF (WhatsApp)"}
+                      </button>
+                      <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
+                        Imprimir
+                      </button>
+                    </div>
                   </div>
                 );
               })()}
 
-              <div className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
+              <div id="relatorio-pagamentos" className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
                 <table className="table">
                   <thead>
                     <tr>
@@ -696,19 +787,22 @@ export default function RelatoriosPage() {
                         </p>
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
+                    <div style={{ display: "flex", gap: "8px" }} className="no-print">
                       <button className="btn btn-secondary btn-sm" onClick={gerarRelatorioLucratividade}>
                         Atualizar Dados
                       </button>
-                      <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-                        Gerar PDF (WhatsApp)
+                      <button className="btn btn-secondary btn-sm" disabled={isSendingWhatsAppReport} onClick={() => handleSendReportWhatsApp("relatorio-lucratividade", `Lucratividade_${empresaFilter}`)}>
+                        {isSendingWhatsAppReport ? "Enviando..." : "Gerar PDF (WhatsApp)"}
+                      </button>
+                      <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
+                        Imprimir
                       </button>
                     </div>
                   </div>
                 );
               })()}
 
-              <div className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
+              <div id="relatorio-lucratividade" className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
                 <table className="table" style={{ fontSize: "13px" }}>
                   <thead>
                     <tr>
@@ -828,93 +922,99 @@ export default function RelatoriosPage() {
                         </p>
                       </div>
                     </div>
-                    <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-                      Gerar PDF (WhatsApp)
-                    </button>
+                    <div style={{ display: "flex", gap: "8px" }} className="no-print">
+                      <button className="btn btn-secondary btn-sm" disabled={isSendingWhatsAppReport} onClick={() => handleSendReportWhatsApp("relatorio-andamento", `Andamento_${andamentoReport.obra.nome}`)}>
+                        {isSendingWhatsAppReport ? "Enviando..." : "Gerar PDF (WhatsApp)"}
+                      </button>
+                      <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
+                        Imprimir
+                      </button>
+                    </div>
                   </div>
                 );
               })()}
 
-              {/* Barra de progresso das 5 etapas da piscina */}
-              <div
-                style={{
-                  backgroundColor: "#f8fafc",
-                  padding: "16px",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--border-color)",
-                  marginBottom: "24px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: 700, color: "var(--text-heading)" }}>
-                  <span>Progresso Físico de Instalação ({andamentoReport.obra.empresa === "ECO_STONE" ? "Cascata" : "Piscina"})</span>
-                  <span>Geral: {Math.round((
-                    andamentoReport.obra.progressoEscavacao +
-                    andamentoReport.obra.progressoEstrutura +
-                    andamentoReport.obra.progressoHidraulica +
-                    andamentoReport.obra.progressoRevestimento +
-                    andamentoReport.obra.progressoAcabamento
-                  ) / 5)}%</span>
-                </div>
-                
-                {/* 5 barras de progresso */}
-                <div className="progress-print-stack" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px", marginTop: "8px" }}>
-                  {(andamentoReport.obra.empresa === "ECO_STONE" ? [
-                    { label: "1. Vistoria e Proteção", val: andamentoReport.obra.progressoEscavacao },
-                    { label: "2. Adequação Hidráulica", val: andamentoReport.obra.progressoHidraulica },
-                    { label: "3. Estrutura e Impermeab.", val: andamentoReport.obra.progressoEstrutura },
-                    { label: "4. Modelagem e Acabamento", val: andamentoReport.obra.progressoRevestimento },
-                    { label: "5. Testes e Entrega", val: andamentoReport.obra.progressoAcabamento }
-                  ] : [
-                    { label: "1. Escavação", val: andamentoReport.obra.progressoEscavacao },
-                    { label: "2. Alvenaria/Estrutura", val: andamentoReport.obra.progressoEstrutura },
-                    { label: "3. Hidráulica/Instalações", val: andamentoReport.obra.progressoHidraulica },
-                    { label: "4. Revestimento/Azulejo", val: andamentoReport.obra.progressoRevestimento },
-                    { label: "5. Acabamento/Entrega", val: andamentoReport.obra.progressoAcabamento }
-                  ]).map((fase) => (
-                    <div key={fase.label} style={{ fontSize: "12px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", color: "var(--text-main)", fontWeight: 600 }}>
-                        <span>{fase.label}</span>
-                        <span>{fase.val}%</span>
-                      </div>
-                      <div style={{ backgroundColor: "#e2e8f0", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
-                        <div style={{ backgroundColor: "var(--primary)", width: `${fase.val}%`, height: "100%" }}></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Lista de Diários */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                {andamentoReport.relatos.length === 0 ? (
-                  <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "24px" }}>Nenhum relato registrado neste período.</p>
-                ) : (
-                  andamentoReport.relatos.map((d: any) => (
-                    <div key={d.id} style={{ border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", padding: "16px", backgroundColor: "#fff" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", borderBottom: "1px dashed var(--border-color)", paddingBottom: "6px" }}>
-                        <strong style={{ color: "var(--primary)" }}>{formatDateBR(new Date(d.data).toISOString().split("T")[0])}</strong>
-                        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Registrado por: {d.usuario?.nome || "Sistema"}</span>
-                      </div>
-                      <p style={{ fontSize: "14px", color: "var(--text-main)", lineHeight: "1.5", margin: 0 }}>{d.conteudo}</p>
-                      
-                      {d.fotos && d.fotos.length > 0 && (
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "12px" }}>
-                          {d.fotos.map((f: any) => (
-                            <img 
-                              key={f.id} 
-                              src={f.base64Data} 
-                              alt="Progresso da Obra" 
-                              style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "6px", border: "1px solid #e2e8f0" }} 
-                            />
-                          ))}
+              <div id="relatorio-andamento" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                {/* Barra de progresso das 5 etapas da piscina */}
+                <div
+                  style={{
+                    backgroundColor: "#f8fafc",
+                    padding: "16px",
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--border-color)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: 700, color: "var(--text-heading)" }}>
+                    <span>Progresso Físico de Instalação ({andamentoReport.obra.empresa === "ECO_STONE" ? "Cascata" : "Piscina"})</span>
+                    <span>Geral: {Math.round((
+                      andamentoReport.obra.progressoEscavacao +
+                      andamentoReport.obra.progressoEstrutura +
+                      andamentoReport.obra.progressoHidraulica +
+                      andamentoReport.obra.progressoRevestimento +
+                      andamentoReport.obra.progressoAcabamento
+                    ) / 5)}%</span>
+                  </div>
+                  
+                  {/* 5 barras de progresso */}
+                  <div className="progress-print-stack" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px", marginTop: "8px" }}>
+                    {(andamentoReport.obra.empresa === "ECO_STONE" ? [
+                      { label: "1. Vistoria e Proteção", val: andamentoReport.obra.progressoEscavacao },
+                      { label: "2. Adequação Hidráulica", val: andamentoReport.obra.progressoHidraulica },
+                      { label: "3. Estrutura e Impermeab.", val: andamentoReport.obra.progressoEstrutura },
+                      { label: "4. Modelagem e Acabamento", val: andamentoReport.obra.progressoRevestimento },
+                      { label: "5. Testes e Entrega", val: andamentoReport.obra.progressoAcabamento }
+                    ] : [
+                      { label: "1. Escavação", val: andamentoReport.obra.progressoEscavacao },
+                      { label: "2. Alvenaria/Estrutura", val: andamentoReport.obra.progressoEstrutura },
+                      { label: "3. Hidráulica/Instalações", val: andamentoReport.obra.progressoHidraulica },
+                      { label: "4. Revestimento/Azulejo", val: andamentoReport.obra.progressoRevestimento },
+                      { label: "5. Acabamento/Entrega", val: andamentoReport.obra.progressoAcabamento }
+                    ]).map((fase) => (
+                      <div key={fase.label} style={{ fontSize: "12px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", color: "var(--text-main)", fontWeight: 600 }}>
+                          <span>{fase.label}</span>
+                          <span>{fase.val}%</span>
                         </div>
-                      )}
-                    </div>
-                  ))
-                )}
+                        <div style={{ backgroundColor: "#e2e8f0", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
+                          <div style={{ backgroundColor: "var(--primary)", width: `${fase.val}%`, height: "100%" }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lista de Diários */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {andamentoReport.relatos.length === 0 ? (
+                    <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "24px" }}>Nenhum relato registrado neste período.</p>
+                  ) : (
+                    andamentoReport.relatos.map((d: any) => (
+                      <div key={d.id} style={{ border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", padding: "16px", backgroundColor: "#fff" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", borderBottom: "1px dashed var(--border-color)", paddingBottom: "6px" }}>
+                          <strong style={{ color: "var(--primary)" }}>{formatDateBR(new Date(d.data).toISOString().split("T")[0])}</strong>
+                          <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Registrado por: {d.usuario?.nome || "Sistema"}</span>
+                        </div>
+                        <p style={{ fontSize: "14px", color: "var(--text-main)", lineHeight: "1.5", margin: 0 }}>{d.conteudo}</p>
+                        
+                        {d.fotos && d.fotos.length > 0 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "12px" }}>
+                            {d.fotos.map((f: any) => (
+                              <img 
+                                key={f.id} 
+                                src={f.base64Data} 
+                                alt="Progresso da Obra" 
+                                style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "6px", border: "1px solid #e2e8f0" }} 
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           ) : (

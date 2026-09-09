@@ -1,0 +1,127 @@
+"use server";
+import { env } from 'process';
+const EVOLUTION_API_URL = 'https://whatsapp-ecostone.onrender.com';
+const EVOLUTION_API_KEY = 'Gabriel2006!';
+const INSTANCE_NAME = 'ecostone'; // O nome da instância que criamos
+
+interface SendTextOptions {
+  number: string;
+  text: string;
+  delay?: number;
+}
+
+interface SendFileOptions {
+  number: string;
+  base64: string;
+  fileName: string;
+  caption?: string;
+  mimetype?: string;
+  delay?: number;
+}
+
+/**
+ * Formata o número para o padrão esperado pela API (55 + DDD + Número)
+ */
+function formatNumber(number: string): string {
+  // Remove tudo que não for número
+  const clean = number.replace(/\D/g, '');
+  
+  // Se já começar com 55 e tiver tamanho adequado, mantém
+  if (clean.startsWith('55') && clean.length >= 12) {
+    return clean;
+  }
+  
+  // Se não tem 55 mas tem DDD + Número, adiciona 55
+  if (clean.length === 10 || clean.length === 11) {
+    return `55${clean}`;
+  }
+  
+  return clean;
+}
+
+/**
+ * Envia uma mensagem de texto simples via WhatsApp
+ */
+export async function sendWhatsAppText({ number, text, delay = 1200 }: SendTextOptions) {
+  try {
+    const formattedNumber = formatNumber(number);
+    
+    const response = await fetch(`${EVOLUTION_API_URL}/message/sendText/${INSTANCE_NAME}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_API_KEY
+      },
+      body: JSON.stringify({
+        number: formattedNumber,
+        options: {
+          delay: delay,
+          presence: 'composing', // Mostra "digitando..."
+          linkPreview: false
+        },
+        textMessage: {
+          text: text
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Erro na API Evolution (Text):', errorData);
+      throw new Error(`Falha ao enviar mensagem: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erro em sendWhatsAppText:', error);
+    throw error;
+  }
+}
+
+/**
+ * Envia um arquivo (PDF, Imagem, etc) em base64 via WhatsApp
+ */
+export async function sendWhatsAppFile({ number, base64, fileName, caption = '', mimetype = 'application/pdf', delay = 1500 }: SendFileOptions) {
+  try {
+    const formattedNumber = formatNumber(number);
+    
+    // Assegura que o base64 está no formato correto exigido pela Evolution API v2 (data URI scheme ou base64 puro)
+    // Para v2, enviamos o base64 puro sem o prefixo (data:mimetype;base64,) se for o campo document
+    let cleanBase64 = base64;
+    if (base64.includes('base64,')) {
+      cleanBase64 = base64.split('base64,')[1];
+    }
+    
+    const response = await fetch(`${EVOLUTION_API_URL}/message/sendMedia/${INSTANCE_NAME}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_API_KEY
+      },
+      body: JSON.stringify({
+        number: formattedNumber,
+        options: {
+          delay: delay,
+          presence: 'composing'
+        },
+        mediaMessage: {
+          mediatype: 'document', // ou 'image', 'video'
+          caption: caption,
+          media: cleanBase64,
+          fileName: fileName
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Erro na API Evolution (File):', errorData);
+      throw new Error(`Falha ao enviar arquivo: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erro em sendWhatsAppFile:', error);
+    throw error;
+  }
+}

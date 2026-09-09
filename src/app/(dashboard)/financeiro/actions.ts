@@ -44,6 +44,7 @@ export async function salvarTransacao(data: {
   funcionarioId?: number | null;
   valesDescontadosIds?: number[];
   empresa?: string;
+  descontoAutomatico?: boolean;
 }) {
   let clienteFornecedor = data.clienteFornecedor || "";
 

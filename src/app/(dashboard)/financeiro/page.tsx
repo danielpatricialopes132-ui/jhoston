@@ -4,6 +4,9 @@ import { useEffect, useState, startTransition } from "react";
 import { getFinanceiroData, salvarTransacao, deleteTransacao, alterarStatusTransacao, salvarEmprestimoIntercompany } from "./actions";
 import { salvarFornecedor } from "../fornecedores/actions";
 import { getValesData } from "../vales/actions";
+import { sendWhatsAppFile } from "@/lib/whatsapp";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import { getSession } from "@/app/login/actions";
 import Link from "next/link";
 
@@ -135,6 +138,8 @@ export default function FinanceiroPage() {
 
   const [isRPAModalOpen, setIsRPAModalOpen] = useState(false);
   const [rpaTransaction, setRpaTransaction] = useState<any>(null);
+  const [whatsappNumberRPA, setWhatsappNumberRPA] = useState("");
+  const [isSendingWhatsAppRPA, setIsSendingWhatsAppRPA] = useState(false);
 
   const loadData = () => {
     getFinanceiroData().then((res) => {
@@ -1880,7 +1885,7 @@ export default function FinanceiroPage() {
               </button>
             </div>
             
-            <div className="modal-body printable-holerite">
+            <div className="modal-body printable-holerite" id="rpa-content-to-print">
               {(() => {
                 const branding = getCompanyBranding(rpaTransaction.empresa || empresaFilter);
                 return (
@@ -1941,20 +1946,72 @@ export default function FinanceiroPage() {
           })()}
             </div>
 
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setIsRPAModalOpen(false)}>
-                Fechar
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  document.body.classList.add("printing-holerite");
-                  window.print();
-                  document.body.classList.remove("printing-holerite");
-                }}
-              >
-                Gerar PDF (RPA)
-              </button>
+            <div className="modal-footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <input
+                  type="text"
+                  placeholder="WhatsApp (Ex: 11999999999)"
+                  className="form-control"
+                  style={{ width: "200px" }}
+                  value={whatsappNumberRPA}
+                  onChange={(e) => setWhatsappNumberRPA(e.target.value)}
+                />
+                <button
+                  className="btn btn-secondary"
+                  style={{ backgroundColor: "#25D366", color: "white", border: "none" }}
+                  disabled={isSendingWhatsAppRPA || !whatsappNumberRPA}
+                  onClick={async () => {
+                    if (!whatsappNumberRPA) return;
+                    setIsSendingWhatsAppRPA(true);
+                    try {
+                      const element = document.getElementById("rpa-content-to-print");
+                      if (element) {
+                        const canvas = await html2canvas(element, { scale: 2 });
+                        const imgData = canvas.toDataURL("image/png");
+                        const pdf = new jsPDF({
+                          orientation: "portrait",
+                          unit: "mm",
+                          format: "a4",
+                        });
+                        const pdfWidth = pdf.internal.pageSize.getWidth();
+                        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+                        const pdfBase64 = pdf.output("datauristring");
+
+                        await sendWhatsAppFile({
+                          number: whatsappNumberRPA,
+                          base64: pdfBase64,
+                          fileName: `RPA_${rpaTransaction.clienteFornecedor || "Pagamento"}.pdf`,
+                          caption: `Segue o Recibo de Pagamento de Autônomo (RPA) referente a ${rpaTransaction.descricao}.`
+                        });
+                        alert("RPA enviado com sucesso pelo WhatsApp!");
+                      }
+                    } catch (error) {
+                      console.error(error);
+                      alert("Erro ao enviar RPA pelo WhatsApp. Verifique o console.");
+                    } finally {
+                      setIsSendingWhatsAppRPA(false);
+                    }
+                  }}
+                >
+                  {isSendingWhatsAppRPA ? "Enviando..." : "Enviar pelo WhatsApp"}
+                </button>
+              </div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button className="btn btn-secondary" onClick={() => setIsRPAModalOpen(false)}>
+                  Fechar
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    document.body.classList.add("printing-holerite");
+                    window.print();
+                    document.body.classList.remove("printing-holerite");
+                  }}
+                >
+                  Gerar PDF (RPA)
+                </button>
+              </div>
             </div>
           </div>
         </div>
