@@ -18,6 +18,7 @@ export async function createFuncionario(data: {
   diariaPadrao: number;
   adicionalMotorista: number;
   pix?: string;
+  telefone?: string;
   ativo?: boolean;
   empresa: string;
 }) {
@@ -28,11 +29,26 @@ export async function createFuncionario(data: {
       diariaPadrao: data.diariaPadrao,
       adicionalMotorista: data.adicionalMotorista,
       pix: data.pix || "",
+      telefone: data.telefone || null,
       ativo: data.ativo !== undefined ? data.ativo : true,
       empresa: data.empresa,
     },
   });
+
+  if (data.telefone && data.telefone.trim() !== "") {
+    await prisma.contato.create({
+      data: {
+        nome: data.nome,
+        telefone: data.telefone,
+        categoria: "EQUIPE",
+        empresa: data.empresa,
+        funcionarioId: funcionario.id,
+      }
+    });
+  }
+
   revalidatePath("/funcionarios");
+  revalidatePath("/agenda");
   revalidatePath("/ponto");
   revalidatePath("/viagens");
   revalidatePath("/vales");
@@ -48,6 +64,7 @@ export async function updateFuncionario(
     diariaPadrao: number;
     adicionalMotorista: number;
     pix?: string;
+    telefone?: string;
     ativo?: boolean;
     empresa: string;
   }
@@ -60,11 +77,45 @@ export async function updateFuncionario(
       diariaPadrao: data.diariaPadrao,
       adicionalMotorista: data.adicionalMotorista,
       pix: data.pix || "",
+      telefone: data.telefone || null,
       ativo: data.ativo !== undefined ? data.ativo : true,
       empresa: data.empresa,
     },
+    include: {
+      contato: true,
+    }
   });
+
+  if (data.telefone && data.telefone.trim() !== "") {
+    if (funcionario.contato) {
+      await prisma.contato.update({
+        where: { id: funcionario.contato.id },
+        data: {
+          nome: data.nome,
+          telefone: data.telefone,
+          empresa: data.empresa,
+        }
+      });
+    } else {
+      await prisma.contato.create({
+        data: {
+          nome: data.nome,
+          telefone: data.telefone,
+          categoria: "EQUIPE",
+          empresa: data.empresa,
+          funcionarioId: funcionario.id,
+        }
+      });
+    }
+  } else if (funcionario.contato) {
+    // Remove contato se telefone for removido
+    await prisma.contato.delete({
+      where: { id: funcionario.contato.id }
+    });
+  }
+
   revalidatePath("/funcionarios");
+  revalidatePath("/agenda");
   revalidatePath("/ponto");
   revalidatePath("/viagens");
   revalidatePath("/vales");
@@ -74,10 +125,22 @@ export async function updateFuncionario(
 
 export async function deleteFuncionario(id: number) {
   try {
+    const funcionario = await prisma.funcionario.findUnique({
+      where: { id },
+      include: { contato: true }
+    });
+    
+    if (funcionario?.contato) {
+      await prisma.contato.delete({
+        where: { id: funcionario.contato.id }
+      });
+    }
+
     await prisma.funcionario.delete({
       where: { id },
     });
     revalidatePath("/funcionarios");
+    revalidatePath("/agenda");
     revalidatePath("/ponto");
     revalidatePath("/viagens");
     revalidatePath("/vales");

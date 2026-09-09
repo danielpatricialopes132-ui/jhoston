@@ -205,104 +205,121 @@ export default function AgendaPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Agenda Integrada</h1>
-          <p className="text-slate-500 text-sm mt-1">Gerencie seus contatos e compromissos com facilidade</p>
-        </div>
-        <div className="flex bg-slate-100/80 backdrop-blur-sm p-1 rounded-xl shadow-inner border border-slate-200/60">
-          <button
-            onClick={() => setActiveTab("CONTATOS")}
-            className={`px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === "CONTATOS" ? "bg-white text-slate-800 shadow-sm border border-slate-200" : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"}`}
-          >
-            <Users size={18} /> Contatos
-          </button>
-          <button
-            onClick={() => setActiveTab("COMPROMISSOS")}
-            className={`px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${activeTab === "COMPROMISSOS" ? "bg-white text-slate-800 shadow-sm border border-slate-200" : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"}`}
-          >
-            <Calendar size={18} /> Compromissos
-          </button>
+    <div className="space-y-8 max-w-[1400px] mx-auto pb-12 animate-in fade-in duration-500">
+      {/* HEADER PREMIUM */}
+      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 sm:p-10 shadow-2xl border border-slate-700/50">
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-72 h-72 rounded-full bg-teal-500/20 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-72 h-72 rounded-full bg-blue-500/20 blur-3xl"></div>
+        
+        <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-bold uppercase tracking-wider mb-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span> Sistema Premium
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
+              Agenda <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-400">Inteligente</span>
+            </h1>
+            <p className="text-slate-400 text-sm sm:text-base mt-3 max-w-xl leading-relaxed">
+              Gestão centralizada de relacionamentos e compromissos. Notifique contatos instantaneamente e organize sua rotina com excelência.
+            </p>
+          </div>
+          
+          <div className="flex bg-slate-900/50 backdrop-blur-md p-1.5 rounded-2xl border border-slate-700/50 shadow-inner w-full lg:w-auto">
+            <button
+              onClick={() => setActiveTab("CONTATOS")}
+              className={`flex-1 lg:flex-none px-6 py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 transition-all duration-300 ${activeTab === "CONTATOS" ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25" : "text-slate-400 hover:text-white hover:bg-slate-800"}`}
+            >
+              <Users size={18} /> Contatos
+            </button>
+            <button
+              onClick={() => setActiveTab("COMPROMISSOS")}
+              className={`flex-1 lg:flex-none px-6 py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 transition-all duration-300 ${activeTab === "COMPROMISSOS" ? "bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25" : "text-slate-400 hover:text-white hover:bg-slate-800"}`}
+            >
+              <Calendar size={18} /> Compromissos
+            </button>
+          </div>
         </div>
       </div>
 
       {activeTab === "CONTATOS" && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-100">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
-                <Users size={20} className="text-teal-600" /> Seus Contatos
+        <div className="bg-white/60 backdrop-blur-xl rounded-[2rem] border border-white/40 shadow-xl overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+          <div className="p-8 border-b border-slate-100/80 bg-white/40">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+              <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-teal-50 text-teal-600 shadow-sm border border-teal-100">
+                  <Users size={22} />
+                </div>
+                Seus Contatos
               </h2>
-              <button onClick={() => openContatoModal()} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-medium transition-all shadow-sm hover:shadow-md active:scale-95">
-                <Plus size={18} /> Novo Contato
+              <button onClick={() => openContatoModal()} className="w-full md:w-auto bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all shadow-md hover:shadow-lg active:scale-95 group">
+                <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" /> Novo Contato
               </button>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <div className="flex flex-col xl:flex-row gap-4">
+              <div className="relative flex-1 group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" size={20} />
                 <input 
                   type="text" 
-                  placeholder="Buscar contatos..." 
+                  placeholder="Pesquisar por nome, telefone ou tipo..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all text-sm"
+                  className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200/80 rounded-2xl focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all text-sm shadow-sm"
                 />
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+              <div className="flex gap-2 overflow-x-auto pb-2 xl:pb-0 hide-scrollbar bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/50">
                 {["TODAS", "CLIENTE", "FORNECEDOR", "EQUIPE"].map(cat => (
                   <button 
                     key={cat}
                     onClick={() => setFilterCategoria(cat)}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors border ${filterCategoria === cat ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
+                    className={`px-5 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${filterCategoria === cat ? 'bg-white text-teal-700 shadow-sm border border-slate-200/80 scale-100' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 border border-transparent scale-95'}`}
                   >
-                    {cat === "TODAS" ? "Todos" : cat.charAt(0) + cat.slice(1).toLowerCase()}
+                    {cat === "TODAS" ? "Todos os Filtros" : cat.charAt(0) + cat.slice(1).toLowerCase()}
                   </button>
                 ))}
               </div>
             </div>
           </div>
           
-          <div className="p-6 bg-slate-50/50 min-h-[400px]">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="p-8 bg-slate-50/30 min-h-[500px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredContatos.map(c => (
-                <div key={c.id} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all p-5 group flex flex-col h-full relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                    <button onClick={() => openContatoModal(c)} className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors"><Edit size={14} /></button>
-                    <button onClick={() => handleDeleteContato(c.id)} className="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors"><Trash2 size={14} /></button>
+                <div key={c.id} className="bg-white rounded-3xl border border-slate-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 p-6 group flex flex-col h-full relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 flex gap-2">
+                    <button onClick={() => openContatoModal(c)} className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-colors"><Edit size={16} /></button>
+                    <button onClick={() => handleDeleteContato(c.id)} className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors"><Trash2 size={16} /></button>
                   </div>
                   
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 text-lg font-bold shadow-inner">
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-white text-xl font-bold shadow-lg">
                       {c.nome.charAt(0).toUpperCase()}
                     </div>
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 ${getCategoriaColor(c.categoria)}`}>
+                    <span className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold uppercase tracking-wider border flex items-center gap-1.5 shadow-sm ${getCategoriaColor(c.categoria)}`}>
                       {getCategoriaIcon(c.categoria)} {c.categoria}
                     </span>
                   </div>
                   
-                  <h3 className="font-bold text-slate-800 text-lg mb-1 line-clamp-1">{c.nome}</h3>
+                  <h3 className="font-extrabold text-slate-800 text-xl mb-1.5 line-clamp-1 group-hover:text-teal-600 transition-colors">{c.nome}</h3>
                   {c.categoria === 'FORNECEDOR' && c.tipoFornecedor && (
-                    <p className="text-xs font-medium text-amber-600 mb-3 flex items-center gap-1">
+                    <p className="text-xs font-bold text-amber-600 mb-4 flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-lg w-fit">
                       <Tag size={12} /> {c.tipoFornecedor}
                     </p>
                   )}
                   
-                  <div className="mt-auto space-y-2.5 pt-4 border-t border-slate-100">
-                    <a href={`https://wa.me/${c.telefone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 text-sm text-slate-600 hover:text-emerald-600 group/link transition-colors">
-                      <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center group-hover/link:bg-emerald-100 transition-colors">
+                  <div className="mt-auto space-y-3 pt-5 border-t border-slate-100">
+                    <a href={`https://wa.me/${c.telefone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-3.5 text-sm text-slate-600 hover:text-emerald-600 group/link transition-colors p-2 -mx-2 rounded-xl hover:bg-emerald-50/50">
+                      <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center group-hover/link:bg-emerald-100 group-hover/link:text-emerald-600 transition-colors shadow-sm">
                         <Phone size={14} />
                       </div>
-                      <span className="font-medium">{c.telefone}</span>
+                      <span className="font-semibold">{c.telefone}</span>
                     </a>
                     
                     {c.email && (
-                      <a href={`mailto:${c.email}`} className="flex items-center gap-3 text-sm text-slate-600 hover:text-blue-600 group/link transition-colors">
-                        <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center group-hover/link:bg-blue-100 transition-colors">
+                      <a href={`mailto:${c.email}`} className="flex items-center gap-3.5 text-sm text-slate-600 hover:text-blue-600 group/link transition-colors p-2 -mx-2 rounded-xl hover:bg-blue-50/50">
+                        <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center group-hover/link:bg-blue-100 group-hover/link:text-blue-600 transition-colors shadow-sm">
                           <Mail size={14} />
                         </div>
-                        <span className="truncate">{c.email}</span>
+                        <span className="truncate font-medium">{c.email}</span>
                       </a>
                     )}
                   </div>
@@ -310,12 +327,12 @@ export default function AgendaPage() {
               ))}
               
               {filteredContatos.length === 0 && (
-                <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                    <Search size={24} className="text-slate-300" />
+                <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-400">
+                  <div className="w-20 h-20 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center mb-5 animate-pulse">
+                    <Search size={32} className="text-slate-300" />
                   </div>
-                  <p className="font-medium text-slate-600 mb-1">Nenhum contato encontrado</p>
-                  <p className="text-sm">Tente ajustar seus filtros ou adicione um novo contato.</p>
+                  <p className="text-lg font-bold text-slate-700 mb-1">Nenhum contato encontrado</p>
+                  <p className="text-sm text-slate-500">Tente ajustar seus filtros ou adicione um novo registro.</p>
                 </div>
               )}
             </div>
@@ -324,106 +341,114 @@ export default function AgendaPage() {
       )}
 
       {activeTab === "COMPROMISSOS" && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
-               <Calendar size={20} className="text-teal-600" /> Calendário de Compromissos
+        <div className="bg-white/60 backdrop-blur-xl rounded-[2rem] border border-white/40 shadow-xl overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+          <div className="p-8 border-b border-slate-100/80 bg-white/40 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 shadow-sm border border-blue-100">
+                <Calendar size={22} />
+              </div>
+              Calendário de Compromissos
             </h2>
-            <button onClick={() => openCompromissoModal()} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-medium transition-all shadow-sm hover:shadow-md active:scale-95">
-              <Plus size={18} /> Novo Compromisso
+            <button onClick={() => openCompromissoModal()} className="w-full md:w-auto bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all shadow-md hover:shadow-lg active:scale-95 group">
+              <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" /> Novo Compromisso
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-slate-50/50 p-4 -mx-6 -mb-6 rounded-b-2xl min-h-[400px]">
-            {filteredCompromissos.map(c => (
-              <div key={c.id} className="bg-white border border-slate-200/80 rounded-2xl p-5 hover:shadow-md transition-all relative group flex flex-col">
-                <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                  <button onClick={() => openCompromissoModal(c)} className="w-8 h-8 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center hover:bg-slate-200 transition-colors"><Edit size={14} /></button>
-                  <button onClick={() => handleDeleteCompromisso(c.id)} className="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors"><Trash2 size={14} /></button>
-                </div>
-                
-                <h3 className="font-bold text-slate-800 text-lg mb-2 pr-16 line-clamp-2">{c.titulo}</h3>
-                
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-teal-50 text-teal-700 text-sm font-medium mb-3 self-start">
-                  <Calendar size={14} />
-                  {format(new Date(c.dataHora), "dd/MM, HH:mm", { locale: ptBR })}
-                </div>
-                
-                {c.descricao && <p className="text-sm text-slate-500 mb-4 line-clamp-3">{c.descricao}</p>}
-                
-                {c.contato && (
-                  <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">
-                        {c.contato.nome.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="text-sm">
-                        <p className="font-semibold text-slate-800 line-clamp-1">{c.contato.nome}</p>
-                        <p className="text-slate-500 text-xs">{c.contato.telefone}</p>
-                      </div>
-                    </div>
-                    <button onClick={() => {
-                      if (confirm('Enviar lembrete via WhatsApp para ' + c.contato!.nome + '?')) {
-                        import('./actions').then(m => {
-                          m.notificarCompromisso(c.id).then(() => {
-                            alert('Notificação enviada!');
-                          }).catch(e => {
-                            alert('Erro ao enviar notificação.');
-                            console.error(e);
-                          });
-                        });
-                      }
-                    }} className="w-10 h-10 flex items-center justify-center text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-full transition-colors" title="Notificar via WhatsApp">
-                      <Bell size={18} />
-                    </button>
+          <div className="p-8 bg-slate-50/30 min-h-[500px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredCompromissos.map(c => (
+                <div key={c.id} className="bg-white border border-slate-200/60 shadow-sm hover:shadow-xl hover:-translate-y-1 rounded-3xl p-6 transition-all duration-300 relative group flex flex-col">
+                  <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 flex gap-2">
+                    <button onClick={() => openCompromissoModal(c)} className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-colors"><Edit size={16} /></button>
+                    <button onClick={() => handleDeleteCompromisso(c.id)} className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors"><Trash2 size={16} /></button>
                   </div>
-                )}
-              </div>
-            ))}
-            {filteredCompromissos.length === 0 && (
-              <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400">
-                <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                  <Calendar size={24} className="text-slate-300" />
+                  
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-50/80 text-blue-700 text-xs font-extrabold mb-4 self-start border border-blue-100">
+                    <Calendar size={14} />
+                    {format(new Date(c.dataHora), "dd 'de' MMMM, HH:mm", { locale: ptBR })}
+                  </div>
+
+                  <h3 className="font-extrabold text-slate-800 text-xl mb-3 pr-16 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">{c.titulo}</h3>
+                  
+                  {c.descricao && <p className="text-sm text-slate-500 mb-6 line-clamp-3 leading-relaxed">{c.descricao}</p>}
+                  
+                  {c.contato && (
+                    <div className="mt-auto pt-5 border-t border-slate-100 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-600 font-bold shadow-inner">
+                          {c.contato.nome.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm line-clamp-1">{c.contato.nome}</p>
+                          <p className="text-slate-500 text-xs font-medium">{c.contato.telefone}</p>
+                        </div>
+                      </div>
+                      <button onClick={() => {
+                        if (confirm('Enviar lembrete via WhatsApp para ' + c.contato!.nome + '?')) {
+                          import('./actions').then(m => {
+                            m.notificarCompromisso(c.id).then(() => {
+                              alert('Notificação enviada!');
+                            }).catch(e => {
+                              alert('Erro ao enviar notificação.');
+                              console.error(e);
+                            });
+                          });
+                        }
+                      }} className="w-11 h-11 flex items-center justify-center text-emerald-600 bg-emerald-50 hover:bg-emerald-500 hover:text-white rounded-2xl transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5" title="Notificar via WhatsApp">
+                        <Bell size={18} />
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <p className="font-medium text-slate-600 mb-1">Nenhum compromisso</p>
-                <p className="text-sm">Seu calendário está livre no momento.</p>
-              </div>
-            )}
+              ))}
+              {filteredCompromissos.length === 0 && (
+                <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-400">
+                  <div className="w-20 h-20 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center mb-5">
+                    <Calendar size={32} className="text-slate-300" />
+                  </div>
+                  <p className="text-lg font-bold text-slate-700 mb-1">Nenhum compromisso</p>
+                  <p className="text-sm text-slate-500">Seu calendário está livre no momento.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {/* MODAL CONTATO */}
       {isContatoModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h2 className="text-lg font-bold text-slate-800">{editingContato ? 'Editar Contato' : 'Novo Contato'}</h2>
-              <button onClick={() => setIsContatoModalOpen(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full p-2 transition-colors">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-white/20">
+            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-teal-50 text-teal-600"><User size={20}/></div>
+                {editingContato ? 'Editar Contato' : 'Novo Contato'}
+              </h2>
+              <button onClick={() => setIsContatoModalOpen(false)} className="text-slate-400 hover:text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-full p-2 transition-all shadow-sm">
                 <Plus size={20} className="rotate-45" />
               </button>
             </div>
             
-            <form onSubmit={handleSaveContato} className="flex-1 overflow-y-auto p-6 space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <form onSubmit={handleSaveContato} className="flex-1 overflow-y-auto p-8 space-y-6 bg-white">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nome Completo</label>
-                  <input required value={cNome} onChange={e => setCNome(e.target.value)} type="text" placeholder="João da Silva" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Nome Completo</label>
+                  <input required value={cNome} onChange={e => setCNome(e.target.value)} type="text" placeholder="Ex: João da Silva" className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all shadow-sm" />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">WhatsApp</label>
-                  <input required value={cTelefone} onChange={e => setCTelefone(e.target.value)} type="text" placeholder="5511999999999" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">WhatsApp</label>
+                  <input required value={cTelefone} onChange={e => setCTelefone(e.target.value)} type="text" placeholder="5511999999999" className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all shadow-sm" />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">E-mail (Opcional)</label>
-                  <input value={cEmail} onChange={e => setCEmail(e.target.value)} type="email" placeholder="joao@exemplo.com" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">E-mail (Opcional)</label>
+                  <input value={cEmail} onChange={e => setCEmail(e.target.value)} type="email" placeholder="joao@exemplo.com" className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all shadow-sm" />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Categoria</label>
-                  <select value={cCategoria} onChange={e => setCCategoria(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all">
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Categoria</label>
+                  <select value={cCategoria} onChange={e => setCCategoria(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all shadow-sm appearance-none cursor-pointer">
                     <option value="CLIENTE">Cliente</option>
                     <option value="FORNECEDOR">Fornecedor</option>
                     <option value="EQUIPE">Equipe</option>
@@ -433,15 +458,15 @@ export default function AgendaPage() {
 
                 {cCategoria === 'FORNECEDOR' && (
                   <div className="sm:col-span-2 animate-in slide-in-from-top-2 duration-300">
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tipo de Fornecedor</label>
-                    <input value={cTipoFornecedor} onChange={e => setCTipoFornecedor(e.target.value)} type="text" placeholder="Ex: Material, Serviço, Concreto, Locação..." className="w-full bg-amber-50/50 border border-amber-200 rounded-xl p-3 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all" />
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Tipo de Fornecedor</label>
+                    <input value={cTipoFornecedor} onChange={e => setCTipoFornecedor(e.target.value)} type="text" placeholder="Ex: Material, Serviço, Concreto, Locação..." className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 outline-none transition-all shadow-sm" />
                   </div>
                 )}
               </div>
               
-              <div className="pt-6 mt-6 border-t border-slate-100 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsContatoModalOpen(false)} className="px-5 py-2.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-medium transition-colors">Cancelar</button>
-                <button type="submit" className="px-5 py-2.5 text-white bg-teal-600 hover:bg-teal-700 rounded-xl font-medium transition-all shadow-sm active:scale-95">Salvar Contato</button>
+              <div className="pt-8 mt-4 border-t border-slate-100 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsContatoModalOpen(false)} className="px-6 py-3.5 text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl font-bold transition-colors shadow-sm">Cancelar</button>
+                <button type="submit" className="px-6 py-3.5 text-white bg-slate-900 hover:bg-slate-800 rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95">Salvar Contato</button>
               </div>
             </form>
           </div>
@@ -450,29 +475,32 @@ export default function AgendaPage() {
 
       {/* MODAL COMPROMISSO */}
       {isCompromissoModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h2 className="text-lg font-bold text-slate-800">{editingCompromisso ? 'Editar Compromisso' : 'Novo Compromisso'}</h2>
-              <button onClick={() => setIsCompromissoModalOpen(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full p-2 transition-colors">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] border border-white/20">
+            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-blue-50 text-blue-600"><Calendar size={20}/></div>
+                {editingCompromisso ? 'Editar Compromisso' : 'Novo Compromisso'}
+              </h2>
+              <button onClick={() => setIsCompromissoModalOpen(false)} className="text-slate-400 hover:text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-full p-2 transition-all shadow-sm">
                 <Plus size={20} className="rotate-45" />
               </button>
             </div>
             
-            <form onSubmit={handleSaveCompromisso} className="flex-1 overflow-y-auto p-6 space-y-5">
+            <form onSubmit={handleSaveCompromisso} className="flex-1 overflow-y-auto p-8 space-y-6 bg-white">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Título</label>
-                <input required value={coTitulo} onChange={e => setCoTitulo(e.target.value)} type="text" placeholder="Reunião de Alinhamento" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" />
+                <label className="block text-sm font-bold text-slate-700 mb-2">Título do Compromisso</label>
+                <input required value={coTitulo} onChange={e => setCoTitulo(e.target.value)} type="text" placeholder="Ex: Reunião de Alinhamento" className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm" />
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Data e Hora</label>
-                <input required value={coDataHora} onChange={e => setCoDataHora(e.target.value)} type="datetime-local" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all" />
+                <label className="block text-sm font-bold text-slate-700 mb-2">Data e Hora</label>
+                <input required value={coDataHora} onChange={e => setCoDataHora(e.target.value)} type="datetime-local" className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm" />
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Contato Relacionado (Opcional)</label>
-                <select value={coContatoId} onChange={e => setCoContatoId(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all">
+                <label className="block text-sm font-bold text-slate-700 mb-2">Contato Relacionado (Opcional)</label>
+                <select value={coContatoId} onChange={e => setCoContatoId(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all shadow-sm appearance-none cursor-pointer">
                   <option value="">Nenhum contato selecionado</option>
                   {filteredContatos.map(c => (
                     <option key={c.id} value={c.id}>{c.nome} ({c.categoria})</option>
@@ -481,13 +509,13 @@ export default function AgendaPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Descrição</label>
-                <textarea value={coDescricao} onChange={e => setCoDescricao(e.target.value)} rows={3} placeholder="Detalhes sobre o compromisso..." className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all resize-none" />
+                <label className="block text-sm font-bold text-slate-700 mb-2">Descrição</label>
+                <textarea value={coDescricao} onChange={e => setCoDescricao(e.target.value)} rows={3} placeholder="Detalhes adicionais sobre o compromisso..." className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all resize-none shadow-sm" />
               </div>
               
-              <div className="pt-6 mt-6 border-t border-slate-100 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsCompromissoModalOpen(false)} className="px-5 py-2.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-medium transition-colors">Cancelar</button>
-                <button type="submit" className="px-5 py-2.5 text-white bg-teal-600 hover:bg-teal-700 rounded-xl font-medium transition-all shadow-sm active:scale-95">Salvar Compromisso</button>
+              <div className="pt-8 mt-4 border-t border-slate-100 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsCompromissoModalOpen(false)} className="px-6 py-3.5 text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl font-bold transition-colors shadow-sm">Cancelar</button>
+                <button type="submit" className="px-6 py-3.5 text-white bg-slate-900 hover:bg-slate-800 rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95">Salvar Compromisso</button>
               </div>
             </form>
           </div>

@@ -109,12 +109,11 @@ export async function sendWhatsAppFile({ number, base64, fileName, caption = '',
           delay: delay,
           presence: 'composing'
         },
-        mediaMessage: {
-          mediatype: 'document', // ou 'image', 'video'
-          caption: caption,
-          media: cleanBase64,
-          fileName: fileName
-        }
+        mediatype: 'document',
+        mimetype: mimetype,
+        caption: caption,
+        media: cleanBase64,
+        fileName: fileName
       })
     });
 

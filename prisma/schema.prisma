@@ -14,12 +14,14 @@ model Funcionario {
   diariaPadrao          Float                 @default(0)
   adicionalMotorista    Float                 @default(0)
   pix                   String?
+  telefone              String?
   ativo                 Boolean               @default(true)
   empresa               String                @default("JHOSTON")
   pontos                RegistroPonto[]
   vales                 Vale[]
   diariasViagem         DiariaViagem[]
   transacoesFinanceiras TransacaoFinanceira[]
+  contato               Contato?
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
 }
@@ -523,6 +525,8 @@ model Contato {
   tipoFornecedor String?
   categoria      String        @default("OUTROS") // "CLIENTE", "FORNECEDOR", "EQUIPE", "OUTROS"
   empresa        String        @default("JHOSTON")
+  funcionarioId  Int?          @unique
+  funcionario    Funcionario?  @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
   compromissos   Compromisso[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

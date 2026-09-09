@@ -11,6 +11,7 @@ interface Funcionario {
   diariaPadrao: number;
   adicionalMotorista: number;
   pix: string | null;
+  telefone: string | null;
   ativo: boolean;
   empresa: string;
 }
@@ -28,6 +29,7 @@ export default function FuncionariosPage() {
   const [diariaPadrao, setDiariaPadrao] = useState("0");
   const [adicionalMotorista, setAdicionalMotorista] = useState("0");
   const [pix, setPix] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [activeContext, setActiveContext] = useState("TODAS");
@@ -70,6 +72,7 @@ export default function FuncionariosPage() {
     setDiariaPadrao("150"); // Valor padrão sugerido
     setAdicionalMotorista("50"); // Adicional padrão sugerido
     setPix("");
+    setTelefone("");
     setAtivo(true);
     setEmpresa(activeContext === "TODAS" ? "JHOSTON" : activeContext);
     setErrorMsg("");
@@ -83,6 +86,7 @@ export default function FuncionariosPage() {
     setDiariaPadrao(f.diariaPadrao.toString());
     setAdicionalMotorista(f.adicionalMotorista.toString());
     setPix(f.pix || "");
+    setTelefone(f.telefone || "");
     setAtivo(f.ativo);
     setEmpresa(f.empresa || "JHOSTON");
     setErrorMsg("");
@@ -107,6 +111,7 @@ export default function FuncionariosPage() {
       diariaPadrao: parseFloat(diariaPadrao) || 0,
       adicionalMotorista: parseFloat(adicionalMotorista) || 0,
       pix,
+      telefone,
       ativo,
       empresa
     };
@@ -212,6 +217,7 @@ export default function FuncionariosPage() {
               <th>Cargo</th>
               <th>Diária Padrão</th>
               <th>Adicional Motorista</th>
+              <th>Telefone</th>
               <th>Chave PIX</th>
               <th>Status</th>
               <th style={{ width: "160px", textAlign: "right" }}>Ações</th>
@@ -233,6 +239,13 @@ export default function FuncionariosPage() {
                   <td style={{ fontWeight: 500 }}>{formatCurrency(f.diariaPadrao)}</td>
                   <td style={{ fontWeight: 500, color: "var(--secondary)" }}>
                     {f.adicionalMotorista > 0 ? `+ ${formatCurrency(f.adicionalMotorista)}` : "Sem adicional"}
+                  </td>
+                  <td>
+                    {f.telefone ? (
+                      <span style={{ fontFamily: "monospace", fontSize: "13px" }}>{f.telefone}</span>
+                    ) : (
+                      <em style={{ color: "var(--text-muted)" }}>Não informado</em>
+                    )}
                   </td>
                   <td>
                     {f.pix ? (
@@ -358,6 +371,16 @@ export default function FuncionariosPage() {
                       required
                     />
                   </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Telefone (Opcional)</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Ex: (11) 99999-9999"
+                    value={telefone}
+                    onChange={(e) => setTelefone(e.target.value)}
+                  />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Chave PIX (Para Pagamento)</label>
