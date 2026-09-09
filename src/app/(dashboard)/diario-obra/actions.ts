@@ -108,3 +108,46 @@ export async function deleteRelatoDiario(id: number) {
     return { success: false, error: "Erro ao excluir o relato." };
   }
 }
+
+import { sendWhatsAppText, sendWhatsAppFile } from '@/lib/whatsapp';
+
+export async function shareDiarioOnWhatsApp(relatoId: number) {
+  const relato = await prisma.diarioObra.findUnique({
+    where: { id: relatoId },
+    include: {
+      obra: true,
+      usuario: true,
+      fotos: true
+    }
+  });
+
+  if (!relato) throw new Error('Relato não encontrado.');
+  if (!relato.obra.whatsappGroupId) throw new Error('Obra não possui grupo de WhatsApp vinculado.');
+
+  const dataFormatada = new Date(relato.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+  const mensagem = ??? *DIÁRIO DE OBRA: *\n?? *Data:* \n?? *Autor:* \n\n?? *Relato:*\n;
+
+  // Enviar texto
+  await sendWhatsAppText(relato.obra.whatsappGroupId, mensagem);
+
+  // Enviar fotos
+  if (relato.fotos && relato.fotos.length > 0) {
+    for (let i = 0; i < relato.fotos.length; i++) {
+      const foto = relato.fotos[i];
+      // A base64Data já possui o prefixo data:image/...;base64,
+      const base64Content = foto.base64Data.split(',')[1] || foto.base64Data;
+      const mime = foto.base64Data.match(/data:(.*?);/)?.[1] || 'image/jpeg';
+      
+      await sendWhatsAppFile(
+        relato.obra.whatsappGroupId,
+        base64Content,
+        mime,
+        oto_.jpg,
+        Foto  do relato
+      );
+    }
+  }
+
+  return { success: true };
+}
+

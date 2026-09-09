@@ -125,6 +125,14 @@ export default function ObrasPage() {
   const [resumoData, setResumoData] = useState<any>(null);
   const [resumoLoading, setResumoLoading] = useState(false);
 
+  // WhatsApp Group states
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [activeObraForGroup, setActiveObraForGroup] = useState<Obra | null>(null);
+  const [groupContacts, setGroupContacts] = useState<any[]>([]);
+  const [selectedGroupContactIds, setSelectedGroupContactIds] = useState<number[]>([]);
+  const [groupError, setGroupError] = useState("");
+  const [groupSubmitting, setGroupSubmitting] = useState(false);
+
   // IA Contract Reader states
   const [isIAImportModalOpen, setIsIAImportModalOpen] = useState(false);
   const [iaFileBase64, setIaFileBase64] = useState<string | null>(null);
@@ -247,6 +255,56 @@ export default function ObrasPage() {
     setDocFile(null);
     setDocError("");
     setIsDocModalOpen(true);
+  };
+
+  const openGroupModal = async (obra: Obra) => {
+    setActiveObraForGroup(obra);
+    setSelectedGroupContactIds([]);
+    setGroupError("");
+    
+    // Lazy load contatos
+    const { getContatos } = await import("../agenda/actions");
+    const contatos = await getContatos();
+    setGroupContacts(contatos);
+    
+    setIsGroupModalOpen(true);
+  };
+
+  const closeGroupModal = () => {
+    setIsGroupModalOpen(false);
+    setActiveObraForGroup(null);
+  };
+
+  const handleGroupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeObraForGroup) return;
+    if (selectedGroupContactIds.length === 0) {
+      setGroupError("Selecione pelo menos um contato.");
+      return;
+    }
+
+    setGroupSubmitting(true);
+    setGroupError("");
+
+    try {
+      const selectedContacts = groupContacts.filter(c => selectedGroupContactIds.includes(c.id));
+      const participants = selectedContacts.map(c => c.telefone);
+
+      const { createObraWhatsAppGroup } = await import("./actions");
+      const res = await createObraWhatsAppGroup(activeObraForGroup.id, participants);
+      
+      if (res.success) {
+        showSuccess("Grupo criado com sucesso!");
+        refreshObras();
+        closeGroupModal();
+      } else {
+        setGroupError("Erro ao criar o grupo.");
+      }
+    } catch (err: any) {
+      setGroupError(err.message || "Falha ao criar o grupo no WhatsApp.");
+    } finally {
+      setGroupSubmitting(false);
+    }
   };
 
   const closeDocModal = () => {
@@ -920,6 +978,23 @@ export default function ObrasPage() {
                       >
                         Editar
                       </button>
+                      {!obra.whatsappGroupId ? (
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => openGroupModal(obra)}
+                          style={{ backgroundColor: "#25D366", borderColor: "#25D366", color: "white" }}
+                        >
+                          💬 Criar Grupo
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          disabled
+                          style={{ backgroundColor: "rgba(37, 211, 102, 0.1)", color: "#25D366", borderColor: "rgba(37, 211, 102, 0.2)" }}
+                        >
+                          💬 Grupo Ativo
+                        </button>
+                      )}
                       <button
                         className="btn btn-danger btn-sm"
                         onClick={() => handleDelete(obra.id)}
@@ -1828,6 +1903,66 @@ export default function ObrasPage() {
           </div>
         </div>
       )}
+
+      {isGroupModalOpen && (
+        <div className='modal-overlay'>
+          <div className='modal-content' style={{ maxWidth: '500px' }}>
+            <div className='modal-header'>
+              <h2>Criar Grupo de WhatsApp</h2>
+              <button className='modal-close' onClick={closeGroupModal}>&times;</button>
+            </div>
+            <form onSubmit={handleGroupSubmit}>
+              <div className='modal-body'>
+                <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                  Selecione os contatos que deseja adicionar ao grupo da obra <strong>{activeObraForGroup?.nome}</strong>.
+                </p>
+                {groupError && (
+                  <div style={{ backgroundColor: 'var(--error-bg)', color: 'var(--error)', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' }}>
+                    {groupError}
+                  </div>
+                )}
+                
+                <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '8px' }}>
+                  {groupContacts.length === 0 ? (
+                    <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px 0' }}>Nenhum contato encontrado na Agenda.</p>
+                  ) : (
+                    groupContacts.map(c => (
+                      <label key={c.id} style={{ display: 'flex', alignItems: 'center', padding: '8px', borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }}>
+                        <input
+                          type='checkbox'
+                          checked={selectedGroupContactIds.includes(c.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedGroupContactIds(prev => [...prev, c.id]);
+                            } else {
+                              setSelectedGroupContactIds(prev => prev.filter(id => id !== c.id));
+                            }
+                          }}
+                          style={{ marginRight: '12px' }}
+                        />
+                        <div>
+                          <div style={{ fontWeight: 600, fontSize: '14px' }}>{c.nome}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{c.telefone}</div>
+                        </div>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className='modal-footer' style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button type='button' className='btn btn-secondary' onClick={closeGroupModal} disabled={groupSubmitting}>
+                  Cancelar
+                </button>
+                <button type='submit' className='btn btn-primary' disabled={groupSubmitting} style={{ backgroundColor: '#25D366', borderColor: '#25D366', color: 'white' }}>
+                  {groupSubmitting ? 'Criando...' : 'Criar Grupo'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+

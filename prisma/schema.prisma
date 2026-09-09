@@ -1,5 +1,5 @@
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
 generator client {
@@ -8,67 +8,68 @@ generator client {
 }
 
 model Funcionario {
-  id                 Int              @id @default(autoincrement())
-  nome               String
-  cargo              String?
-  diariaPadrao       Float            @default(0)
-  adicionalMotorista Float            @default(0)
-  pix                String?
-  ativo              Boolean          @default(true)
-  empresa            String           @default("JHOSTON")
-  pontos             RegistroPonto[]
-  vales              Vale[]
-  diariasViagem      DiariaViagem[]
+  id                    Int                   @id @default(autoincrement())
+  nome                  String
+  cargo                 String?
+  diariaPadrao          Float                 @default(0)
+  adicionalMotorista    Float                 @default(0)
+  pix                   String?
+  ativo                 Boolean               @default(true)
+  empresa               String                @default("JHOSTON")
+  pontos                RegistroPonto[]
+  vales                 Vale[]
+  diariasViagem         DiariaViagem[]
   transacoesFinanceiras TransacaoFinanceira[]
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 model Obra {
-  id                    Int                   @id @default(autoincrement())
-  nome                  String
-  clienteNome           String
-  endereco              String?
-  status                String                @default("ATIVA") // "ATIVA", "FINALIZADA", "SUSPENSA"
-  valorFechado          Float                 @default(0)
-  observacoesPermuta    String?
-  empresa               String                @default("JHOSTON")
-  clientes              Cliente[]             @relation("ObraClientes")
-  documentos            DocumentoObra[]
-  procuradorId          Int?
-  procurador            Cliente?              @relation("ObraProcurador", fields: [procuradorId], references: [id], onDelete: SetNull)
-  autorizacoesCompra    AutorizacaoCompra[]
-  progressoEscavacao    Int                   @default(0)
-  progressoEstrutura    Int                   @default(0)
-  progressoHidraulica   Int                   @default(0)
-  progressoRevestimento Int                   @default(0)
-  progressoAcabamento   Int                   @default(0)
-  pontos                RegistroPonto[]
-  viagens               Viagem[]
-  vales                 Vale[]
-  transacoesFinanceiras TransacaoFinanceira[]
-  diarios               DiarioObra[]
-  mensagensChat         MensagemChat[]
-  tours360              Tour360[]
-  relatorios            RelatorioProgresso[]
+  id                     Int                    @id @default(autoincrement())
+  nome                   String
+  clienteNome            String
+  endereco               String?
+  status                 String                 @default("ATIVA") // "ATIVA", "FINALIZADA", "SUSPENSA"
+  valorFechado           Float                  @default(0)
+  observacoesPermuta     String?
+  empresa                String                 @default("JHOSTON")
+  clientes               Cliente[]              @relation("ObraClientes")
+  documentos             DocumentoObra[]
+  procuradorId           Int?
+  procurador             Cliente?               @relation("ObraProcurador", fields: [procuradorId], references: [id], onDelete: SetNull)
+  autorizacoesCompra     AutorizacaoCompra[]
+  progressoEscavacao     Int                    @default(0)
+  progressoEstrutura     Int                    @default(0)
+  progressoHidraulica    Int                    @default(0)
+  progressoRevestimento  Int                    @default(0)
+  progressoAcabamento    Int                    @default(0)
+  pontos                 RegistroPonto[]
+  viagens                Viagem[]
+  vales                  Vale[]
+  transacoesFinanceiras  TransacaoFinanceira[]
+  diarios                DiarioObra[]
+  mensagensChat          MensagemChat[]
+  tours360               Tour360[]
+  relatorios             RelatorioProgresso[]
   relatoriosFotograficos RelatorioFotografico[]
-  centrosCusto          CentroCusto[]
-  etapasMedicao         EtapaMedicao[]
-  tokenMedicaoFisica    String?               @unique @default(uuid())
-  tokenMedicaoFinanceira String?              @unique @default(uuid())
-  adendos               AdendoObra[]
-  createdAt             DateTime              @default(now())
-  updatedAt             DateTime              @updatedAt
+  centrosCusto           CentroCusto[]
+  etapasMedicao          EtapaMedicao[]
+  tokenMedicaoFisica     String?                @unique @default(uuid())
+  tokenMedicaoFinanceira String?                @unique @default(uuid())
+  adendos                AdendoObra[]
+  whatsappGroupId        String?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
 }
 
 model Cliente {
   id                  Int                @id @default(autoincrement())
   tipo                String             @default("PF") // "PF" ou "PJ"
-  nome                String             // Nome ou Razão Social
+  nome                String // Nome ou Razão Social
   cpfCnpj             String?
   rg                  String?
   ie                  String?
-  contato             String?            // Procurador / Contato / Representante
+  contato             String? // Procurador / Contato / Representante
   telefone            String?
   email               String?
   endereco            String?
@@ -111,65 +112,65 @@ model Viagem {
 }
 
 model DiariaViagem {
-  id              Int         @id @default(autoincrement())
+  id              Int                  @id @default(autoincrement())
   viagemId        Int
-  viagem          Viagem      @relation(fields: [viagemId], references: [id], onDelete: Cascade)
+  viagem          Viagem               @relation(fields: [viagemId], references: [id], onDelete: Cascade)
   funcionarioId   Int
-  funcionario     Funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  funcionario     Funcionario          @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
   valorCalculado  Float
-  foiDirigindo    Boolean     @default(false)
-  tipoDiaria      String      @default("INTEIRA") // "INTEIRA", "MEIA"
-  statusPagamento String      @default("PENDENTE") // "PENDENTE", "PAGO"
-  transacaoId     Int?        @unique
+  foiDirigindo    Boolean              @default(false)
+  tipoDiaria      String               @default("INTEIRA") // "INTEIRA", "MEIA"
+  statusPagamento String               @default("PENDENTE") // "PENDENTE", "PAGO"
+  transacaoId     Int?                 @unique
   transacao       TransacaoFinanceira? @relation(fields: [transacaoId], references: [id], onDelete: SetNull)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 }
 
 model Vale {
-  id             Int         @id @default(autoincrement())
+  id             Int                  @id @default(autoincrement())
   funcionarioId  Int
-  funcionario    Funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  funcionario    Funcionario          @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
   obraId         Int?
-  obra           Obra?       @relation(fields: [obraId], references: [id], onDelete: SetNull)
+  obra           Obra?                @relation(fields: [obraId], references: [id], onDelete: SetNull)
   data           DateTime
   valor          Float
   descricao      String?
-  statusDesconto String      @default("PENDENTE") // "PENDENTE", "DESCONTADO"
-  tipo           String      @default("VALE") // "VALE" (desconto) ou "BONUS" (acréscimo)
-  transacaoId    Int?        @unique
+  statusDesconto String               @default("PENDENTE") // "PENDENTE", "DESCONTADO"
+  tipo           String               @default("VALE") // "VALE" (desconto) ou "BONUS" (acréscimo)
+  transacaoId    Int?                 @unique
   transacao      TransacaoFinanceira? @relation(fields: [transacaoId], references: [id], onDelete: SetNull)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 }
 
 model TransacaoFinanceira {
-  id                Int         @id @default(autoincrement())
-  tipo              String      // "RECEITA", "DESPESA"
-  categoria         String?     // Legado: "Fornecedores", "Cliente", etc.
+  id                Int           @id @default(autoincrement())
+  tipo              String // "RECEITA", "DESPESA"
+  categoria         String? // Legado: "Fornecedores", "Cliente", etc.
   obraId            Int?
-  obra              Obra?       @relation(fields: [obraId], references: [id], onDelete: SetNull)
+  obra              Obra?         @relation(fields: [obraId], references: [id], onDelete: SetNull)
   centroCustoId     Int?
-  centroCusto       CentroCusto? @relation(fields: [centroCustoId], references: [id], onDelete: SetNull)
+  centroCusto       CentroCusto?  @relation(fields: [centroCustoId], references: [id], onDelete: SetNull)
   planoContaId      Int?
-  planoConta        PlanoConta?  @relation(fields: [planoContaId], references: [id], onDelete: SetNull)
+  planoConta        PlanoConta?   @relation(fields: [planoContaId], references: [id], onDelete: SetNull)
   descricao         String
   valor             Float
   adendoId          Int?
-  adendo            AdendoObra?  @relation(fields: [adendoId], references: [id], onDelete: SetNull)
+  adendo            AdendoObra?   @relation(fields: [adendoId], references: [id], onDelete: SetNull)
   dataVencimento    DateTime
   dataPagamento     DateTime?
-  status            String      @default("PENDENTE") // "PENDENTE", "PAGO", "ATRASADO"
+  status            String        @default("PENDENTE") // "PENDENTE", "PAGO", "ATRASADO"
   clienteFornecedor String?
   fornecedorId      Int?
-  fornecedor        Fornecedor? @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
+  fornecedor        Fornecedor?   @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
   funcionarioId     Int?
-  funcionario       Funcionario? @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
-  empresa           String      @default("JHOSTON")
+  funcionario       Funcionario?  @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
+  empresa           String        @default("JHOSTON")
   vale              Vale?
   diariaViagem      DiariaViagem?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 }
 
 model Fornecedor {
@@ -186,33 +187,34 @@ model Fornecedor {
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
 }
+
 model AdendoObra {
-  id          Int      @id @default(autoincrement())
-  obraId      Int
-  obra        Obra     @relation(fields: [obraId], references: [id], onDelete: Cascade)
-  descricao   String
-  valor       Float
-  status      String   @default("ATIVO") // "ATIVO", "FINALIZADO", "CANCELADO"
-  transacoes  TransacaoFinanceira[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         Int                   @id @default(autoincrement())
+  obraId     Int
+  obra       Obra                  @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  descricao  String
+  valor      Float
+  status     String                @default("ATIVO") // "ATIVO", "FINALIZADO", "CANCELADO"
+  transacoes TransacaoFinanceira[]
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
 }
 
 model Usuario {
-  id            Int             @id @default(autoincrement())
-  email         String          @unique
-  senha         String
-  nome          String
-  role          String          @default("CAMPO") // "MASTER", "ESCRITORIO", "CAMPO"
-  statusReset   String          @default("NENHUM") // "NENHUM", "SOLICITADO", "AUTORIZADO"
-  empresa       String          @default("JHOSTON") // "JHOSTON", "ECO_STONE", "AMBAS"
-  statusAcesso  String          @default("PENDENTE") // "PENDENTE", "APROVADO", "BLOQUEADO"
-  pontosCriados RegistroPonto[]
-  diariosCriados DiarioObra[]
+  id                 Int             @id @default(autoincrement())
+  email              String          @unique
+  senha              String
+  nome               String
+  role               String          @default("CAMPO") // "MASTER", "ESCRITORIO", "CAMPO"
+  statusReset        String          @default("NENHUM") // "NENHUM", "SOLICITADO", "AUTORIZADO"
+  empresa            String          @default("JHOSTON") // "JHOSTON", "ECO_STONE", "AMBAS"
+  statusAcesso       String          @default("PENDENTE") // "PENDENTE", "APROVADO", "BLOQUEADO"
+  pontosCriados      RegistroPonto[]
+  diariosCriados     DiarioObra[]
   mensagensEnviadas  MensagemChat[]  @relation("Remetente")
   mensagensRecebidas MensagemChat[]  @relation("Destinatario")
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 }
 
 model DiarioObra {
@@ -243,7 +245,7 @@ model Oportunidade {
   email            String?
   endereco         String?
   descricaoPiscina String?
-  produto          String   // "PREMIUM", "SUPER_PREMIUM", "CASCATA", "REVESTIMENTO"
+  produto          String // "PREMIUM", "SUPER_PREMIUM", "CASCATA", "REVESTIMENTO"
   areaPiscina      Float    @default(0)
   valorProposta    Float    @default(0)
   status           String   @default("PENDENTE") // "PENDENTE", "PROPOSTA_GERADA", "PROPOSTA_ENVIADA", "ACEITO", "RECUSADO"
@@ -255,17 +257,17 @@ model Oportunidade {
   updatedAt        DateTime @updatedAt
 
   // Novos campos para a JHOSTON REVEST e propostas complexas
-  descricaoServico String?  @default("Aplicação de revestimento resinado Verano Pools")
-  valorInsumos     Float?   @default(0)
-  valorEstadia     Float?   @default(0)
-  imposto          Float?   @default(0)
-  desconto         Float?   @default(0)
-  prazoAplicacao   Int?     @default(15)
+  descricaoServico String?        @default("Aplicação de revestimento resinado Verano Pools")
+  valorInsumos     Float?         @default(0)
+  valorEstadia     Float?         @default(0)
+  imposto          Float?         @default(0)
+  desconto         Float?         @default(0)
+  prazoAplicacao   Int?           @default(15)
   contaBancariaId  Int?
   contaBancaria    ContaBancaria? @relation(fields: [contaBancariaId], references: [id], onDelete: SetNull)
-  areasResina      Json?    // [{ descricao: "Deck Piscina", area: 50 }, ...]
-  itensAdicionais  Json?    // [{ idProduto: 1, nome: "Estadia", quantidade: 1, valorUnitario: 100, valorTotal: 100 }, ...]
-  tipoFrete        String   @default("FOB") // "FOB" ou "CIF"
+  areasResina      Json? // [{ descricao: "Deck Piscina", area: 50 }, ...]
+  itensAdicionais  Json? // [{ idProduto: 1, nome: "Estadia", quantidade: 1, valorUnitario: 100, valorTotal: 100 }, ...]
+  tipoFrete        String         @default("FOB") // "FOB" ou "CIF"
 }
 
 model Boleto {
@@ -292,39 +294,39 @@ model MensagemChat {
 }
 
 model DocumentoObra {
-  id           Int      @id @default(autoincrement())
-  obraId       Int
-  obra         Obra     @relation(fields: [obraId], references: [id], onDelete: Cascade)
-  nome         String
-  fileName     String
-  base64Data   String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  obraId     Int
+  obra       Obra     @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  nome       String
+  fileName   String
+  base64Data String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model DocumentoCliente {
-  id           Int      @id @default(autoincrement())
-  clienteId    Int
-  cliente      Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  nome         String
-  fileName     String
-  base64Data   String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  clienteId  Int
+  cliente    Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  nome       String
+  fileName   String
+  base64Data String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model AutorizacaoCompra {
-  id            Int        @id @default(autoincrement())
-  obraId        Int
-  obra          Obra       @relation(fields: [obraId], references: [id], onDelete: Cascade)
-  fornecedorId  Int
-  fornecedor    Fornecedor @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
-  data          DateTime   @default(now())
-  itens         String
-  valorLimite   Float      @default(0)
-  observacoes   String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id           Int        @id @default(autoincrement())
+  obraId       Int
+  obra         Obra       @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  fornecedorId Int
+  fornecedor   Fornecedor @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
+  data         DateTime   @default(now())
+  itens        String
+  valorLimite  Float      @default(0)
+  observacoes  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
 model ProdutoServico {
@@ -344,14 +346,14 @@ model ContaBancaria {
   banco         String
   agencia       String?
   conta         String?
-  tipoPix       String?  // "CPF", "CNPJ", "CELULAR", "EMAIL", "ALEATORIA"
+  tipoPix       String? // "CPF", "CNPJ", "CELULAR", "EMAIL", "ALEATORIA"
   chavePix      String?
   titular       String
-  documento     String?  // CPF ou CNPJ do titular
-  empresa       String   @default("JHOSTON") // "JHOSTON", "ECO_STONE", "AMBAS"
-  ativa         Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  documento     String? // CPF ou CNPJ do titular
+  empresa       String         @default("JHOSTON") // "JHOSTON", "ECO_STONE", "AMBAS"
+  ativa         Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   oportunidades Oportunidade[]
 }
 
@@ -366,13 +368,13 @@ model Tour360 {
 }
 
 model Feedback {
-  id               Int      @id @default(autoincrement())
-  clienteNome      String
-  relato           String
-  legendaGerada    String?
-  pendenciasJson   String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  clienteNome    String
+  relato         String
+  legendaGerada  String?
+  pendenciasJson String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model BioLink {
@@ -413,54 +415,54 @@ model FotoRelatorio {
   secao        SecaoRelatorio @relation(fields: [secaoId], references: [id], onDelete: Cascade)
   base64Data   String
   dataFoto     String?
-  tipoEvolucao String?        // "ANTES" ou "DEPOIS"
+  tipoEvolucao String? // "ANTES" ou "DEPOIS"
   createdAt    DateTime       @default(now())
 }
 
 model EtapaMedicao {
-  id        Int           @id @default(autoincrement())
-  obraId    Int
-  obra      Obra          @relation(fields: [obraId], references: [id], onDelete: Cascade)
-  nome      String   
-  ordem     Int           @default(0)
-  itens     ItemMedicao[]
+  id     Int           @id @default(autoincrement())
+  obraId Int
+  obra   Obra          @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  nome   String
+  ordem  Int           @default(0)
+  itens  ItemMedicao[]
 }
 
 model ItemMedicao {
   id                  Int                 @id @default(autoincrement())
   etapaId             Int
   etapa               EtapaMedicao        @relation(fields: [etapaId], references: [id], onDelete: Cascade)
-  descricao           String       
-  unidade             String?      
+  descricao           String
+  unidade             String?
   quantidadeTotal     Float               @default(1)
   quantidadeRealizada Float               @default(0)
   precoUnitario       Float               @default(0)
-  percentual          Float               @default(0)  
+  percentual          Float               @default(0)
   ordem               Int                 @default(0)
   comentarios         ComentarioMedicao[]
   updatedAt           DateTime            @updatedAt
 }
 
 model ComentarioMedicao {
-  id        Int          @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   itemId    Int
-  item      ItemMedicao  @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  autor     String       @default("Cliente")
+  item      ItemMedicao @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  autor     String      @default("Cliente")
   texto     String
-  lido      Boolean      @default(false)
-  createdAt DateTime     @default(now())
+  lido      Boolean     @default(false)
+  createdAt DateTime    @default(now())
 }
 
 model RelatorioFotografico {
-  id               Int                  @id @default(autoincrement())
-  obraId           Int
-  obra             Obra                 @relation(fields: [obraId], references: [id], onDelete: Cascade)
-  titulo           String               @default("Relatório de Avanço Fotográfico")
-  relatoEmpresa    String               @default("")
-  status           String               @default("RASCUNHO") // "RASCUNHO", "FINALIZADO"
-  paresFotos       ParFotoRelatorio[]
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  id            Int                @id @default(autoincrement())
+  obraId        Int
+  obra          Obra               @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  titulo        String             @default("Relatório de Avanço Fotográfico")
+  relatoEmpresa String             @default("")
+  status        String             @default("RASCUNHO") // "RASCUNHO", "FINALIZADO"
+  paresFotos    ParFotoRelatorio[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 }
 
 model ParFotoRelatorio {
@@ -477,27 +479,27 @@ model ParFotoRelatorio {
 }
 
 model CentroCusto {
-  id          Int                   @id @default(autoincrement())
-  nome        String
-  codigo      String?               @unique
-  obraId      Int?                  // Se for vinculado a uma obra específica
-  obra        Obra?                 @relation(fields: [obraId], references: [id], onDelete: SetNull)
-  transacoes  TransacaoFinanceira[]
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
+  id         Int                   @id @default(autoincrement())
+  nome       String
+  codigo     String?               @unique
+  obraId     Int? // Se for vinculado a uma obra específica
+  obra       Obra?                 @relation(fields: [obraId], references: [id], onDelete: SetNull)
+  transacoes TransacaoFinanceira[]
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
 }
 
 model PlanoConta {
-  id             Int                   @id @default(autoincrement())
-  codigo         String                @unique // ex: "1.0", "1.1.1"
-  descricao      String
-  tipo           String                // "RECEITA", "DESPESA"
-  contaPaiId     Int?
-  contaPai       PlanoConta?           @relation("ContaHierarquia", fields: [contaPaiId], references: [id], onDelete: SetNull)
-  subContas      PlanoConta[]          @relation("ContaHierarquia")
-  transacoes     TransacaoFinanceira[]
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
+  id         Int                   @id @default(autoincrement())
+  codigo     String                @unique // ex: "1.0", "1.1.1"
+  descricao  String
+  tipo       String // "RECEITA", "DESPESA"
+  contaPaiId Int?
+  contaPai   PlanoConta?           @relation("ContaHierarquia", fields: [contaPaiId], references: [id], onDelete: SetNull)
+  subContas  PlanoConta[]          @relation("ContaHierarquia")
+  transacoes TransacaoFinanceira[]
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
 }
 
 model ConfiguracaoEmpresa {
@@ -511,4 +513,28 @@ model ConfiguracaoEmpresa {
   endereco      String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Contato {
+  id           Int           @id @default(autoincrement())
+  nome         String
+  telefone     String
+  categoria    String        @default("OUTROS") // "CLIENTE", "FORNECEDOR", "EQUIPE", "OUTROS"
+  empresa      String        @default("JHOSTON")
+  compromissos Compromisso[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Compromisso {
+  id        Int      @id @default(autoincrement())
+  titulo    String
+  descricao String?
+  dataHora  DateTime
+  contatoId Int?
+  contato   Contato? @relation(fields: [contatoId], references: [id], onDelete: SetNull)
+  empresa   String   @default("JHOSTON")
+  status    String   @default("PENDENTE") // "PENDENTE", "CONCLUIDO", "CANCELADO"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

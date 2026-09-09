@@ -491,3 +491,43 @@ export async function getObraResumoFinanceiro(obraId: number) {
     return { success: false, error: error.message };
   }
 }
+
+import { createWhatsAppGroup } from '@/lib/whatsapp';
+
+export async function createObraWhatsAppGroup(obraId: number, participantesBase: string[]) {
+  const obra = await prisma.obra.findUnique({ where: { id: obraId } });
+  if (!obra) throw new Error('Obra não encontrada');
+  
+  if (obra.whatsappGroupId) {
+    throw new Error('Esta obra já possui um grupo do WhatsApp.');
+  }
+
+  // Filtrar vazios
+  const participantes = participantesBase.filter(p => !!p);
+  
+  if (participantes.length === 0) {
+    throw new Error('Nenhum participante fornecido');
+  }
+
+  const groupName = Obra: .substring(0, 25);
+  const response = await createWhatsAppGroup(groupName, participantes);
+  
+  // A API Evolution retorna propriedades dependendo do sucesso, precisamos pegar o ID do grupo
+  // O formato costuma ser { subject: '...', id: '...', ... } ou algo similar.
+  // Vamos assumir que há um .id ou retornar string
+  const groupId = response?.id || response?.groupMetadata?.id || response?.jid || null;
+  
+  if (!groupId) {
+    console.error('Resposta da API não conteve ID do grupo:', response);
+    throw new Error('Grupo foi criado mas não retornou o ID. Verifique o WhatsApp.');
+  }
+
+  await prisma.obra.update({
+    where: { id: obraId },
+    data: { whatsappGroupId: groupId }
+  });
+
+  revalidatePath('/obras');
+  return { success: true, groupId };
+}
+

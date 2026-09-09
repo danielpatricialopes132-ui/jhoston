@@ -23,6 +23,11 @@ interface SendFileOptions {
  * Formata o número para o padrão esperado pela API (55 + DDD + Número)
  */
 function formatNumber(number: string): string {
+  // Se for um JID de grupo, retorna do jeito que está (Evolution API v2)
+  if (number.includes('@g.us') || number.includes('-')) {
+    return number;
+  }
+
   // Remove tudo que não for número
   const clean = number.replace(/\D/g, '');
   
@@ -125,3 +130,39 @@ export async function sendWhatsAppFile({ number, base64, fileName, caption = '',
     throw error;
   }
 }
+
+/**
+ * Cria um grupo no WhatsApp via Evolution API
+ * Retorna o ID do grupo (ex: 120363123456789@g.us)
+ */
+export async function createWhatsAppGroup(subject: string, participants: string[]) {
+  try {
+    const formattedParticipants = participants.map(formatNumber);
+
+    const response = await fetch(${EVOLUTION_API_URL}/group/create/, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_API_KEY
+      },
+      body: JSON.stringify({
+        subject: subject,
+        description: 'Grupo criado via Sistema ',
+        participants: formattedParticipants
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Erro na API Evolution (Create Group):', errorData);
+      throw new Error(Falha ao criar grupo: );
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Erro em createWhatsAppGroup:', error);
+    throw error;
+  }
+}
+

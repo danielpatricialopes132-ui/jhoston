@@ -209,6 +209,25 @@ export default function DiarioObraPage() {
     }
   };
 
+  const [sharingId, setSharingId] = useState<number | null>(null);
+
+  const handleShareWhatsApp = async (id: number) => {
+    try {
+      setSharingId(id);
+      const { shareDiarioOnWhatsApp } = await import("./actions");
+      const res = await shareDiarioOnWhatsApp(id);
+      if (res.success) {
+        setSuccessMsg("Relato compartilhado no grupo do WhatsApp com sucesso!");
+        setTimeout(() => setSuccessMsg(""), 3000);
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erro ao compartilhar no WhatsApp.");
+      setTimeout(() => setErrorMsg(""), 5000);
+    } finally {
+      setSharingId(null);
+    }
+  };
+
   const formatDateBR = (dateStr: string) => {
     const [year, month, day] = dateStr.split("-");
     return `${day}/${month}/${year}`;
@@ -438,21 +457,40 @@ export default function DiarioObraPage() {
                           Autor: {r.usuario.nome} ({r.usuario.role})
                         </span>
                       </div>
-                      {(session?.userRole === "ESCRITORIO" || session?.userRole === "MASTER") && (
-                        <button
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "var(--error)",
-                            cursor: "pointer",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                          }}
-                          onClick={() => handleDelete(r.id)}
-                        >
-                          Excluir
-                        </button>
-                      )}
+                      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                        {r.obra.whatsappGroupId && (
+                          <button
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "#25D366",
+                              cursor: sharingId === r.id ? "wait" : "pointer",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              opacity: sharingId === r.id ? 0.6 : 1
+                            }}
+                            disabled={sharingId === r.id}
+                            onClick={() => handleShareWhatsApp(r.id)}
+                          >
+                            💬 {sharingId === r.id ? "Enviando..." : "Compartilhar no Grupo"}
+                          </button>
+                        )}
+                        {(session?.userRole === "ESCRITORIO" || session?.userRole === "MASTER") && (
+                          <button
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "var(--error)",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                            }}
+                            onClick={() => handleDelete(r.id)}
+                          >
+                            Excluir
+                          </button>
+                        )}
+                      </div>
                     </div>
                     
                     <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-main)", whiteSpace: "pre-line", margin: 0 }}>
