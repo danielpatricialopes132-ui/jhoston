@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getRelatoriosMetadata, getFolhaPontoObra, getPagamentoFuncionarios, getLucratividadeObras, getAndamentoObraReport as getAndamentoObra, getRelatorioGerencialContabil, getLivroCaixa, gerarLinkCompartilhado, lancarPagamentoSalario } from "./actions";
 import { getCompanyBranding } from "@/lib/branding";
-import { sendWhatsAppFile, sendWhatsAppText } from "@/lib/whatsapp";
+import { sendWhatsAppFile, sendWhatsAppText, wakeEvolutionServer } from "@/lib/whatsapp";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 
@@ -161,6 +161,10 @@ export default function RelatoriosPage() {
         if (res.centrosCusto) setCentrosCusto(res.centrosCusto);
       }
     });
+
+    // Pré-aquece a Evolution API silenciosamente em segundo plano para quando o usuário clicar no botão WhatsApp já estar pronto!
+    wakeEvolutionServer().catch(() => {});
+
     return () => {
       isMounted = false;
     };

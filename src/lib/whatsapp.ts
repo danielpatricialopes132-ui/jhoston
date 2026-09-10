@@ -45,11 +45,69 @@ function formatNumber(number: string): string {
 }
 
 /**
- * Envia uma mensagem de texto simples via WhatsApp
+ * "Acorda" o servidor Render e verifica se a instância está pronta e conectada.
+ * Não obriga a esperar 60s se o servidor responder antes! Faz polling inteligente.
  */
+export async function wakeEvolutionServer(): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(`${EVOLUTION_API_URL}`, {
+      signal: controller.signal
+    }).catch(() => null);
+    clearTimeout(timeoutId);
+    return res?.ok || false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Garante que a instância do WhatsApp no Render está acordada e com status "open".
+ * Se estiver dormindo ou conectando, faz tentativas inteligentes (polling) até 50 segundos.
+ */
+async function ensureEvolutionConnected(maxWaitSeconds = 50): Promise<void> {
+  const startTime = Date.now();
+  
+  // 1. Disparo de "Wake-up" rápido na raiz
+  fetch(`${EVOLUTION_API_URL}`).catch(() => {});
+
+  while (Date.now() - startTime < maxWaitSeconds * 1000) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      const res = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${INSTANCE_NAME}`, {
+        headers: { 'apikey': EVOLUTION_API_KEY },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const state = data?.instance?.state;
+        if (state === 'open') {
+          console.log(`[Evolution API] Conectado e pronto em ${Math.round((Date.now() - startTime) / 1000)}s.`);
+          return;
+        }
+        console.log(`[Evolution API] Instância em estado '${state}', aguardando...`);
+      }
+    } catch (e: any) {
+      console.log(`[Evolution API] Servidor acordando (${Math.round((Date.now() - startTime) / 1000)}s)...`);
+    }
+
+    // Espera 3 segundos antes da próxima checagem
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+
+  console.warn(`[Evolution API] Tempo limite de espera atingido (${maxWaitSeconds}s). Tentando envio direto.`);
+}
 export async function sendWhatsAppText({ number, text, delay = 1200 }: SendTextOptions) {
   try {
     const formattedNumber = formatNumber(number);
+
+    // Assegura que o servidor está acordado e pronto
+    await ensureEvolutionConnected();
     
     const response = await fetch(`${EVOLUTION_API_URL}/message/sendText/${INSTANCE_NAME}`, {
       method: 'POST',
@@ -89,6 +147,9 @@ export async function sendWhatsAppText({ number, text, delay = 1200 }: SendTextO
 export async function sendWhatsAppFile({ number, base64, fileName, caption = '', mimetype = 'application/pdf', delay = 1500 }: SendFileOptions) {
   try {
     const formattedNumber = formatNumber(number);
+
+    // 1. Assegura que o servidor no Render está acordado e com WhatsApp conectado antes de enviar
+    await ensureEvolutionConnected();
     
     // Assegura que o base64 está no formato correto exigido pela Evolution API v2 (data URI scheme ou base64 puro)
     // Para v2, enviamos o base64 puro sem o prefixo (data:mimetype;base64,) se for o campo document
