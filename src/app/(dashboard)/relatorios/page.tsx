@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRelatoriosMetadata, getFolhaPontoObra, getPagamentoFuncionarios, getLucratividadeObras, getAndamentoObraReport as getAndamentoObra, getRelatorioGerencialContabil, getLivroCaixa, gerarLinkCompartilhado } from "./actions";
+import { getRelatoriosMetadata, getFolhaPontoObra, getPagamentoFuncionarios, getLucratividadeObras, getAndamentoObraReport as getAndamentoObra, getRelatorioGerencialContabil, getLivroCaixa, gerarLinkCompartilhado, lancarPagamentoSalario } from "./actions";
 import { getCompanyBranding } from "@/lib/branding";
 import { sendWhatsAppFile, sendWhatsAppText } from "@/lib/whatsapp";
 import html2canvas from "html2canvas";
@@ -93,6 +93,19 @@ export default function RelatoriosPage() {
   const [selectedHoleriteFunc, setSelectedHoleriteFunc] = useState<PagamentoItem | null>(null);
   const [isHoleriteModalOpen, setIsHoleriteModalOpen] = useState(false);
   const [ocultarZerados, setOcultarZerados] = useState(true);
+  const [somenteComSaldo, setSomenteComSaldo] = useState(true);
+
+  // States: Lançamento Contábil de Salário a partir do relatório
+  const [planoContas, setPlanoContas] = useState<any[]>([]);
+  const [centrosCusto, setCentrosCusto] = useState<any[]>([]);
+  const [isLancarModalOpen, setIsLancarModalOpen] = useState(false);
+  const [selectedLancarFunc, setSelectedLancarFunc] = useState<PagamentoItem | null>(null);
+  const [lancarValor, setLancarValor] = useState<number>(0);
+  const [lancarData, setLancarData] = useState<string>(() => new Date().toISOString().split("T")[0]);
+  const [lancarPlanoContaId, setLancarPlanoContaId] = useState<string>("");
+  const [lancarCentroCustoId, setLancarCentroCustoId] = useState<string>("");
+  const [lancarDescricao, setLancarDescricao] = useState<string>("");
+  const [isSubmittingLancamento, setIsSubmittingLancamento] = useState(false);
 
   // States: Aba 3 (Lucratividade)
   const [lucratividadeReport, setLucratividadeReport] = useState<any[]>([]);
@@ -136,14 +149,16 @@ export default function RelatoriosPage() {
     { value: 12, label: "Dezembro" },
   ];
 
-  // Carregar metadados iniciais (obras, colaboradores)
+  // Carregar metadados iniciais (obras, colaboradores, plano de contas, centro de custo)
   useEffect(() => {
     let isMounted = true;
-    getRelatoriosMetadata().then((res) => {
+    getRelatoriosMetadata().then((res: any) => {
       if (isMounted) {
         setObras(res.obras as any);
         setFuncionarios(res.funcionarios);
         setAgendas(res.agendas || []);
+        if (res.planoContas) setPlanoContas(res.planoContas);
+        if (res.centrosCusto) setCentrosCusto(res.centrosCusto);
       }
     });
     return () => {
@@ -445,18 +460,18 @@ export default function RelatoriosPage() {
       {/* Tabs */}
       <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-color)", marginBottom: "24px", overflowX: "auto", paddingBottom: "4px" }} className="no-print">
         <button
+          className={`btn ${activeTab === "pagamento" ? "btn-primary" : "btn-secondary"}`}
+          onClick={() => setActiveTab("pagamento")}
+          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: "nowrap" }}
+        >
+          Folha de Salários
+        </button>
+        <button
           className={`btn ${activeTab === "ponto" ? "btn-primary" : "btn-secondary"}`}
           onClick={() => setActiveTab("ponto")}
           style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: "nowrap" }}
         >
           Ponto por Obra
-        </button>
-        <button
-          className={`btn ${activeTab === "pagamento" ? "btn-primary" : "btn-secondary"}`}
-          onClick={() => setActiveTab("pagamento")}
-          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: "nowrap" }}
-        >
-          Pagamento de Colaboradores
         </button>
         <button
           className={`btn ${activeTab === "lucratividade" ? "btn-primary" : "btn-secondary"}`}
@@ -477,7 +492,7 @@ export default function RelatoriosPage() {
           onClick={() => setActiveTab("gerencial")}
           style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: "nowrap" }}
         >
-          Gerencial Contábil
+          Relatório Gerencial
         </button>
         <button
           className={`btn ${activeTab === "livro_caixa" ? "btn-primary" : "btn-secondary"}`}
@@ -696,15 +711,25 @@ export default function RelatoriosPage() {
                 onChange={(e) => setDataFim(e.target.value)}
               />
             </div>
-            <div className="form-group" style={{ display: "flex", alignItems: "center", gap: "8px", paddingBottom: "4px" }}>
+            <div className="form-group" style={{ display: "flex", alignItems: "center", gap: "12px", paddingBottom: "4px", flexWrap: "wrap" }}>
               <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 600, color: "var(--text-heading)", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={somenteComSaldo}
+                  onChange={(e) => setSomenteComSaldo(e.target.checked)}
+                  style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                Apenas com Saldo a Pagar (&gt; R$ 0)
+              </label>
+
+              <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 500, color: "var(--text-muted)", cursor: "pointer" }}>
                 <input
                   type="checkbox"
                   checked={ocultarZerados}
                   onChange={(e) => setOcultarZerados(e.target.checked)}
                   style={{ width: "16px", height: "16px", cursor: "pointer" }}
                 />
-                Ocultar colaboradores zerados
+                Ocultar sem movimentação
               </label>
             </div>
             <button className="btn btn-primary" onClick={gerarRelatorioPagamentos} style={{ height: "42px" }}>
@@ -734,7 +759,7 @@ export default function RelatoriosPage() {
                         <span style={{ fontSize: "11px", fontWeight: 700, color: branding.primaryColor, textTransform: "uppercase", letterSpacing: "0.5px" }}>
                           {empresaFilter === "TODOS" ? "CONSOLIDADO GERAL" : `${branding.name} — ${branding.subtitle}`}
                         </span>
-                        <h4 style={{ fontSize: "17px", fontWeight: 800, marginTop: "2px", color: "var(--text-heading)" }}>Resumo de Pagamento por Período</h4>
+                        <h4 style={{ fontSize: "17px", fontWeight: 800, marginTop: "2px", color: "var(--text-heading)" }}>Folha de Pagamentos & Salários a Pagar</h4>
                         <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "2px" }}>
                           Demonstrativo de diárias, viagens, vales, pagamentos já feitos no caixa e saldo de salário de {formatDateBR(dataInicio)} a {formatDateBR(dataFim)}.
                         </p>
@@ -771,7 +796,15 @@ export default function RelatoriosPage() {
                   </thead>
                   <tbody>
                     {pagamentosReport
-                      .filter((p) => !ocultarZerados || p.temMovimentacao)
+                      .filter((p) => {
+                        if (somenteComSaldo) {
+                          return p.valorLiquidoPendente > 0;
+                        }
+                        if (ocultarZerados) {
+                          return p.temMovimentacao;
+                        }
+                        return true;
+                      })
                       .map((p) => {
                         const jaPago = p.valorPagoNoPeriodo || 0;
                         const totalLiquido = p.valorLiquidoTotal !== undefined ? p.valorLiquidoTotal : (p.valorTotalPonto + p.valorTotalViagem + p.valorTotalBonus - p.valorValesPendentes);
@@ -796,8 +829,8 @@ export default function RelatoriosPage() {
                               <strong>{formatCurrency(p.valorTotalPonto)}</strong>
                               <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                                 {p.funcionario.funcao === "ESCRITORIO" || p.funcionario.funcao === "DIRETORIA"
-                                  ? "Fixo Mensal"
-                                  : `(${p.pontosContagem} dia(s) trab.)`}
+                                   ? "Fixo Mensal"
+                                   : `(${p.pontosContagem} dia(s) trab.)`}
                               </div>
                             </td>
                             <td>
@@ -860,15 +893,34 @@ export default function RelatoriosPage() {
                               )}
                             </td>
                             <td style={{ textAlign: "right" }}>
-                              <button
-                                className="btn btn-secondary btn-sm"
-                                onClick={() => {
-                                  setSelectedHoleriteFunc(p);
-                                  setIsHoleriteModalOpen(true);
-                                }}
-                              >
-                                Gerar RPA
-                              </button>
+                              <div style={{ display: "inline-flex", gap: "6px" }}>
+                                {saldo > 0 && (
+                                  <button
+                                    className="btn btn-sm btn-primary"
+                                    style={{ fontSize: "11px", padding: "4px 8px" }}
+                                    title="Lançar pagamento deste saldo no Caixa Financeiro"
+                                    onClick={() => {
+                                      setSelectedLancarFunc(p);
+                                      setLancarValor(saldo);
+                                      setLancarData(new Date().toISOString().split("T")[0]);
+                                      setLancarDescricao(`Pagamento Salário - ${p.funcionario.nome} (${formatDateBR(dataInicio)} a ${formatDateBR(dataFim)})`);
+                                      setIsLancarModalOpen(true);
+                                    }}
+                                  >
+                                    Pagar no Caixa
+                                  </button>
+                                )}
+                                <button
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ fontSize: "11px", padding: "4px 8px" }}
+                                  onClick={() => {
+                                    setSelectedHoleriteFunc(p);
+                                    setIsHoleriteModalOpen(true);
+                                  }}
+                                >
+                                  Gerar RPA
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -1588,6 +1640,166 @@ export default function RelatoriosPage() {
                 }}
               >
                 Gerar PDF (RPA)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL LANÇAR PAGAMENTO DE SALÁRIO NO CAIXA --- */}
+      {isLancarModalOpen && selectedLancarFunc && (
+        <div className="modal-backdrop" onClick={() => setIsLancarModalOpen(false)}>
+          <div className="modal-content" style={{ maxWidth: "550px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ fontSize: "16px", fontWeight: 700 }}>
+                💳 Lançar Pagamento de Salário no Caixa
+              </h3>
+              <button className="modal-close-btn" onClick={() => setIsLancarModalOpen(false)}>×</button>
+            </div>
+
+            <div className="modal-body" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div style={{ padding: "12px", backgroundColor: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-heading)" }}>
+                  {selectedLancarFunc.funcionario.nome}
+                </div>
+                <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                  Cargo: {selectedLancarFunc.funcionario.cargo || "Não informado"} | Função: {selectedLancarFunc.funcionario.funcao || "Colaborador"}
+                </div>
+                {selectedLancarFunc.funcionario.pix && (
+                  <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#0284c7" }}>Chave PIX:</span>
+                    <code style={{ fontSize: "12px", backgroundColor: "#e0f2fe", padding: "2px 6px", borderRadius: "4px" }}>
+                      {selectedLancarFunc.funcionario.pix}
+                    </code>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      style={{ fontSize: "10px", padding: "2px 6px" }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedLancarFunc.funcionario.pix || "");
+                        alert("PIX copiado!");
+                      }}
+                    >
+                      Copiar
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 600 }}>Valor a Pagar (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="form-control"
+                    value={lancarValor}
+                    onChange={(e) => setLancarValor(parseFloat(e.target.value) || 0)}
+                  />
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                    Saldo apurado: {formatCurrency(selectedLancarFunc.valorLiquidoPendente)}
+                  </span>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 600 }}>Data do Pagamento</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={lancarData}
+                    onChange={(e) => setLancarData(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 600 }}>Plano de Contas Contábil</label>
+                <select
+                  className="form-control"
+                  value={lancarPlanoContaId}
+                  onChange={(e) => setLancarPlanoContaId(e.target.value)}
+                >
+                  <option value="">Padrão (Conta 2.3.0 - Salários / Mão de Obra)</option>
+                  {planoContas.map((pc) => (
+                    <option key={pc.id} value={pc.id}>
+                      {pc.codigo} - {pc.descricao || pc.nome}
+                    </option>
+                  ))}
+                </select>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                  Gera o débito no plano contábil empresarial selecionado.
+                </span>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 600 }}>Centro de Custos (Opcional)</label>
+                <select
+                  className="form-control"
+                  value={lancarCentroCustoId}
+                  onChange={(e) => setLancarCentroCustoId(e.target.value)}
+                >
+                  <option value="">Nenhum / Geral</option>
+                  {centrosCusto.map((cc) => (
+                    <option key={cc.id} value={cc.id}>
+                      {cc.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" style={{ fontWeight: 600 }}>Descrição / Histórico Contábil</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={lancarDescricao}
+                  onChange={(e) => setLancarDescricao(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setIsLancarModalOpen(false)}
+                disabled={isSubmittingLancamento}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={isSubmittingLancamento || lancarValor <= 0}
+                onClick={async () => {
+                  if (lancarValor <= 0) {
+                    alert("Informe um valor válido.");
+                    return;
+                  }
+                  try {
+                    setIsSubmittingLancamento(true);
+                    await lancarPagamentoSalario({
+                      funcionarioId: selectedLancarFunc.funcionario.id,
+                      valor: lancarValor,
+                      dataPagamento: lancarData,
+                      empresa: empresaFilter !== "TODOS" ? empresaFilter : (selectedLancarFunc.funcionario as any).empresa || "ECO_STONE",
+                      planoContaId: lancarPlanoContaId ? parseInt(lancarPlanoContaId) : null,
+                      centroCustoId: lancarCentroCustoId ? parseInt(lancarCentroCustoId) : null,
+                      descricao: lancarDescricao,
+                    });
+                    alert("Lançamento de pagamento registrado com sucesso no Caixa Financeiro!");
+                    setIsLancarModalOpen(false);
+                    // Atualizar folha
+                    gerarRelatorioPagamentos();
+                  } catch (err: any) {
+                    console.error(err);
+                    alert(`Erro ao lançar pagamento: ${err.message || "Tente novamente"}`);
+                  } finally {
+                    setIsSubmittingLancamento(false);
+                  }
+                }}
+              >
+                {isSubmittingLancamento ? "Lançando..." : "Confirmar Pagamento"}
               </button>
             </div>
           </div>

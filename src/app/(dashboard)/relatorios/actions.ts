@@ -3,12 +3,75 @@
 import { prisma } from "@/lib/db";
 
 export async function getRelatoriosMetadata() {
-  const [obras, funcionarios, agendas] = await Promise.all([
+  const [obras, funcionarios, agendas, planoContas, centrosCusto] = await Promise.all([
     prisma.obra.findMany({ orderBy: { nome: "asc" } }),
     prisma.funcionario.findMany({ orderBy: { nome: "asc" } }),
     prisma.contato.findMany({ orderBy: { nome: "asc" } }),
+    prisma.planoConta.findMany({ where: { tipo: "DESPESA" }, orderBy: { codigo: "asc" } }),
+    prisma.centroCusto.findMany({ orderBy: { nome: "asc" } }),
   ]);
-  return { obras, funcionarios, agendas };
+  return { obras, funcionarios, agendas, planoContas, centrosCusto };
+}
+
+export async function lancarPagamentoSalario(data: {
+  funcionarioId: number;
+  valor: number;
+  dataPagamento: string;
+  dataVencimento?: string;
+  empresa: string;
+  planoContaId?: number | null;
+  centroCustoId?: number | null;
+  descricao?: string;
+  obraId?: number | null;
+}) {
+  const funcionario = await prisma.funcionario.findUnique({
+    where: { id: data.funcionarioId }
+  });
+
+  if (!funcionario) {
+    throw new Error("Colaborador não encontrado.");
+  }
+
+  // Tentar localizar plano de conta padrão de salário se não foi informado (ex: 2.3.0 ou Salários)
+  let planoId = data.planoContaId;
+  if (!planoId) {
+    const planoSalario = await prisma.planoConta.findFirst({
+      where: {
+        OR: [
+          { codigo: { startsWith: "2.3" } },
+          { descricao: { contains: "Salário", mode: "insensitive" } },
+          { descricao: { contains: "Salarios", mode: "insensitive" } },
+          { descricao: { contains: "Mão de Obra", mode: "insensitive" } }
+        ]
+      }
+    });
+    if (planoSalario) {
+      planoId = planoSalario.id;
+    }
+  }
+
+  const descricao = data.descricao || `Pagamento de Salário/Diárias - ${funcionario.nome}`;
+  const dataVenc = data.dataVencimento ? new Date(data.dataVencimento) : new Date(data.dataPagamento);
+  const dataPag = new Date(data.dataPagamento);
+
+  const transacao = await prisma.transacaoFinanceira.create({
+    data: {
+      tipo: "DESPESA",
+      descricao,
+      valor: data.valor,
+      dataVencimento: dataVenc,
+      dataPagamento: dataPag,
+      status: "PAGO",
+      clienteFornecedor: funcionario.nome,
+      funcionarioId: funcionario.id,
+      planoContaId: planoId || null,
+      centroCustoId: data.centroCustoId || null,
+      obraId: data.obraId || null,
+      empresa: data.empresa || funcionario.empresa || "ECO_STONE",
+    }
+  });
+
+  return transacao;
 }
 
 // 1. Relatório de Folha de Ponto por Obra
