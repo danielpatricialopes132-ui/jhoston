@@ -132,6 +132,26 @@ export default function PontoPage() {
     loadPendentes();
   }, [session, pontoTab]);
 
+  const navegarDia = (dias: number) => {
+    try {
+      const parts = dataStr.split("-");
+      let d: Date;
+      if (parts.length === 3) {
+        d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      } else {
+        d = new Date(dataStr);
+      }
+      if (isNaN(d.getTime())) d = new Date();
+      d.setDate(d.getDate() + dias);
+      const ano = d.getFullYear();
+      const mes = String(d.getMonth() + 1).padStart(2, "0");
+      const dia = String(d.getDate()).padStart(2, "0");
+      setDataStr(`${ano}-${mes}-${dia}`);
+    } catch {
+      // fallback
+    }
+  };
+
   const handleRowChange = (index: number, field: keyof PontoRow, value: string) => {
     const updated = [...pontoRows];
     updated[index] = { ...updated[index], [field]: value };
@@ -525,13 +545,63 @@ export default function PontoPage() {
           {/* Seletores */}
           <div className="filters-bar">
             <div className="form-group" style={{ flex: 1 }}>
-              <label className="form-label">Data do Ponto</label>
-              <input
-                type="date"
-                className="form-control"
-                value={dataStr}
-                onChange={(e) => setDataStr(e.target.value)}
-              />
+              <label className="form-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>Data do Ponto</span>
+                <button
+                  type="button"
+                  onClick={() => setDataStr(new Date().toISOString().split("T")[0])}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--primary)",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    padding: 0
+                  }}
+                >
+                  Hoje
+                </button>
+              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => navegarDia(-1)}
+                  style={{
+                    padding: "0 12px",
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                  title="Dia Anterior"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <input
+                  type="date"
+                  className="form-control"
+                  style={{ flex: 1, minWidth: "140px" }}
+                  value={dataStr}
+                  onChange={(e) => setDataStr(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => navegarDia(1)}
+                  style={{
+                    padding: "0 12px",
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                  title="Próximo Dia"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
             </div>
             <div className="form-group" style={{ flex: 2 }}>
               <label className="form-label">Obra / Centro de Custo</label>
