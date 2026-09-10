@@ -16,9 +16,23 @@ export async function getPontoData(dataStr: string, obraId: number) {
   }
 
   // Normaliza a data para busca
-  const targetDate = new Date(dataStr);
-  const startOfDay = new Date(targetDate.setUTCHours(0, 0, 0, 0));
-  const endOfDay = new Date(targetDate.setUTCHours(23, 59, 59, 999));
+  const cleanDateStr = dataStr && dataStr.trim() ? dataStr.trim() : new Date().toISOString().split("T")[0];
+  const parts = cleanDateStr.split("T")[0].split("-");
+  let startOfDay: Date;
+  let endOfDay: Date;
+
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    startOfDay = new Date(Date.UTC(y, m, d, 0, 0, 0, 0));
+    endOfDay = new Date(Date.UTC(y, m, d, 23, 59, 59, 999));
+  } else {
+    const targetDate = new Date(cleanDateStr);
+    const validTime = isNaN(targetDate.getTime()) ? new Date() : targetDate;
+    startOfDay = new Date(validTime.setUTCHours(0, 0, 0, 0));
+    endOfDay = new Date(validTime.setUTCHours(23, 59, 59, 999));
+  }
 
   // Buscar pontos já registrados para a data e obra
   const pontosExistentes = await prisma.registroPonto.findMany({
@@ -55,12 +69,26 @@ export async function salvarPonto(
     return { success: false, error: "Usuário não autenticado." };
   }
 
-  const targetDate = new Date(dataStr);
-  const startOfDay = new Date(targetDate.setUTCHours(0, 0, 0, 0));
-  const endOfDay = new Date(targetDate.setUTCHours(23, 59, 59, 999));
+  const cleanDateStr = dataStr && dataStr.trim() ? dataStr.trim() : new Date().toISOString().split("T")[0];
+  const parts = cleanDateStr.split("T")[0].split("-");
+  let startOfDay: Date;
+  let endOfDay: Date;
 
-  // Regra de status de aprovação baseada na role do usuário que insere
-  const statusAprovacao = session.userRole === "ESCRITORIO" ? "APROVADO" : "PENDENTE";
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    startOfDay = new Date(Date.UTC(y, m, d, 0, 0, 0, 0));
+    endOfDay = new Date(Date.UTC(y, m, d, 23, 59, 59, 999));
+  } else {
+    const targetDate = new Date(cleanDateStr);
+    const validTime = isNaN(targetDate.getTime()) ? new Date() : targetDate;
+    startOfDay = new Date(validTime.setUTCHours(0, 0, 0, 0));
+    endOfDay = new Date(validTime.setUTCHours(23, 59, 59, 999));
+  }
+
+  // Regra de status de aprovação: MASTER e ESCRITORIO já entram APROVADOS
+  const statusAprovacao = (session.userRole === "ESCRITORIO" || session.userRole === "MASTER") ? "APROVADO" : "PENDENTE";
 
   await prisma.$transaction(async (tx) => {
     // 1. Deleta registros existentes para aquela data e obra
@@ -100,10 +128,10 @@ export async function salvarPonto(
   return { success: true, statusAprovacao };
 }
 
-// Buscar todos os pontos pendentes para aprovação do escritório
+// Buscar todos os pontos pendentes para aprovação do escritório / master
 export async function getPontosPendentes() {
   const session = await getSession();
-  if (!session || session.userRole !== "ESCRITORIO") {
+  if (!session || (session.userRole !== "ESCRITORIO" && session.userRole !== "MASTER")) {
     return [];
   }
 
