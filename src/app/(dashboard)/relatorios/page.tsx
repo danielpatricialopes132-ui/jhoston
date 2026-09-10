@@ -63,6 +63,18 @@ interface PagamentoItem {
 
 import { Send } from "lucide-react";
 
+const ReportFooter = ({ branding, style }: { branding: ReturnType<typeof getCompanyBranding>, style?: React.CSSProperties }) => (
+  <div className="report-footer no-print-bg" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "24px", paddingTop: "12px", borderTop: "1px solid #e2e8f0", backgroundColor: "transparent", ...style }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+      <img src={branding.logo} alt={branding.name} style={{ height: "24px", objectFit: "contain" }} />
+      <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+        Sistema de Gestão Integrada • Gerado em {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date())}
+      </span>
+    </div>
+    <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>{branding.cnpj}</span>
+  </div>
+);
+
 export default function RelatoriosPage() {
   const [activeTab, setActiveTab] = useState<"ponto" | "pagamento" | "lucratividade" | "andamento" | "gerencial" | "livro_caixa">("ponto");
   const [obras, setObras] = useState<Obra[]>([]);
@@ -557,7 +569,7 @@ export default function RelatoriosPage() {
           {isLoading ? (
             <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>Carregando dados...</p>
           ) : folhaPontoData ? (
-            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+            <div id="relatorio-ponto" className="card" style={{ padding: 0, overflow: "hidden", backgroundColor: "#fff" }}>
               {(() => {
                 const currentObra = obras.find((o) => o.id === parseInt(selectedObraId));
                 const branding = getCompanyBranding(currentObra?.empresa || empresaFilter);
@@ -591,7 +603,7 @@ export default function RelatoriosPage() {
                 );
               })()}
 
-              <div id="relatorio-ponto" className="table-container" style={{ margin: 0, border: "none", borderRadius: 0, overflowX: "auto" }}>
+              <div className="table-container" style={{ margin: 0, border: "none", borderRadius: 0, overflowX: "auto" }}>
                 <table className="table" style={{ borderCollapse: "collapse", fontSize: "12px", width: "100%", minWidth: "900px" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#f8fafc" }}>
@@ -684,6 +696,7 @@ export default function RelatoriosPage() {
                 <div style={{ color: "var(--warning)" }}><strong>CH</strong> = Dia Chuvoso</div>
                 <div style={{ color: "var(--text-muted)" }}><strong>-</strong> = Não Aplicável (Sem Lançamento / N/A)</div>
               </div>
+              <ReportFooter branding={getCompanyBranding(obras.find((o) => o.id === parseInt(selectedObraId))?.empresa || empresaFilter)} style={{ margin: "0 24px", paddingBottom: "16px" }} />
             </div>
           ) : (
             <div className="card" style={{ textAlign: "center", padding: "32px", color: "var(--text-muted)" }}>
@@ -748,7 +761,7 @@ export default function RelatoriosPage() {
               Nenhum dado encontrado no período. Ajuste as datas e gere o relatório.
             </div>
           ) : (
-            <div className="card" style={{ padding: 24 }}>
+            <div id="relatorio-pagamentos" className="card" style={{ padding: 24, backgroundColor: "#fff" }}>
               {(() => {
                 const branding = getCompanyBranding(empresaFilter);
                 return (
@@ -781,7 +794,7 @@ export default function RelatoriosPage() {
                 );
               })()}
 
-              <div id="relatorio-pagamentos" className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
+              <div className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
                 <table className="table" style={{ fontSize: "12px" }}>
                   <thead>
                     <tr>
@@ -932,6 +945,7 @@ export default function RelatoriosPage() {
                   </tbody>
                 </table>
               </div>
+              <ReportFooter branding={getCompanyBranding(empresaFilter)} />
             </div>
           )}
         </div>
@@ -947,7 +961,7 @@ export default function RelatoriosPage() {
               Nenhuma obra cadastrada para avaliação financeira.
             </div>
           ) : (
-            <div className="card" style={{ padding: 24 }}>
+            <div id="relatorio-lucratividade" className="card" style={{ padding: 24, backgroundColor: "#fff" }}>
               {(() => {
                 const branding = getCompanyBranding(empresaFilter);
                 return (
@@ -983,7 +997,7 @@ export default function RelatoriosPage() {
                 );
               })()}
 
-              <div id="relatorio-lucratividade" className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
+              <div className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
                 <table className="table" style={{ fontSize: "13px" }}>
                   <thead>
                     <tr>
@@ -1031,6 +1045,7 @@ export default function RelatoriosPage() {
                   </tbody>
                 </table>
               </div>
+              <ReportFooter branding={getCompanyBranding(empresaFilter)} />
             </div>
           )}
         </div>
@@ -1079,7 +1094,7 @@ export default function RelatoriosPage() {
           {isLoading ? (
             <p style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px" }}>Carregando dados...</p>
           ) : andamentoReport ? (
-            <div className="card printable-report-card" style={{ padding: 24 }}>
+            <div id="relatorio-andamento" className="card printable-report-card" style={{ padding: 24, backgroundColor: "#fff" }}>
               {(() => {
                 const branding = getCompanyBranding(andamentoReport.obra.empresa);
                 return (
@@ -1115,7 +1130,7 @@ export default function RelatoriosPage() {
                 );
               })()}
 
-              <div id="relatorio-andamento" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
                 {/* Barra de progresso das 5 etapas da piscina */}
                 <div
                   style={{
@@ -1197,6 +1212,7 @@ export default function RelatoriosPage() {
                   )}
                 </div>
               </div>
+              <ReportFooter branding={getCompanyBranding(andamentoReport.obra.empresa)} />
             </div>
           ) : (
             <div className="card" style={{ textAlign: "center", padding: "32px", color: "var(--text-muted)" }}>
@@ -1326,6 +1342,9 @@ export default function RelatoriosPage() {
                   </div>
                 </div>
               ))}
+              <div className="card" style={{ padding: "16px 24px", backgroundColor: "#fff" }}>
+                <ReportFooter branding={getCompanyBranding(empresaFilter)} style={{ marginTop: 0, borderTop: "none" }} />
+              </div>
             </div>
           )}
         </div>
@@ -1370,7 +1389,7 @@ export default function RelatoriosPage() {
           </div>
 
           {livroCaixaReport && (
-            <div className="card" style={{ padding: "24px" }}>
+            <div id="relatorio-livro-caixa" className="card" style={{ padding: "24px", backgroundColor: "#fff" }}>
               <style>{`
                 @media print {
                   @page {
@@ -1473,6 +1492,7 @@ export default function RelatoriosPage() {
                   </tbody>
                 </table>
               </div>
+              <ReportFooter branding={getCompanyBranding(empresaFilter)} />
             </div>
           )}
         </div>
