@@ -118,9 +118,16 @@ export async function sendWhatsAppFile({ number, base64, fileName, caption = '',
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Erro na API Evolution (File):', errorData);
-      throw new Error(`Falha ao enviar arquivo: ${response.statusText}`);
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
+      }
+      console.error('Erro detalhado na API Evolution (File):', response.status, errorData);
+      const msg = errorData?.response?.message || errorData?.message || response.statusText;
+      throw new Error(`Falha ao enviar arquivo (${response.status}): ${typeof msg === 'object' ? JSON.stringify(msg) : msg}`);
     }
 
     return await response.json();
