@@ -149,9 +149,29 @@ export async function getPagamentoFuncionarios(dataInicioStr: string, dataFimStr
       descricao: v.descricao || "Sem anotação",
     }));
 
-    // D) Cálculo Líquido Pendente
-    // O líquido pendente de pagamento = (Valor Ponto + Diárias de Viagem Pendentes + Bônus Pendentes) - Vales Pendentes
-    const valorLiquidoPendente = (valorTotalPonto + valorViagemPendente + valorBonusPendentes) - valorValesPendentes;
+    // D) Pagamentos já realizados no Financeiro (Transações do tipo DESPESA com status PAGO para este funcionário)
+    const pagamentosRealizados = await prisma.transacaoFinanceira.findMany({
+      where: {
+        funcionarioId: f.id,
+        tipo: "DESPESA",
+        status: "PAGO",
+        dataVencimento: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+    });
+
+    const valorPagoNoPeriodo = pagamentosRealizados.reduce((acc, t) => acc + t.valor, 0);
+
+    // E) Cálculo do Bruto, Já Pago e Saldo
+    // Total a receber antes de pagamentos = Pontos + Viagens (todas) + Bônus - Vales
+    const totalBrutoPeriodo = valorTotalPonto + valorTotalViagem + valorTotalBonus;
+    const totalDescontosVales = valorValesPendentes + valorValesDescontados;
+    const valorLiquidoTotal = Math.max(0, totalBrutoPeriodo - totalDescontosVales);
+    
+    // Saldo real de salário a pagar = Líquido Total - O que já foi pago no Financeiro
+    const saldoSalarioPendente = valorLiquidoTotal - valorPagoNoPeriodo;
 
     payrollReport.push({
       funcionario: f,
@@ -172,7 +192,16 @@ export async function getPagamentoFuncionarios(dataInicioStr: string, dataFimStr
       valorBonusPendentes,
       valorBonusPagos,
       bonusDetails,
-      valorLiquidoPendente,
+      valorPagoNoPeriodo,
+      pagamentosRealizadosDetails: pagamentosRealizados.map(t => ({
+        id: t.id,
+        descricao: t.descricao,
+        valor: t.valor,
+        data: new Date(t.dataPagamento || t.dataVencimento).toISOString().split("T")[0],
+      })),
+      valorLiquidoTotal,
+      valorLiquidoPendente: saldoSalarioPendente, // Saldo remanescente a pagar
+      temMovimentacao: (pontosTrabalhados.length > 0 || diariasViagem.length > 0 || valesList.length > 0 || bonusList.length > 0 || valorPagoNoPeriodo > 0 || totalBrutoPeriodo > 0),
     });
   }
 

@@ -54,7 +54,11 @@ interface PagamentoItem {
   valorBonusPendentes: number;
   valorBonusPagos: number;
   bonusDetails?: any[];
+  valorPagoNoPeriodo?: number;
+  pagamentosRealizadosDetails?: any[];
+  valorLiquidoTotal?: number;
   valorLiquidoPendente: number;
+  temMovimentacao?: boolean;
 }
 
 import { Send } from "lucide-react";
@@ -88,6 +92,7 @@ export default function RelatoriosPage() {
   const [pagamentosReport, setPagamentosReport] = useState<PagamentoItem[]>([]);
   const [selectedHoleriteFunc, setSelectedHoleriteFunc] = useState<PagamentoItem | null>(null);
   const [isHoleriteModalOpen, setIsHoleriteModalOpen] = useState(false);
+  const [ocultarZerados, setOcultarZerados] = useState(true);
 
   // States: Aba 3 (Lucratividade)
   const [lucratividadeReport, setLucratividadeReport] = useState<any[]>([]);
@@ -685,6 +690,17 @@ export default function RelatoriosPage() {
                 onChange={(e) => setDataFim(e.target.value)}
               />
             </div>
+            <div className="form-group" style={{ display: "flex", alignItems: "center", gap: "8px", paddingBottom: "4px" }}>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 600, color: "var(--text-heading)", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={ocultarZerados}
+                  onChange={(e) => setOcultarZerados(e.target.checked)}
+                  style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                />
+                Ocultar colaboradores zerados
+              </label>
+            </div>
             <button className="btn btn-primary" onClick={gerarRelatorioPagamentos} style={{ height: "42px" }}>
               Gerar Folha
             </button>
@@ -714,7 +730,7 @@ export default function RelatoriosPage() {
                         </span>
                         <h4 style={{ fontSize: "17px", fontWeight: 800, marginTop: "2px", color: "var(--text-heading)" }}>Resumo de Pagamento por Período</h4>
                         <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "2px" }}>
-                          Cálculo líquido de diárias de ponto, viagens, vales e bônus no período de {formatDateBR(dataInicio)} a {formatDateBR(dataFim)}.
+                          Demonstrativo de diárias, viagens, vales, pagamentos já feitos no caixa e saldo de salário de {formatDateBR(dataInicio)} a {formatDateBR(dataFim)}.
                         </p>
                       </div>
                     </div>
@@ -731,7 +747,7 @@ export default function RelatoriosPage() {
               })()}
 
               <div id="relatorio-pagamentos" className="table-container" style={{ margin: 0, boxShadow: "none", border: "none" }}>
-                <table className="table">
+                <table className="table" style={{ fontSize: "12px" }}>
                   <thead>
                     <tr>
                       <th>Colaborador</th>
@@ -739,91 +755,118 @@ export default function RelatoriosPage() {
                       <th>Ganhos Ponto</th>
                       <th>Ganhos Viagem</th>
                       <th>Bônus (+)</th>
-                      <th>Vales Descontar (-)</th>
-                      <th style={{ fontWeight: 700 }}>Línguido a Pagar</th>
+                      <th>Vales (-)</th>
+                      <th>Total a Receber</th>
+                      <th style={{ color: "#10b981" }}>Já Pago (Caixa)</th>
+                      <th style={{ fontWeight: 800, fontSize: "13px" }}>Saldo de Salário</th>
                       <th>PIX</th>
                       <th style={{ textAlign: "right" }}>Ações</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pagamentosReport.map((p) => (
-                      <tr key={p.funcionario.id}>
-                        <td>
-                          <strong style={{ color: "var(--text-heading)" }}>{p.funcionario.nome}</strong>
-                          {p.funcionario.funcao === "ESCRITORIO" && (
-                            <span className="badge" style={{ display: "block", width: "fit-content", marginTop: "2px", fontSize: "10px", backgroundColor: "#e0e7ff", color: "#3730a3" }}>
-                              ESCRITÓRIO
-                            </span>
-                          )}
-                          {p.funcionario.funcao === "DIRETORIA" && (
-                            <span className="badge" style={{ display: "block", width: "fit-content", marginTop: "2px", fontSize: "10px", backgroundColor: "#fef3c7", color: "#92400e" }}>
-                              DIRETORIA
-                            </span>
-                          )}
-                        </td>
-                        <td>{p.funcionario.cargo || "-"}</td>
-                        <td style={{ color: "var(--text-main)" }}>
-                          {formatCurrency(p.valorTotalPonto)}
-                          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                            {p.funcionario.funcao === "ESCRITORIO" || p.funcionario.funcao === "DIRETORIA"
-                              ? "Fixo Mensal"
-                              : `(${p.pontosContagem} dia(s) trab.)`}
-                          </div>
-                        </td>
-                        <td>
-                          <span style={{ color: "var(--text-heading)", fontWeight: 500 }}>
-                            {formatCurrency(p.valorTotalViagem)}
-                          </span>
-                          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                            Pendentes: <strong style={{ color: "var(--warning)" }}>{formatCurrency(p.valorViagemPendente)}</strong>
-                          </div>
-                        </td>
-                        <td style={{ color: "var(--success)", fontWeight: 600 }}>
-                          + {formatCurrency(p.valorTotalBonus)}
-                          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>({p.bonusCount} bônus)</div>
-                        </td>
-                        <td style={{ color: "var(--error)", fontWeight: 500 }}>
-                          - {formatCurrency(p.valorValesPendentes)}
-                          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                            (Total descontado: {formatCurrency(p.valorValesDescontados)})
-                          </div>
-                        </td>
-                        <td style={{ fontWeight: 700, fontSize: "15px", color: p.valorLiquidoPendente >= 0 ? "var(--primary)" : "var(--error)" }}>
-                          {formatCurrency(p.valorLiquidoPendente)}
-                        </td>
-                        <td>
-                          {p.funcionario.pix ? (
-                            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                              <span style={{ fontFamily: "monospace", fontSize: "11px", backgroundColor: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
-                                {p.funcionario.pix}
+                    {pagamentosReport
+                      .filter((p) => !ocultarZerados || p.temMovimentacao)
+                      .map((p) => {
+                        const jaPago = p.valorPagoNoPeriodo || 0;
+                        const totalLiquido = p.valorLiquidoTotal !== undefined ? p.valorLiquidoTotal : (p.valorTotalPonto + p.valorTotalViagem + p.valorTotalBonus - p.valorValesPendentes);
+                        const saldo = p.valorLiquidoPendente;
+                        return (
+                          <tr key={p.funcionario.id}>
+                            <td>
+                              <strong style={{ color: "var(--text-heading)", fontSize: "13px" }}>{p.funcionario.nome}</strong>
+                              {p.funcionario.funcao === "ESCRITORIO" && (
+                                <span className="badge" style={{ display: "block", width: "fit-content", marginTop: "2px", fontSize: "10px", backgroundColor: "#e0e7ff", color: "#3730a3" }}>
+                                  ESCRITÓRIO
+                                </span>
+                              )}
+                              {p.funcionario.funcao === "DIRETORIA" && (
+                                <span className="badge" style={{ display: "block", width: "fit-content", marginTop: "2px", fontSize: "10px", backgroundColor: "#fef3c7", color: "#92400e" }}>
+                                  DIRETORIA
+                                </span>
+                              )}
+                            </td>
+                            <td>{p.funcionario.cargo || "-"}</td>
+                            <td style={{ color: "var(--text-main)" }}>
+                              <strong>{formatCurrency(p.valorTotalPonto)}</strong>
+                              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                                {p.funcionario.funcao === "ESCRITORIO" || p.funcionario.funcao === "DIRETORIA"
+                                  ? "Fixo Mensal"
+                                  : `(${p.pontosContagem} dia(s) trab.)`}
+                              </div>
+                            </td>
+                            <td>
+                              <span style={{ color: "var(--text-heading)", fontWeight: 500 }}>
+                                {formatCurrency(p.valorTotalViagem)}
                               </span>
+                              {p.diariasViagemCount > 0 && (
+                                <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                                  {p.diariasViagemCount} diária(s)
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ color: "var(--success)", fontWeight: 600 }}>
+                              {p.valorTotalBonus > 0 ? `+ ${formatCurrency(p.valorTotalBonus)}` : "R$ 0,00"}
+                              {p.bonusCount > 0 && <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>({p.bonusCount} bônus)</div>}
+                            </td>
+                            <td style={{ color: "var(--error)", fontWeight: 500 }}>
+                              {p.valorValesPendentes > 0 ? `- ${formatCurrency(p.valorValesPendentes)}` : "R$ 0,00"}
+                              {p.valesCount > 0 && (
+                                <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                                  ({p.valesCount} vale(s))
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ fontWeight: 600, color: "var(--text-heading)" }}>
+                              {formatCurrency(totalLiquido)}
+                            </td>
+                            <td style={{ color: jaPago > 0 ? "#10b981" : "var(--text-muted)", fontWeight: 600 }}>
+                              {formatCurrency(jaPago)}
+                              {p.pagamentosRealizadosDetails && p.pagamentosRealizadosDetails.length > 0 && (
+                                <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+                                  {p.pagamentosRealizadosDetails.length} pgto(s) no Caixa
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ fontWeight: 800, fontSize: "14px", color: saldo > 0 ? "var(--primary)" : saldo === 0 ? "var(--text-muted)" : "var(--error)" }}>
+                              {formatCurrency(saldo)}
+                              {saldo === 0 && totalLiquido > 0 && (
+                                <div style={{ fontSize: "10px", color: "#10b981", fontWeight: 700 }}>QUITADO</div>
+                              )}
+                            </td>
+                            <td>
+                              {p.funcionario.pix ? (
+                                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                                  <span style={{ fontFamily: "monospace", fontSize: "11px", backgroundColor: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
+                                    {p.funcionario.pix}
+                                  </span>
+                                  <button
+                                    className="copy-pix-btn"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(p.funcionario.pix || "");
+                                      alert("PIX copiado!");
+                                    }}
+                                  >
+                                    Copiar
+                                  </button>
+                                </div>
+                              ) : (
+                                <em style={{ color: "var(--text-muted)", fontSize: "11px" }}>Não informado</em>
+                              )}
+                            </td>
+                            <td style={{ textAlign: "right" }}>
                               <button
-                                className="copy-pix-btn"
+                                className="btn btn-secondary btn-sm"
                                 onClick={() => {
-                                  navigator.clipboard.writeText(p.funcionario.pix || "");
-                                  alert("PIX copiado!");
+                                  setSelectedHoleriteFunc(p);
+                                  setIsHoleriteModalOpen(true);
                                 }}
                               >
-                                Copiar
+                                Gerar RPA
                               </button>
-                            </div>
-                          ) : (
-                            <em style={{ color: "var(--text-muted)", fontSize: "11px" }}>Não informado</em>
-                          )}
-                        </td>
-                        <td style={{ textAlign: "right" }}>
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => {
-                              setSelectedHoleriteFunc(p);
-                              setIsHoleriteModalOpen(true);
-                            }}
-                          >
-                            Gerar RPA
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
@@ -1483,6 +1526,15 @@ export default function RelatoriosPage() {
                         <td style={{ textAlign: "right", padding: "6px", fontWeight: "600", color: "var(--error)" }}>{formatCurrency(v.valor)}</td>
                       </tr>
                     ))}
+
+                    {selectedHoleriteFunc.pagamentosRealizadosDetails && selectedHoleriteFunc.pagamentosRealizadosDetails.map((p: any) => (
+                      <tr key={p.id} style={{ borderBottom: "1px solid #f1f5f9", fontStyle: "italic" }}>
+                        <td style={{ padding: "6px" }}>Pago no Caixa: {p.descricao || "Adiantamento/Pagto"} ({formatDateBR(p.data)})</td>
+                        <td style={{ textAlign: "center", padding: "6px" }}>1</td>
+                        <td style={{ textAlign: "right", padding: "6px" }}>-</td>
+                        <td style={{ textAlign: "right", padding: "6px", fontWeight: "600", color: "#64748b" }}>{formatCurrency(p.valor)}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
 
@@ -1491,10 +1543,23 @@ export default function RelatoriosPage() {
                     <strong>Total Proventos:</strong> {formatCurrency(selectedHoleriteFunc.valorTotalPonto + selectedHoleriteFunc.valorTotalViagem + selectedHoleriteFunc.valorTotalBonus)}
                   </div>
                   <div>
-                    <strong>Total Descontos:</strong> {formatCurrency(selectedHoleriteFunc.valorValesPendentes)}
+                    <strong>Vales / Descontos:</strong> {formatCurrency(selectedHoleriteFunc.valorValesPendentes)}
                   </div>
+                  {(selectedHoleriteFunc.valorPagoNoPeriodo || 0) > 0 && (
+                    <>
+                      <div>
+                        <strong>Total Bruto/Líquido Gerado:</strong> {formatCurrency(selectedHoleriteFunc.valorLiquidoTotal || 0)}
+                      </div>
+                      <div style={{ color: "#0284c7" }}>
+                        <strong>Já Pago no Período (Caixa):</strong> -{formatCurrency(selectedHoleriteFunc.valorPagoNoPeriodo || 0)}
+                      </div>
+                    </>
+                  )}
                   <div style={{ gridColumn: "span 2", borderTop: "1px dashed #ccc", paddingTop: "8px", marginTop: "4px", fontSize: "15px" }}>
-                    <strong style={{ color: "var(--primary)" }}>VALOR LÍQUIDO A PAGAR: {formatCurrency(selectedHoleriteFunc.valorLiquidoPendente)}</strong>
+                    <strong style={{ color: (selectedHoleriteFunc.valorLiquidoPendente ?? 0) > 0 ? "var(--primary)" : "#16a34a" }}>
+                      {(selectedHoleriteFunc.valorLiquidoPendente ?? 0) > 0 ? "SALDO DE SALÁRIO A PAGAR: " : "STATUS: QUITADO (SALDO R$ 0,00)"} 
+                      {(selectedHoleriteFunc.valorLiquidoPendente ?? 0) > 0 && formatCurrency(selectedHoleriteFunc.valorLiquidoPendente ?? 0)}
+                    </strong>
                   </div>
                 </div>
 
