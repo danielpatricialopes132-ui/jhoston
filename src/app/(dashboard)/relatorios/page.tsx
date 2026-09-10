@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, startTransition } from "react";
+import { useEffect, useState } from "react";
 import { getRelatoriosMetadata, getFolhaPontoObra, getPagamentoFuncionarios, getLucratividadeObras, getAndamentoObraReport as getAndamentoObra, getRelatorioGerencialContabil, getLivroCaixa, gerarLinkCompartilhado } from "./actions";
 import { getCompanyBranding } from "@/lib/branding";
 import { sendWhatsAppFile, sendWhatsAppText } from "@/lib/whatsapp";
