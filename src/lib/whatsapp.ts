@@ -119,19 +119,24 @@ export async function sendWhatsAppText({ number, text, delay = 1200 }: SendTextO
         number: formattedNumber,
         options: {
           delay: delay,
-          presence: 'composing', // Mostra "digitando..."
+          presence: 'composing',
           linkPreview: false
         },
-        textMessage: {
-          text: text
-        }
+        text: text
       })
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Erro na API Evolution (Text):', errorData);
-      throw new Error(`Falha ao enviar mensagem: ${response.statusText}`);
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
+      }
+      console.error('Erro detalhado na API Evolution (Text):', response.status, errorData);
+      const msg = errorData?.response?.message || errorData?.message || response.statusText;
+      throw new Error(`Falha ao enviar mensagem (${response.status}): ${typeof msg === 'object' ? JSON.stringify(msg) : msg}`);
     }
 
     return await response.json();
