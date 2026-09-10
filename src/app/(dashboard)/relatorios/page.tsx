@@ -138,11 +138,17 @@ export default function RelatoriosPage() {
 
   // Carregar metadados iniciais (obras, colaboradores)
   useEffect(() => {
+    let isMounted = true;
     getRelatoriosMetadata().then((res) => {
-      setObras(res.obras as any);
-      setFuncionarios(res.funcionarios);
-      setAgendas(res.agendas || []);
+      if (isMounted) {
+        setObras(res.obras as any);
+        setFuncionarios(res.funcionarios);
+        setAgendas(res.agendas || []);
+      }
     });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // 1. Gerar Relatório de Frequência de Ponto
