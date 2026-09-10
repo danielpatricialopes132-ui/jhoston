@@ -59,6 +59,7 @@ interface Obra {
   procurador: Cliente | null;
   empresa: string;
   adendos: Adendo[];
+  whatsappGroupId?: string | null;
 }
 
 interface FornecedorInfo {

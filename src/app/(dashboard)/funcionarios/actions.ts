@@ -15,6 +15,8 @@ export async function getFuncionarios() {
 export async function createFuncionario(data: {
   nome: string;
   cargo?: string | null;
+  funcao?: string;
+  salarioFixo?: number;
   diariaPadrao: number;
   adicionalMotorista: number;
   pix?: string;
@@ -26,6 +28,8 @@ export async function createFuncionario(data: {
     data: {
       nome: data.nome,
       cargo: data.cargo || null,
+      funcao: data.funcao || "CAMPO",
+      salarioFixo: data.salarioFixo || 0,
       diariaPadrao: data.diariaPadrao,
       adicionalMotorista: data.adicionalMotorista,
       pix: data.pix || "",
@@ -61,6 +65,8 @@ export async function updateFuncionario(
   data: {
     nome: string;
     cargo?: string | null;
+    funcao?: string;
+    salarioFixo?: number;
     diariaPadrao: number;
     adicionalMotorista: number;
     pix?: string;
@@ -74,6 +80,8 @@ export async function updateFuncionario(
     data: {
       nome: data.nome,
       cargo: data.cargo || null,
+      funcao: data.funcao || "CAMPO",
+      salarioFixo: data.salarioFixo || 0,
       diariaPadrao: data.diariaPadrao,
       adicionalMotorista: data.adicionalMotorista,
       pix: data.pix || "",

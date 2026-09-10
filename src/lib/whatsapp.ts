@@ -138,7 +138,7 @@ export async function createWhatsAppGroup(subject: string, participants: string[
   try {
     const formattedParticipants = participants.map(formatNumber);
 
-    const response = await fetch(`${EVOLUTION_API_URL}/group/create`, {
+    const response = await fetch(`${EVOLUTION_API_URL}/group/create/${INSTANCE_NAME}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

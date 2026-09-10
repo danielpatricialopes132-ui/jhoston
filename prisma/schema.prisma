@@ -11,6 +11,8 @@ model Funcionario {
   id                    Int                   @id @default(autoincrement())
   nome                  String
   cargo                 String?
+  funcao                String                @default("CAMPO") // "ESCRITORIO", "CAMPO", "DIRETORIA", "OUTRO"
+  salarioFixo           Float                 @default(0)
   diariaPadrao          Float                 @default(0)
   adicionalMotorista    Float                 @default(0)
   pix                   String?

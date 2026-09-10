@@ -20,11 +20,11 @@ export async function getContatos() {
   })
 }
 
-export async function salvarContato(data: { id?: number, nome: string, telefone: string, categoria: string, email?: string, tipoFornecedor?: string }) {
+export async function salvarContato(data: { id?: number, nome: string, telefone: string, categoria: string, email?: string, tipoFornecedor?: string, empresa?: string }) {
   const session = await getSession()
   if (!session) throw new Error("Não autorizado")
 
-  const empresa = session.userEmpresa || "JHOSTON"
+  const empresa = data.empresa || session.userEmpresa || "JHOSTON"
 
   if (data.id) {
     const contato = await prisma.contato.update({
@@ -34,7 +34,8 @@ export async function salvarContato(data: { id?: number, nome: string, telefone:
         telefone: data.telefone,
         categoria: data.categoria,
         email: data.email || null,
-        tipoFornecedor: data.categoria === 'FORNECEDOR' ? (data.tipoFornecedor || null) : null
+        tipoFornecedor: data.categoria === 'FORNECEDOR' ? (data.tipoFornecedor || null) : null,
+        ...(data.empresa ? { empresa: data.empresa } : {})
       }
     })
     revalidatePath("/agenda")
@@ -127,7 +128,7 @@ export async function deletarCompromisso(id: number) {
   revalidatePath("/agenda")
 }
 
-import { sendWhatsAppText } from '@/lib/whatsapp';
+import { sendWhatsAppText, createWhatsAppGroup } from '@/lib/whatsapp';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -150,5 +151,22 @@ export async function notificarCompromisso(id: number) {
     number: comp.contato.telefone,
     text: text
   });
+}
+
+export async function criarGrupoAgendaWhatsApp(tituloGrupo: string, telefones: string[]) {
+  const session = await getSession();
+  if (!session) throw new Error('Não autorizado');
+
+  if (!tituloGrupo.trim()) {
+    throw new Error('O título do grupo é obrigatório');
+  }
+
+  const validNumbers = telefones.filter((t) => !!t && t.trim() !== "");
+  if (validNumbers.length === 0) {
+    throw new Error('Selecione ao menos um contato com telefone válido');
+  }
+
+  const res = await createWhatsAppGroup(tituloGrupo.substring(0, 25), validNumbers);
+  return { success: true, res };
 }
 

@@ -43,20 +43,27 @@ export async function getFolhaPontoObra(obraId: number, ano: number, mes: number
 }
 
 // 2. Relatório de Pagamento de Funcionários
-export async function getPagamentoFuncionarios(dataInicioStr: string, dataFimStr: string) {
+export async function getPagamentoFuncionarios(dataInicioStr: string, dataFimStr: string, empresaFilter: string = "TODOS") {
   const start = new Date(dataInicioStr);
   const end = new Date(dataFimStr);
   const startOfDay = new Date(start.setUTCHours(0, 0, 0, 0));
   const endOfDay = new Date(end.setUTCHours(23, 59, 59, 999));
 
+  const whereFuncionario: any = { ativo: true };
+  if (empresaFilter && empresaFilter !== "TODOS") {
+    whereFuncionario.empresa = empresaFilter;
+  }
+
   const funcionarios = await prisma.funcionario.findMany({
-    where: { ativo: true },
+    where: whereFuncionario,
     orderBy: { nome: "asc" },
   });
 
   const payrollReport = [];
 
   for (const f of funcionarios) {
+    const isMensalista = f.funcao === "ESCRITORIO" || f.funcao === "DIRETORIA";
+
     // A) Diárias normais por Ponto (dias de trabalho registrados no ponto)
     const pontosTrabalhados = await prisma.registroPonto.findMany({
       where: {
@@ -73,10 +80,12 @@ export async function getPagamentoFuncionarios(dataInicioStr: string, dataFimStr
       },
     });
 
-    const valorTotalPonto = pontosTrabalhados.reduce((sum, p) => {
-      const factor = p.tipoDia === "CHUVA" ? (p.percentualPago / 100) : 1;
-      return sum + (f.diariaPadrao * factor);
-    }, 0);
+    const valorTotalPonto = isMensalista
+      ? (f.salarioFixo || 0)
+      : pontosTrabalhados.reduce((sum, p) => {
+          const factor = p.tipoDia === "CHUVA" ? (p.percentualPago / 100) : 1;
+          return sum + (f.diariaPadrao * factor);
+        }, 0);
 
     // B) Diárias de Viagem lançadas
     const diariasViagem = await prisma.diariaViagem.findMany({

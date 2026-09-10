@@ -170,7 +170,7 @@ export default function Sidebar() {
       title: "Comercial & Clientes",
       items: [
         { name: "CRM / Oportunidades", path: "/crm", icon: icons.crm, adminOnly: true },
-        { name: "Agenda Inteligente", path: "/agenda", icon: icons.clientes, adminOnly: true },
+        { name: "Agenda Inteligente", path: "/agenda", icon: icons.clientes, adminOnly: false },
         { name: "Marketing & Tour 360", path: "/marketing", icon: icons.marketing, adminOnly: true },
         { name: "Clientes (Proprietários)", path: "/clientes", icon: icons.clientes, adminOnly: true },
       ],

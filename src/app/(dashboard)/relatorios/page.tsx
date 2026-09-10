@@ -24,6 +24,8 @@ interface Funcionario {
   id: number;
   nome: string;
   cargo: string | null;
+  funcao?: string | null;
+  salarioFixo?: number;
   pix?: string | null;
 }
 
@@ -158,7 +160,7 @@ export default function RelatoriosPage() {
   // 2. Gerar Relatório de Pagamentos
   const gerarRelatorioPagamentos = () => {
     setIsLoading(true);
-    getPagamentoFuncionarios(dataInicio, dataFim).then((res) => {
+    getPagamentoFuncionarios(dataInicio, dataFim, empresaFilter).then((res) => {
       setPagamentosReport(res as any);
       setIsLoading(false);
     });
@@ -410,10 +412,9 @@ export default function RelatoriosPage() {
         <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Filtrar Empresa:</span>
         <div style={{ display: "inline-flex", gap: "8px" }}>
           {[
-            { id: "TODOS", name: "Consolidado" },
-            { id: "JHOSTON", name: "Jhoston Pools" },
-            { id: "ECO_STONE", name: "Eco Stone" },
-            { id: "JHOSTON_REVEST", name: "Jhoston Revest" }
+            { id: "ECO_STONE", name: "🌿 Eco Stone" },
+            { id: "JHOSTON", name: "🏢 Jhoston Pools" },
+            { id: "JHOSTON_REVEST", name: "✨ Jhoston Revest" }
           ].map((c) => (
             <button
               key={c.id}
@@ -421,9 +422,6 @@ export default function RelatoriosPage() {
                 setEmpresaFilter(c.id);
                 setSelectedObraId("");
                 setAndamentoObraId("");
-                if (activeTab === "livro_caixa" && dataInicioLivro && dataFimLivro) {
-                  // We'll let a manual refresh or effect handle it, but wait, the effect doesn't handle livro_caixa automatically yet
-                }
               }}
               className={`btn btn-sm ${empresaFilter === c.id ? "btn-primary" : "btn-secondary"}`}
             >
@@ -752,11 +750,25 @@ export default function RelatoriosPage() {
                       <tr key={p.funcionario.id}>
                         <td>
                           <strong style={{ color: "var(--text-heading)" }}>{p.funcionario.nome}</strong>
+                          {p.funcionario.funcao === "ESCRITORIO" && (
+                            <span className="badge" style={{ display: "block", width: "fit-content", marginTop: "2px", fontSize: "10px", backgroundColor: "#e0e7ff", color: "#3730a3" }}>
+                              ESCRITÓRIO
+                            </span>
+                          )}
+                          {p.funcionario.funcao === "DIRETORIA" && (
+                            <span className="badge" style={{ display: "block", width: "fit-content", marginTop: "2px", fontSize: "10px", backgroundColor: "#fef3c7", color: "#92400e" }}>
+                              DIRETORIA
+                            </span>
+                          )}
                         </td>
-                        <td>{p.funcionario.cargo}</td>
+                        <td>{p.funcionario.cargo || "-"}</td>
                         <td style={{ color: "var(--text-main)" }}>
                           {formatCurrency(p.valorTotalPonto)}
-                          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>({p.pontosContagem} dia(s))</div>
+                          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                            {p.funcionario.funcao === "ESCRITORIO" || p.funcionario.funcao === "DIRETORIA"
+                              ? "Fixo Mensal"
+                              : `(${p.pontosContagem} dia(s) trab.)`}
+                          </div>
                         </td>
                         <td>
                           <span style={{ color: "var(--text-heading)", fontWeight: 500 }}>
