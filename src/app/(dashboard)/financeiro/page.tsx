@@ -140,6 +140,7 @@ export default function FinanceiroPage() {
   const [rpaTransaction, setRpaTransaction] = useState<any>(null);
   const [whatsappNumberRPA, setWhatsappNumberRPA] = useState("");
   const [isSendingWhatsAppRPA, setIsSendingWhatsAppRPA] = useState(false);
+  const [isGuiaLancamentosOpen, setIsGuiaLancamentosOpen] = useState(false);
 
   const loadData = () => {
     getFinanceiroData().then((res) => {
@@ -1435,10 +1436,32 @@ export default function FinanceiroPage() {
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="modal-header">
-              <h4 style={{ fontSize: "18px", fontWeight: 600 }}>
-                {editingTransacao ? "Editar Transação" : `Lançar Nova ${tipo === "RECEITA" ? "Receita" : "Despesa"}`}
-              </h4>
+            <div className="modal-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <h4 style={{ fontSize: "18px", fontWeight: 600, margin: 0 }}>
+                  {editingTransacao ? "Editar Transação" : `Lançar Nova ${tipo === "RECEITA" ? "Receita" : "Despesa"}`}
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setIsGuiaLancamentosOpen(true)}
+                  style={{
+                    backgroundColor: "rgba(59, 130, 246, 0.12)",
+                    color: "#3b82f6",
+                    border: "1px solid rgba(59, 130, 246, 0.3)",
+                    borderRadius: "20px",
+                    padding: "4px 12px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px"
+                  }}
+                  title="Clique para ver o guia de onde lançar cada valor"
+                >
+                  💡 Guia de Lançamentos
+                </button>
+              </div>
               <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px" }} onClick={closeModal}>
                 &times;
               </button>
@@ -1466,7 +1489,22 @@ export default function FinanceiroPage() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Plano de Contas *</label>
-                    <select className="form-control" value={planoContaId} onChange={(e) => setPlanoContaId(e.target.value)} required>
+                    <select 
+                      className="form-control" 
+                      value={planoContaId} 
+                      onChange={(e) => {
+                        const newId = e.target.value;
+                        setPlanoContaId(newId);
+                        const contaSel = planoContas.find(c => c.id.toString() === newId);
+                        if (contaSel && (contaSel.codigo === "2.7.0" || contaSel.descricao.toLowerCase().includes("despesas gerais"))) {
+                          if (!descricao || descricao.startsWith("Envio de adiantamento para despesas gerais de viagem")) {
+                            const f = funcionarios.find(func => func.id.toString() === funcionarioId);
+                            setDescricao(`Envio de adiantamento para despesas gerais de viagem${f ? ` - Colaborador ${f.nome}` : ""}`);
+                          }
+                        }
+                      }} 
+                      required
+                    >
                       <option value="">-- Selecione uma Conta --</option>
                       {planoContas.filter(c => c.tipo === tipo).map(c => (
                         <option key={c.id} value={c.id}>{c.codigo} - {c.descricao}</option>
@@ -1479,16 +1517,24 @@ export default function FinanceiroPage() {
                 {tipo === "DESPESA" ? (
                   planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("folha de pagamento") ||
                   planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("salário") ||
-                  planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("adiantamento") ? (
+                  planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("adiantamento") ||
+                  planoContas.find(c => c.id.toString() === planoContaId)?.codigo === "2.7.0" ||
+                  planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("despesas gerais") ? (
                     <div className="form-group">
-                      <label className="form-label">Colaborador *</label>
+                      <label className="form-label">Colaborador (Favorecido) *</label>
                       <select 
                         className="form-control" 
                         value={funcionarioId} 
                         onChange={(e) => {
-                          setFuncionarioId(e.target.value);
+                          const newFuncId = e.target.value;
+                          setFuncionarioId(newFuncId);
                           setValesDescontadosIds([]);
                           setTotalVales(0);
+                          const contaSel = planoContas.find(c => c.id.toString() === planoContaId);
+                          if (contaSel && (contaSel.codigo === "2.7.0" || contaSel.descricao.toLowerCase().includes("despesas gerais"))) {
+                            const f = funcionarios.find(func => func.id.toString() === newFuncId);
+                            setDescricao(`Envio de adiantamento para despesas gerais de viagem${f ? ` - Colaborador ${f.nome}` : ""}`);
+                          }
                         }}
                         required
                       >
@@ -1500,7 +1546,7 @@ export default function FinanceiroPage() {
                         ))}
                       </select>
                       
-                      {funcionarioId && valesPendentes.filter(v => v.funcionarioId.toString() === funcionarioId).length > 0 && (
+                      {funcionarioId && !(planoContas.find(c => c.id.toString() === planoContaId)?.codigo === "2.7.0" || planoContas.find(c => c.id.toString() === planoContaId)?.descricao.toLowerCase().includes("despesas gerais")) && valesPendentes.filter(v => v.funcionarioId.toString() === funcionarioId).length > 0 && (
                         <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#fff3cd', borderRadius: '8px', border: '1px solid #ffe69c' }}>
                           <h5 style={{ margin: '0 0 8px 0', color: '#856404' }}>Vales Pendentes</h5>
                           {valesPendentes.filter(v => v.funcionarioId.toString() === funcionarioId).map(v => (
@@ -2012,6 +2058,132 @@ export default function FinanceiroPage() {
                   Gerar PDF (RPA)
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Guia Rápido de Lançamentos */}
+      {isGuiaLancamentosOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: "800px", maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+            <div className="modal-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--border-color)", paddingBottom: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "22px" }}>💡</span>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: "17px", fontWeight: 700 }}>Guia Rápido: Onde Lançar no Financeiro?</h4>
+                  <p style={{ margin: 0, fontSize: "13px", color: "var(--text-muted)" }}>
+                    Consulte como classificar corretamente cada operação da empresa.
+                  </p>
+                </div>
+              </div>
+              <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: "22px", color: "var(--text-muted)" }} onClick={() => setIsGuiaLancamentosOpen(false)}>
+                &times;
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* Card 1: Envio para Colaborador (Viagem/Geral) */}
+              <div style={{ backgroundColor: "rgba(59, 130, 246, 0.06)", border: "1px solid rgba(59, 130, 246, 0.25)", borderRadius: "8px", padding: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <strong style={{ fontSize: "15px", color: "#3b82f6" }}>
+                    🚗 1. Dinheiro Enviado para Colaborador (Despesas de Viagem / Gerais)
+                  </strong>
+                  <span style={{ backgroundColor: "#3b82f6", color: "#fff", fontSize: "11px", padding: "2px 8px", borderRadius: "12px", fontWeight: 600 }}>
+                    CONTA 2.7.0
+                  </span>
+                </div>
+                <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "var(--text-secondary)" }}>
+                  Quando você faz um PIX de adiantamento para um funcionário em campo cobrir gastos de estrada, refeições, combustíveis, pedágios ou suprimentos de obra.
+                </p>
+                <div style={{ backgroundColor: "var(--bg-card)", padding: "10px", borderRadius: "6px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <div>• <strong>Tipo:</strong> Despesa</div>
+                  <div>• <strong>Plano de Contas:</strong> <code>2.7.0 - Despesas Gerais (não especificadas - Obra/Viagem)</code></div>
+                  <div>• <strong>Favorecido:</strong> O campo muda para <strong>Colaborador</strong> automaticamente! O sistema já insere o texto na descrição: <em>"Envio de adiantamento para despesas gerais de viagem - Colaborador Fulano"</em>.</div>
+                  <div>• <strong>Obra Vinculada:</strong> Selecione a Obra correspondente para o custo ser computado no lucro real do contrato.</div>
+                </div>
+              </div>
+
+              {/* Card 2: Contabilidade e Assessoria Jurídica */}
+              <div style={{ backgroundColor: "rgba(16, 185, 129, 0.06)", border: "1px solid rgba(16, 185, 129, 0.25)", borderRadius: "8px", padding: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <strong style={{ fontSize: "15px", color: "#10b981" }}>
+                    📊 2. Mensalidade da Contabilidade / Jurídico
+                  </strong>
+                  <span style={{ backgroundColor: "#10b981", color: "#fff", fontSize: "11px", padding: "2px 8px", borderRadius: "12px", fontWeight: 600 }}>
+                    CONTA 4.3.1 ou 4.3.0
+                  </span>
+                </div>
+                <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "var(--text-secondary)" }}>
+                  Pagamento mensal do escritório contábil ou honorários advocatícios da empresa.
+                </p>
+                <div style={{ backgroundColor: "var(--bg-card)", padding: "10px", borderRadius: "6px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <div>• <strong>Tipo:</strong> Despesa</div>
+                  <div>• <strong>Plano de Contas:</strong> <code>4.3.1 - Mensalidade Contábil</code> (ou <code>4.3.0 - Honorários Contábeis e Advocatícios</code>)</div>
+                  <div>• <strong>Obra Vinculada:</strong> Deixar <em>Sem obra vinculada</em> (é uma despesa institucional/sede).</div>
+                  <div>• <strong>Centro de Custo:</strong> Escritório / Administrativo.</div>
+                </div>
+              </div>
+
+              {/* Card 3: Combustível, Pedágio e Hospedagem com NF direta */}
+              <div style={{ backgroundColor: "rgba(245, 158, 11, 0.06)", border: "1px solid rgba(245, 158, 11, 0.25)", borderRadius: "8px", padding: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <strong style={{ fontSize: "15px", color: "#f59e0b" }}>
+                    ⛽ 3. Combustível, Pedágios, Hotéis e Refeições (Pagos Direto pela Empresa)
+                  </strong>
+                  <span style={{ backgroundColor: "#f59e0b", color: "#fff", fontSize: "11px", padding: "2px 8px", borderRadius: "12px", fontWeight: 600 }}>
+                    CONTAS 2.5.0 / 2.6.0
+                  </span>
+                </div>
+                <p style={{ fontSize: "13px", margin: "0 0 8px 0", color: "var(--text-secondary)" }}>
+                  Quando o pagamento for feito direto no posto, hotel ou restaurante (cartão corporativo, fatura ou nota direta).
+                </p>
+                <div style={{ backgroundColor: "var(--bg-card)", padding: "10px", borderRadius: "6px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <div>• <strong>Combustível / Frete / Pedágio:</strong> <code>2.5.0 - Combustível, Fretes e Logística (Obras)</code></div>
+                  <div>• <strong>Hospedagem / Alimentação:</strong> <code>2.6.0 - Alimentação e Hospedagem (Obras/Viagem)</code></div>
+                  <div>• <strong>Obra Vinculada:</strong> Sempre selecionar a Obra da viagem.</div>
+                </div>
+              </div>
+
+              {/* Card 4: Folha de Pagamento & Diárias */}
+              <div style={{ backgroundColor: "rgba(139, 92, 246, 0.06)", border: "1px solid rgba(139, 92, 246, 0.25)", borderRadius: "8px", padding: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <strong style={{ fontSize: "15px", color: "#8b5cf6" }}>
+                    👷 4. Pagamento de Salários, Diárias de Ponto e Vales
+                  </strong>
+                  <span style={{ backgroundColor: "#8b5cf6", color: "#fff", fontSize: "11px", padding: "2px 8px", borderRadius: "12px", fontWeight: 600 }}>
+                    CONTAS 2.3.0 / 3.1.0
+                  </span>
+                </div>
+                <div style={{ backgroundColor: "var(--bg-card)", padding: "10px", borderRadius: "6px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <div>• <strong>Equipe de Campo / Diaristas:</strong> <code>2.3.0 - Folha de Pagamento (Equipe Campo)</code> — o sistema lista os vales pendentes do colaborador para você abater automaticamente na hora!</div>
+                  <div>• <strong>Equipe de Escritório / Sócios:</strong> <code>3.1.0 - Pró-labore e Folha de Pagamento (Escritório)</code></div>
+                  <div>• <strong>Diárias de Viagem & Vales:</strong> São gerados e lançados automaticamente pelas telas de <em>Diárias de Viagem</em> e <em>Controle de Vales</em> através do botão <strong>"Lançar no Caixa"</strong>.</div>
+                </div>
+              </div>
+
+              {/* Card 5: Materiais e Insumos */}
+              <div style={{ backgroundColor: "rgba(236, 72, 153, 0.06)", border: "1px solid rgba(236, 72, 153, 0.25)", borderRadius: "8px", padding: "14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <strong style={{ fontSize: "15px", color: "#ec4899" }}>
+                    🧱 5. Compra de Materiais, Resinas, Pastilhas e Insumos
+                  </strong>
+                  <span style={{ backgroundColor: "#ec4899", color: "#fff", fontSize: "11px", padding: "2px 8px", borderRadius: "12px", fontWeight: 600 }}>
+                    CONTA 2.1.0
+                  </span>
+                </div>
+                <div style={{ backgroundColor: "var(--bg-card)", padding: "10px", borderRadius: "6px", fontSize: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <div>• <strong>Plano de Contas:</strong> <code>2.1.0 - Materiais de Construção / Revestimento</code></div>
+                  <div>• <strong>Fornecedor:</strong> Selecione o fornecedor cadastrado (ou use o botão <code>+</code> para cadastrar na hora).</div>
+                  <div>• <strong>Obra / Adendo:</strong> Se o material for para uma obra ou adendo extra contratado pelo cliente, vincule diretamente.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer" style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--border-color)", padding: "12px 16px" }}>
+              <button className="btn btn-primary" onClick={() => setIsGuiaLancamentosOpen(false)}>
+                Entendido, fechar guia
+              </button>
             </div>
           </div>
         </div>

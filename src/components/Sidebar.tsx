@@ -202,6 +202,7 @@ export default function Sidebar() {
         { name: "Contas Bancárias", path: "/contas-bancarias", icon: icons.contasBancarias, adminOnly: true },
         { name: "Cad. Fornecedores", path: "/fornecedores", icon: icons.fornecedores, adminOnly: true },
         { name: "Cad. Prod/Serviços", path: "/produtos-servicos", icon: icons.produtosServicos, adminOnly: true },
+        { name: "Configuração Contábil", path: "/financeiro/contabilidade", icon: icons.relatorios, adminOnly: true },
         { name: "Relatórios Gerenciais", path: "/relatorios", icon: icons.relatorios, adminOnly: true },
       ],
     },

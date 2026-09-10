@@ -312,6 +312,19 @@ export default function AjudaPage() {
               <li><strong>Vales (Débito):</strong> Adiantamentos financeiros concedidos aos diaristas. Serão deduzidos automaticamente na folha de fechamento.</li>
               <li><strong>Bônus (Crédito):</strong> Premiações ou diárias extras. Exige obrigatoriamente o preenchimento do campo de descrição com a justificativa técnica.</li>
             </ul>
+
+            <h5>D. Guia Rápido de Lançamentos por Plano de Contas</h5>
+            <p>
+              Para manter o Mini Balancete e o DRE de Obras apurados com exatidão, classifique os lançamentos da seguinte maneira:
+            </p>
+            <ul>
+              <li><strong>Envio de Dinheiro para Colaborador (Despesas de Estrada / Viagem):</strong> Use <code>2.7.0 - Despesas Gerais (não especificadas - Obra/Viagem)</code>. O sistema já abre a seleção de Colaborador e preenche a descrição padrão automaticamente. Vincule sempre à <strong>Obra</strong> correspondente.</li>
+              <li><strong>Mensalidade Contábil / Honorários Advocatícios:</strong> Use <code>4.3.1 - Mensalidade Contábil</code> (ou <code>4.3.0</code>) com Centro de Custo Administrativo / Escritório e sem vínculo de obra.</li>
+              <li><strong>Combustíveis, Pedágios e Fretes (NF Direta da Empresa):</strong> Use <code>2.5.0 - Combustível, Fretes e Logística (Obras)</code> vinculada à Obra.</li>
+              <li><strong>Hotéis e Refeições (NF Direta da Empresa):</strong> Use <code>2.6.0 - Alimentação e Hospedagem (Obras/Viagem)</code> vinculada à Obra.</li>
+              <li><strong>Pagamento de Salários e Diárias:</strong> Use <code>2.3.0 - Folha de Pagamento (Equipe Campo)</code> ou <code>3.1.0</code> para o Escritório. As diárias e vales possuem lançamento automático pelo botão <em>"Lançar no Caixa"</em> nas respectivas telas.</li>
+              <li><strong>Compra de Materiais e Insumos:</strong> Use <code>2.1.0 - Materiais de Construção / Revestimento</code> com fornecedor e obra vinculados.</li>
+            </ul>
           </div>
         )}
 

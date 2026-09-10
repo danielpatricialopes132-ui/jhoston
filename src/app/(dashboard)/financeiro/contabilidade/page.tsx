@@ -9,7 +9,7 @@ export default function ContabilidadeDashboard() {
   const [loading, setLoading] = useState(true);
 
   // States para forms
-  const [novaConta, setNovaConta] = useState({ codigo: "", descricao: "", tipo: "DESPESAS" });
+  const [novaConta, setNovaConta] = useState({ codigo: "", descricao: "", tipo: "DESPESA" });
   const [novoCentro, setNovoCentro] = useState({ codigo: "", nome: "" });
 
   const carregarDados = async () => {
@@ -84,7 +84,7 @@ export default function ContabilidadeDashboard() {
             <input required placeholder="Cód (ex: 2.1)" className="form-control" value={novaConta.codigo} onChange={(e) => setNovaConta({ ...novaConta, codigo: e.target.value })} style={{ width: "100px" }} />
             <input required placeholder="Descrição (ex: Combustível)" className="form-control" value={novaConta.descricao} onChange={(e) => setNovaConta({ ...novaConta, descricao: e.target.value })} style={{ flex: 1 }} />
             <select className="form-control" value={novaConta.tipo} onChange={(e) => setNovaConta({ ...novaConta, tipo: e.target.value })} style={{ width: "120px" }}>
-              <option value="DESPESAS">Despesa</option>
+              <option value="DESPESA">Despesa</option>
               <option value="RECEITA">Receita</option>
             </select>
             <button type="submit" className="btn btn-primary">+</button>
