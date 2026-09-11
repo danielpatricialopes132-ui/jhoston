@@ -10,8 +10,8 @@ export default function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Rota de Login e Cadastro
-  const publicPaths = ["/login", "/signup"];
+  // Rota de Login, Cadastro e Relatórios Públicos
+  const publicPaths = ["/login", "/signup", "/public"];
   const isPublicPath = publicPaths.some((path) => url.pathname.startsWith(path));
 
   if (isPublicPath) {

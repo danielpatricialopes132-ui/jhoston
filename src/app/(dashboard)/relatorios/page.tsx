@@ -66,12 +66,11 @@ import { Send } from "lucide-react";
 const ReportFooter = ({ branding, style }: { branding: ReturnType<typeof getCompanyBranding>, style?: React.CSSProperties }) => (
   <div className="report-footer no-print-bg" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "24px", paddingTop: "12px", borderTop: "1px solid #e2e8f0", backgroundColor: "transparent", ...style }}>
     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-      <img src={branding.logo} alt={branding.name} style={{ height: "24px", objectFit: "contain" }} />
+      <img src="/logo.jpg" alt="DPG SOLUTIONS" style={{ height: "24px", objectFit: "contain" }} />
       <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
         Sistema de Gestão Integrada • Gerado em {new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date())}
       </span>
     </div>
-    <span style={{ fontSize: "10px", color: "var(--text-muted)", fontWeight: 600 }}>{branding.cnpj}</span>
   </div>
 );
 
