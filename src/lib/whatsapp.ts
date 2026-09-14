@@ -238,3 +238,128 @@ export async function createWhatsAppGroup(subject: string, participants: string[
   }
 }
 
+/**
+ * Verifica se um número possui WhatsApp válido
+ */
+export async function checkWhatsAppNumber(number: string) {
+  try {
+    const formattedNumber = formatNumber(number);
+    await ensureEvolutionConnected();
+
+    const response = await fetch(`${EVOLUTION_API_URL}/chat/checkNumber/${INSTANCE_NAME}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_API_KEY
+      },
+      body: JSON.stringify({ numbers: [formattedNumber] })
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao verificar número no WhatsApp');
+    }
+
+    const data = await response.json();
+    // A Evolution API v2 retorna um array. Verificamos se o primeiro item é válido.
+    if (Array.isArray(data) && data.length > 0) {
+      return data[0]; // { exists: true, jid: "55...", ... }
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Erro em checkWhatsAppNumber:', error);
+    return { exists: false };
+  }
+}
+
+/**
+ * Obtém o estado de conexão atual da instância (open, connecting, close)
+ */
+export async function getEvolutionConnectionState() {
+  try {
+    const response = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${INSTANCE_NAME}`, {
+      headers: { 'apikey': EVOLUTION_API_KEY }
+    });
+
+    if (!response.ok) return { state: 'close' };
+    
+    const data = await response.json();
+    return { state: data?.instance?.state || 'close' };
+  } catch {
+    return { state: 'close' };
+  }
+}
+
+/**
+ * Solicita a conexão da instância e retorna o base64 do QR Code (se necessário)
+ */
+export async function connectEvolutionInstance() {
+  try {
+    const response = await fetch(`${EVOLUTION_API_URL}/instance/connect/${INSTANCE_NAME}`, {
+      headers: { 'apikey': EVOLUTION_API_KEY }
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao solicitar conexão da instância');
+    }
+
+    const data = await response.json();
+    return data; // { base64: "...", state: "connecting", ... }
+  } catch (error) {
+    console.error('Erro em connectEvolutionInstance:', error);
+    throw error;
+  }
+}
+
+/**
+ * Desconecta (Logout) a instância do WhatsApp
+ */
+export async function logoutEvolutionInstance() {
+  try {
+    const response = await fetch(`${EVOLUTION_API_URL}/instance/logout/${INSTANCE_NAME}`, {
+      method: 'DELETE',
+      headers: { 'apikey': EVOLUTION_API_KEY }
+    });
+
+    if (!response.ok) {
+      throw new Error('Falha ao deslogar instância');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erro em logoutEvolutionInstance:', error);
+    throw error;
+  }
+}
+
+/**
+ * Configura a URL de Webhook para a instância receber os eventos do WhatsApp
+ */
+export async function setEvolutionWebhook(webhookUrl: string) {
+  try {
+    const response = await fetch(`${EVOLUTION_API_URL}/webhook/set/${INSTANCE_NAME}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': EVOLUTION_API_KEY
+      },
+      body: JSON.stringify({
+        enabled: true,
+        url: webhookUrl,
+        webhookByEvents: false,
+        events: ['MESSAGES_UPSERT'] // Evento principal para receber mensagens
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Erro ao configurar webhook:', errorText);
+      throw new Error('Falha ao configurar webhook');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erro em setEvolutionWebhook:', error);
+    throw error;
+  }
+}
