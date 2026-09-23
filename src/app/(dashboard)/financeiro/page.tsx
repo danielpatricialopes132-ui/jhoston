@@ -387,14 +387,15 @@ export default function FinanceiroPage() {
   // Filtrar transações globais para os cálculos dependendo da empresa
   const transacoesFiltradasEmpresa = transacoes.filter(
     (t) => {
-      const isEcoCtx = activeContext.toUpperCase().includes("ECO");
-      const isAmbasCtx = activeContext === "TODOS" || activeContext === "AMBAS";
-      const matchesContext = isAmbasCtx ? true : isEcoCtx ? (t as any).empresa === "ECO_STONE" : (t as any).empresa === "JHOSTON";
+      const tEmpresa = String((t as any).empresa || "").toUpperCase();
+      const filterEmp = String(empresaFilter || "").toUpperCase();
       
-      const isEcoEmp = empresaFilter.toUpperCase().includes("ECO");
-      const normalizedEmp = isEcoEmp ? "ECO_STONE" : empresaFilter;
-      const matchesEmp = empresaFilter === "TODOS" ? true : (t as any).empresa === normalizedEmp;
-      return matchesContext && matchesEmp;
+      const isEcoFilter = filterEmp.includes("ECO");
+      const isJhostonFilter = filterEmp.includes("JHOSTON");
+      const isAmbasFilter = filterEmp === "TODOS" || filterEmp === "AMBAS";
+
+      const matchesEmp = isAmbasFilter ? true : isEcoFilter ? tEmpresa.includes("ECO") : isJhostonFilter ? tEmpresa.includes("JHOSTON") : tEmpresa === filterEmp;
+      return matchesEmp;
     }
   );
 
@@ -424,16 +425,16 @@ export default function FinanceiroPage() {
 
     const matchesTipo = tipoFilter === "TODOS" || t.tipo === tipoFilter;
     const matchesStatus = statusFilter === "TODOS" || t.status === statusFilter;
-    const matchesObra = obraFilter === "TODOS" || t.obraId?.toString() === obraFilter;
-    const isEcoCtx = activeContext.toUpperCase().includes("ECO");
-    const isAmbasCtx = activeContext === "TODOS" || activeContext === "AMBAS";
-    const matchesContext = isAmbasCtx ? true : isEcoCtx ? (t as any).empresa === "ECO_STONE" : (t as any).empresa === "JHOSTON";
+    const tEmpresa = String((t as any).empresa || "").toUpperCase();
+    const filterEmp = String(empresaFilter || "").toUpperCase();
     
-    const isEcoEmp = empresaFilter.toUpperCase().includes("ECO");
-    const normalizedEmp = isEcoEmp ? "ECO_STONE" : empresaFilter;
-    const matchesEmpresa = empresaFilter === "TODOS" ? true : (t as any).empresa === normalizedEmp;
+    const isEcoFilter = filterEmp.includes("ECO");
+    const isJhostonFilter = filterEmp.includes("JHOSTON");
+    const isAmbasFilter = filterEmp === "TODOS" || filterEmp === "AMBAS";
 
-    return matchesSearch && matchesTipo && matchesStatus && matchesObra && matchesContext && matchesEmpresa;
+    const matchesEmpresa = isAmbasFilter ? true : isEcoFilter ? tEmpresa.includes("ECO") : isJhostonFilter ? tEmpresa.includes("JHOSTON") : tEmpresa === filterEmp;
+
+    return matchesSearch && matchesTipo && matchesStatus && matchesObra && matchesEmpresa;
   });
 
   const handleExportCSV = () => {
