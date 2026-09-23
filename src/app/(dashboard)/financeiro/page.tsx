@@ -387,8 +387,13 @@ export default function FinanceiroPage() {
   // Filtrar transações globais para os cálculos dependendo da empresa
   const transacoesFiltradasEmpresa = transacoes.filter(
     (t) => {
-      const matchesContext = (activeContext === "TODOS" || activeContext === "AMBAS") ? true : (activeContext === "ECO_STONE" || activeContext === "ECO STONE") ? (t as any).empresa === "ECO_STONE" : (t as any).empresa === "JHOSTON";
-      const matchesEmp = empresaFilter === "TODOS" ? true : (t as any).empresa === (empresaFilter === "ECO STONE" ? "ECO_STONE" : empresaFilter);
+      const isEcoCtx = activeContext.toUpperCase().includes("ECO");
+      const isAmbasCtx = activeContext === "TODOS" || activeContext === "AMBAS";
+      const matchesContext = isAmbasCtx ? true : isEcoCtx ? (t as any).empresa === "ECO_STONE" : (t as any).empresa === "JHOSTON";
+      
+      const isEcoEmp = empresaFilter.toUpperCase().includes("ECO");
+      const normalizedEmp = isEcoEmp ? "ECO_STONE" : empresaFilter;
+      const matchesEmp = empresaFilter === "TODOS" ? true : (t as any).empresa === normalizedEmp;
       return matchesContext && matchesEmp;
     }
   );
@@ -420,8 +425,13 @@ export default function FinanceiroPage() {
     const matchesTipo = tipoFilter === "TODOS" || t.tipo === tipoFilter;
     const matchesStatus = statusFilter === "TODOS" || t.status === statusFilter;
     const matchesObra = obraFilter === "TODOS" || t.obraId?.toString() === obraFilter;
-    const matchesContext = (activeContext === "TODOS" || activeContext === "AMBAS") ? true : (activeContext === "ECO_STONE" || activeContext === "ECO STONE") ? (t as any).empresa === "ECO_STONE" : (t as any).empresa === "JHOSTON";
-    const matchesEmpresa = empresaFilter === "TODOS" || (t as any).empresa === (empresaFilter === "ECO STONE" ? "ECO_STONE" : empresaFilter);
+    const isEcoCtx = activeContext.toUpperCase().includes("ECO");
+    const isAmbasCtx = activeContext === "TODOS" || activeContext === "AMBAS";
+    const matchesContext = isAmbasCtx ? true : isEcoCtx ? (t as any).empresa === "ECO_STONE" : (t as any).empresa === "JHOSTON";
+    
+    const isEcoEmp = empresaFilter.toUpperCase().includes("ECO");
+    const normalizedEmp = isEcoEmp ? "ECO_STONE" : empresaFilter;
+    const matchesEmpresa = empresaFilter === "TODOS" ? true : (t as any).empresa === normalizedEmp;
 
     return matchesSearch && matchesTipo && matchesStatus && matchesObra && matchesContext && matchesEmpresa;
   });
@@ -703,7 +713,7 @@ export default function FinanceiroPage() {
       </div>
 
       {/* Seletor de Empresa (Isolamento Estrito) */}
-      {(activeContext !== "ECO_STONE" && activeContext !== "ECO STONE") && (
+      {(!activeContext.toUpperCase().includes("ECO")) && (
         <div style={{ display: "flex", gap: "10px", marginBottom: "20px", padding: "12px", backgroundColor: "var(--bg-card)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", alignItems: "center" }}>
           <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-heading)" }}>Visualizar Empresa:</span>
           <div style={{ display: "inline-flex", gap: "8px" }}>
