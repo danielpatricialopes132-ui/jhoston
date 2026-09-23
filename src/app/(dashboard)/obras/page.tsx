@@ -702,6 +702,49 @@ export default function ObrasPage() {
     }
   };
 
+  const handleExportCSV = () => {
+    if (filteredObras.length === 0) {
+      showError("Nenhuma obra para exportar.");
+      return;
+    }
+
+    const headers = ["ID", "Nome da Obra", "Cliente", "Status", "Endereço", "Empresa", "Valor Fechado", "Total Adendos", "Detalhes Adendos", "Valor Total"];
+    
+    const rows = filteredObras.map(obra => {
+      const totalAdendos = (obra.adendos || []).reduce((acc, adendo) => acc + adendo.valor, 0);
+      const detalhesAdendos = (obra.adendos || []).map(a => `${a.descricao} (R$ ${a.valor.toFixed(2)})`).join(" | ");
+      const valorTotal = obra.valorFechado + totalAdendos;
+
+      const formatField = (field: string | number | null | undefined) => {
+        if (field === null || field === undefined) return '""';
+        return `"${String(field).replace(/"/g, '""')}"`;
+      };
+
+      return [
+        obra.id,
+        formatField(obra.nome),
+        formatField(obra.clienteNome),
+        formatField(obra.status),
+        formatField(obra.endereco),
+        formatField(obra.empresa),
+        obra.valorFechado.toFixed(2),
+        totalAdendos.toFixed(2),
+        formatField(detalhesAdendos),
+        valorTotal.toFixed(2)
+      ].join(",");
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n"); // \uFEFF for excel utf-8 encoding BOM
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `obras_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const filteredObras = obras.filter((o) => {
     const matchesSearch =
       o.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -710,12 +753,20 @@ export default function ObrasPage() {
 
     const matchesStatus = statusFilter === "TODAS" || o.status === statusFilter;
     
-    // Isolamento estrito para ECO STONE
-    const matchesContext = (activeContext === "TODAS" || activeContext === "AMBAS") ? true : activeContext === "ECO_STONE" ? o.empresa === "ECO_STONE" : o.empresa === "JHOSTON";
-    
-    const matchesEmpresa = empresaFilter === "TODAS" || o.empresa === empresaFilter;
+    const normalizeEmp = (val: string) => {
+      const v = (val || "").toUpperCase().trim();
+      if (v.includes("ECO")) return "ECO STONE";
+      if (v.includes("REVEST")) return "JHOSTON REVEST";
+      if (v.includes("JHOSTON")) return "JHOSTON";
+      return v;
+    };
+
+    const oEmp = normalizeEmp(o.empresa);
+    const empFilt = normalizeEmp(empresaFilter);
+
+    const matchesEmpresa = (empFilt === "TODAS" || empFilt === "AMBAS") ? true : oEmp === empFilt;
  
-    return matchesSearch && matchesStatus && matchesContext && matchesEmpresa;
+    return matchesSearch && matchesStatus && matchesEmpresa;
   });
 
   const formatCurrency = (val: number) => {
@@ -739,6 +790,10 @@ export default function ObrasPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
+          <button className="btn btn-secondary" onClick={handleExportCSV} style={{ borderColor: "var(--primary)", color: "var(--primary)", gap: "8px", display: "flex", alignItems: "center" }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar CSV
+          </button>
           <button className="btn btn-secondary" onClick={openIAImportModal} style={{ borderColor: "var(--primary)", color: "var(--primary)", gap: "8px", display: "flex", alignItems: "center" }}>
             ✨ Importar Contrato (IA)
           </button>

@@ -94,10 +94,12 @@ export async function getSession() {
 
 export async function setContextoEmpresa(novaEmpresa: string) {
   const session = await getSession();
+  console.log("setContextoEmpresa START", novaEmpresa, "Session:", session);
   if (!session) return { success: false };
 
   // Somente MASTERs têm direito a alterar o contexto de empresa
   if (session.userRole !== "MASTER") {
+    console.log("Access denied! userRole:", session.userRole);
     return { success: false, error: "Apenas administradores podem trocar o contexto de empresa." };
   }
 
@@ -114,6 +116,7 @@ export async function setContextoEmpresa(novaEmpresa: string) {
   });
 
   const sessionToken = Buffer.from(newSessionData).toString("base64");
+  console.log("Saving new cookie with userEmpresa:", novaEmpresa);
 
   cookieStore.set("session_token", sessionToken, {
     httpOnly: true,
@@ -124,6 +127,7 @@ export async function setContextoEmpresa(novaEmpresa: string) {
 
   // Revalida a tela atual para atualizar dados na nova empresa
   revalidatePath("/", "layout");
+  console.log("Cookie saved and revalidatePath called.");
 
   return { success: true };
 }

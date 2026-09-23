@@ -425,6 +425,7 @@ export default function FinanceiroPage() {
 
     const matchesTipo = tipoFilter === "TODOS" || t.tipo === tipoFilter;
     const matchesStatus = statusFilter === "TODOS" || t.status === statusFilter;
+    const matchesObra = obraFilter === "TODOS" || t.obraId?.toString() === obraFilter;
     const tEmpresa = String((t as any).empresa || "").toUpperCase();
     const filterEmp = String(empresaFilter || "").toUpperCase();
     

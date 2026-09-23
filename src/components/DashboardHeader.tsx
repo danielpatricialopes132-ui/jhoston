@@ -13,10 +13,10 @@ export function getCompanyDisplay(empresa?: string | null) {
   if (!empresa) return { name: "JHOSTON TEC", icon: "🏢", color: "#0f766e", tag: "JHOSTON", bg: "rgba(15, 118, 110, 0.1)" };
 
   const norm = empresa.toUpperCase().trim();
-  if (norm === "ECO_STONE" || norm.includes("ECO")) {
+  if (norm === "ECO_STONE" || norm === "ECO STONE" || norm.includes("ECO")) {
     return { name: "ECO STONE", icon: "🌿", color: "#16a34a", tag: "ECO STONE", bg: "rgba(22, 163, 74, 0.1)" };
   }
-  if (norm === "JHOSTON_REVEST" || norm.includes("REVEST")) {
+  if (norm === "JHOSTON_REVEST" || norm === "JHOSTON REVEST" || norm.includes("REVEST")) {
     return { name: "JHOSTON REVEST", icon: "✨", color: "#d97706", tag: "REVEST", bg: "rgba(217, 119, 6, 0.1)" };
   }
   return { name: "JHOSTON TEC", icon: "🏢", color: "#0f766e", tag: "JHOSTON", bg: "rgba(15, 118, 110, 0.1)" };
@@ -30,6 +30,10 @@ export default function DashboardHeader({ initialEmpresa = "JHOSTON" }: Dashboar
   const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
+    setEmpresa(initialEmpresa);
+  }, [initialEmpresa]);
+
+  useEffect(() => {
     // Sincroniza com evento disparado pela Sidebar
     const handleContextChange = (e: CustomEvent<string>) => {
       if (e.detail) {
@@ -40,6 +44,7 @@ export default function DashboardHeader({ initialEmpresa = "JHOSTON" }: Dashboar
     window.addEventListener("empresaContextChanged" as any, handleContextChange);
 
     getSession().then((sess) => {
+      console.log("DashboardHeader getSession() fallback returned:", sess?.userEmpresa);
       if (sess?.userEmpresa) {
         setEmpresa(sess.userEmpresa);
       }
@@ -53,6 +58,8 @@ export default function DashboardHeader({ initialEmpresa = "JHOSTON" }: Dashboar
       window.removeEventListener("empresaContextChanged" as any, handleContextChange);
     };
   }, []);
+
+  console.log("DashboardHeader rendering. initialEmpresa:", initialEmpresa, "current empresa:", empresa);
 
   const handleHeaderContextChange = (novaEmpresa: string) => {
     if (novaEmpresa === empresa || isSwitching) return;
