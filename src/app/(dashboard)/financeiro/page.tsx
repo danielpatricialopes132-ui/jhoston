@@ -426,6 +426,39 @@ export default function FinanceiroPage() {
     return matchesSearch && matchesTipo && matchesStatus && matchesObra && matchesContext && matchesEmpresa;
   });
 
+  const handleExportCSV = () => {
+    if (filteredTransacoes.length === 0) {
+      alert("Nenhuma transação para exportar.");
+      return;
+    }
+
+    const headers = ["Tipo", "Empresa", "Cliente / Fornecedor", "Plano de Contas", "Centro de Custo", "Descrição", "Vencimento", "Valor", "Status", "Data Pagamento"];
+    
+    const rows = filteredTransacoes.map(t => {
+      return [
+        t.tipo === "RECEITA" ? "Receita" : "Despesa",
+        (t as any).empresa === "ECO_STONE" ? "Eco Stone" : "Jhoston",
+        t.clienteFornecedor || "Não informado",
+        t.planoConta ? `${t.planoConta.codigo} - ${t.planoConta.descricao}` : (t.categoria || "S/ Conta"),
+        t.centroCusto ? t.centroCusto.nome : (t.obra ? t.obra.nome : "Caixa Geral"),
+        t.descricao,
+        formatDateBR(t.dataVencimento),
+        t.valor.toString().replace(".", ","),
+        t.status === "PAGO" ? "Pago" : "Pendente",
+        t.dataPagamento ? formatDateBR(t.dataPagamento) : ""
+      ].map(val => `"${(val || "").toString().replace(/"/g, '""')}"`).join(";");
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(";") + "\n" + rows.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `transacoes_financeiras.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Carga e processamento dos gráficos
   const getLast6Months = () => {
     const months = [];
@@ -965,6 +998,12 @@ export default function FinanceiroPage() {
                   <option key={o.id} value={o.id}>{o.nome}</option>
                 ))}
               </select>
+            </div>
+            <div className="form-group" style={{ display: "flex", alignItems: "flex-end" }}>
+              <button className="btn btn-secondary" onClick={handleExportCSV} title="Exportar para CSV">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "6px" }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Exportar CSV
+              </button>
             </div>
           </div>
 
